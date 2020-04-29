@@ -29,6 +29,12 @@ lz4 : use lib/liblz4.a
    
 ```
 
++ new feature: client wrapper with consumer group supported, only available in c++11 or above env.
+
+Run "make wrapper" to generate libslssdk_wrapper.a instead of libslssdk.a.
+
+See usage of client wrapper in sample_wrapper.cpp.
+
 ## using SConscript
 
 + suppose your working  directory is $root
