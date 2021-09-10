@@ -262,8 +262,34 @@ struct PullDataResponse : public Response
 {
     std::string cursor;
 };
-
-
+struct LogStoreSqlResponse : public Response
+{
+    int64_t processedRows;
+    int64_t elapsedMilli;
+    double cpuSec;
+    int64_t cpuCore;
+    LogResult result;
+    LogStoreSqlResponse() : processedRows(0), elapsedMilli(0), cpuSec(0.0), cpuCore(0) {}
+};
+typedef LogStoreSqlResponse ProjectSqlResponse;
+struct CreateSqlInstanceResponse : public Response
+{
+};
+struct UpdateSqlInstanceResponse : public Response
+{
+};
+struct SqlInstance
+{
+    std::string name;
+    int cu;
+    time_t createTime;
+    time_t updateTime;
+    SqlInstance() : cu(0), createTime(0), updateTime(0) {}
+};
+struct ListSqlInstanceResponse : public Response
+{
+    std::vector<SqlInstance> sqlInstances;
+};
 
 typedef ListShardsResponse  SplitShardResponse ;
 typedef ListShardsResponse  MergeShardsResponse ;
@@ -450,7 +476,11 @@ public:
     Response RemoveConfigFromMachineGroup(const std::string& project, const std::string& machineGroup, const std::string& config);
     GetAppliedConfigsResponse GetAppliedConfigs(const std::string& project, const std::string& machineGroup);
 
-
+    LogStoreSqlResponse ExecuteLogStoreSql(const std::string &project, const std::string &logstore, time_t beginTime, time_t endTime, const std::string &query, bool powerSql = false);
+    ProjectSqlResponse ExecuteProjectSql(const std::string &project, const std::string &query, bool powerSql);
+    CreateSqlInstanceResponse CreateSqlInstance(const std::string &project, int cu);
+    UpdateSqlInstanceResponse UpdateSqlInstance(const std::string &project, int cu);
+    ListSqlInstanceResponse ListSqlInstance(const std::string &project);
 
     void SetUserAgent(const std::string& userAgent) {mUserAgent = userAgent;}
     void SetKeyProvider(const std::string& keyProvider) {mKeyProvider = keyProvider;}
