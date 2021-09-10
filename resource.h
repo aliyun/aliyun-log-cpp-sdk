@@ -16,6 +16,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <memory>
 #include "rapidjson/writer.h"
 #include "rapidjson/document.h"
 
@@ -256,25 +257,33 @@ class KeyContent : public Resource
 private:
     std::vector<std::string> mToken;
     bool mCaseSensitive;
+    std::string mAlias;
+    bool mChn;
+    std::string mIndexType;
+    bool mDocValue;
 public:
     virtual void SetRequestValues(rapidjson::Writer<rapidjson::StringBuffer>& writer) const;
     virtual void SetFullValues(rapidjson::Writer<rapidjson::StringBuffer>& writer) const;
     virtual void FromJson(const rapidjson::Value& value);
 
-    KeyContent() {}
+    KeyContent() {mChn = false;mDocValue = false;mIndexType = "text";}
     ~KeyContent() {}
 
     void SetToken(const std::vector<std::string>& token) { mToken = token; }
     void SetCaseSensitive(const bool caseSensitive) { mCaseSensitive = caseSensitive; }
+    void SetChnToken(const bool chn) { mChn = chn; }
+    void SetDocValue(const bool docValue) { mDocValue = docValue; }
+    void SetIndexType(const std::string &indexType) { mIndexType = indexType; }
 
     std::vector<std::string> GetToken() const { return mToken; }
     bool GetCaseSensitive() const { return mCaseSensitive; }
+    const std::string& GetIndexType() const { return mIndexType; }
 };
 
 class Keys : public Resource
 {
 private:
-    std::map<std::string, KeyContent> mKeys;
+    std::map<std::string, std::shared_ptr<KeyContent>> mKeys;
 public:
     virtual void SetRequestValues(rapidjson::Writer<rapidjson::StringBuffer>& writer) const;
     virtual void SetFullValues(rapidjson::Writer<rapidjson::StringBuffer>& writer) const;
@@ -283,8 +292,25 @@ public:
     Keys() {}
     ~Keys() {}
 
-    void AddKey(const std::string& key, const std::vector<std::string>& token, const bool caseSensitive);
-    std::map<std::string, KeyContent> GetKeys() const { return mKeys; }
+    void AddKey(const std::string &key, const std::shared_ptr<KeyContent> &keyContent);
+    std::map<std::string, std::shared_ptr<KeyContent>> GetKeys() const { return mKeys; }
+};
+class JsonKeyContent : public KeyContent
+{
+private:
+    bool mIndexAll;
+    int mMaxDepth;
+    Keys mJsonKeys;
+public:
+    virtual void SetRequestValues(rapidjson::Writer<rapidjson::StringBuffer> &writer) const;
+    virtual void FromJson(const rapidjson::Value &value);
+
+    JsonKeyContent() : mIndexAll(true), mMaxDepth(-1) { SetIndexType("json"); }
+    ~JsonKeyContent() {}
+
+    void SetIndexAll(const bool indexAll) { mIndexAll = indexAll; }
+    void SetMaxDepth(const int maxDepth) { mMaxDepth = maxDepth; }
+    void SetJsonKeys(const Keys &jsonKeys) { mJsonKeys = jsonKeys; }
 };
 
 class AllKeys : public Resource
@@ -315,6 +341,10 @@ private:
     AllKeys mAllKeys;
     Line mLine;
     Keys mKeys;
+    bool mLogReduceEnable;
+    std::vector<std::string> mLogReduceWhiteList;
+    std::vector<std::string> mLogReduceBlackList;
+    int mMaxTextLen;
 
     int64_t mLastModifyTime;
 public:
@@ -322,8 +352,8 @@ public:
     virtual void SetFullValues(rapidjson::Writer<rapidjson::StringBuffer>& writer) const;
     virtual void FromJson(const rapidjson::Value& value);
 
-    Index() { mLineSet = false; mKeysSet = false; mAllKeysSet = false; }
-    Index(uint32_t ttl) { mLineSet = false; mKeysSet = false; mAllKeysSet = false; mTtl = ttl;}
+    Index() { mLineSet = false; mKeysSet = false; mAllKeysSet = false; mLogReduceEnable = false; mMaxTextLen = 0;}
+    Index(uint32_t ttl) { mLineSet = false; mKeysSet = false; mAllKeysSet = false; mTtl = ttl; mLogReduceEnable = false; mMaxTextLen = 0;}
     ~Index() {}
 
     AllKeys GetAllKeys() const { return mAllKeys; }
@@ -336,6 +366,9 @@ public:
     void SetTTL(const uint32_t ttl) { mTtl = ttl; }
     void SetLine(const Line& line) { mLineSet = true; mLine = line; }
     void SetKeys(const Keys& keys) { mKeysSet = true; mKeys = keys; }
+    void SetLogReduceEnable(const bool logReduceEnalbe) { mLogReduceEnable = logReduceEnalbe; }
+    void SetLogReduceWhiteList(const std::vector<std::string> &logReduceWhiteList) { mLogReduceWhiteList = logReduceWhiteList; }
+    void SetLogReduceBlackList(const std::vector<std::string> &logReduceBlackList) { mLogReduceBlackList = logReduceBlackList; }
 };
 
 typedef enum ACLPrivilege

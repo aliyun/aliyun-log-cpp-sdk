@@ -1619,14 +1619,148 @@ GetAppliedConfigsResponse LOGClient::GetAppliedConfigs(const string& project, co
     return ret;
 }
 
-
-
-
-
-
-
-
-
+LogStoreSqlResponse LOGClient::ExecuteLogStoreSql(const std::string &project, const std::string &logstore, time_t beginTime, time_t endTime, const std::string &query, bool powerSql)
+{
+    string operation = LOGSTORES;
+    operation.append("/").append(logstore).append(INDEX);
+    string body = "";
+    map<string, string> parameterList;
+    SetCommonParameter(parameterList);
+    parameterList["type"] = "log";
+    parameterList["from"] = apsara::ToString(beginTime);
+    parameterList["to"] = apsara::ToString(endTime);
+    parameterList["query"] = query;
+    parameterList["powerSql"] = apsara::ToString(powerSql);
+    map<string, string> httpHeader;
+    httpHeader[X_LOG_BODYRAWSIZE] = apsara::ToString(body.length());
+    httpHeader[CONTENT_TYPE] = "";
+    HttpMessage httpResponse;
+    SendRequest(project, HTTP_GET, operation, body, parameterList, httpHeader, httpResponse);
+    LogStoreSqlResponse ret;
+    ret.statusCode = httpResponse.statusCode;
+    ret.requestId = httpResponse.header[X_LOG_REQUEST_ID];
+    if (httpResponse.header.count(X_LOG_PROCESSED_ROWS) > 0)
+        ret.processedRows = atol(httpResponse.header.at(X_LOG_PROCESSED_ROWS).c_str());
+    if (httpResponse.header.count(X_LOG_ELASPED_MILLISECOND) > 0)
+        ret.elapsedMilli = atol(httpResponse.header.at(X_LOG_ELASPED_MILLISECOND).c_str());
+    if (httpResponse.header.count(X_LOG_CPU_SEC) > 0)
+        ret.cpuSec = atof(httpResponse.header.at(X_LOG_CPU_SEC).c_str());
+    if (httpResponse.header.count(X_LOG_CPU_CORES) > 0)
+        ret.cpuCore = atol(httpResponse.header.at(X_LOG_CPU_CORES).c_str());
+    ExtractLogs(httpResponse, ret.result);
+    return ret;
+}
+ProjectSqlResponse LOGClient::ExecuteProjectSql(const std::string &project, const std::string &query, bool powerSql)
+{
+    string operation = "/logs";
+    string body = "";
+    map<string, string> parameterList;
+    SetCommonParameter(parameterList);
+    parameterList["query"] = query;
+    parameterList["powerSql"] = apsara::ToString(powerSql);
+    map<string, string> httpHeader;
+    httpHeader[X_LOG_BODYRAWSIZE] = apsara::ToString(body.length());
+    httpHeader[CONTENT_TYPE] = "";
+    HttpMessage httpResponse;
+    SendRequest(project, HTTP_GET, operation, body, parameterList, httpHeader, httpResponse);
+    ProjectSqlResponse ret;
+    ret.statusCode = httpResponse.statusCode;
+    ret.requestId = httpResponse.header[X_LOG_REQUEST_ID];
+    if (httpResponse.header.count(X_LOG_PROCESSED_ROWS) > 0)
+        ret.processedRows = atol(httpResponse.header.at(X_LOG_PROCESSED_ROWS).c_str());
+    if (httpResponse.header.count(X_LOG_ELASPED_MILLISECOND) > 0)
+        ret.elapsedMilli = atol(httpResponse.header.at(X_LOG_ELASPED_MILLISECOND).c_str());
+    if (httpResponse.header.count(X_LOG_CPU_SEC) > 0)
+        ret.cpuSec = atof(httpResponse.header.at(X_LOG_CPU_SEC).c_str());
+    if (httpResponse.header.count(X_LOG_CPU_CORES) > 0)
+        ret.cpuCore = atol(httpResponse.header.at(X_LOG_CPU_CORES).c_str());
+    ExtractLogs(httpResponse, ret.result);
+    return ret;
+}
+CreateSqlInstanceResponse LOGClient::CreateSqlInstance(const std::string &project, int cu)
+{
+    std::string operation = "/sqlinstance";
+    std::string body;
+    rapidjson::StringBuffer stringBuffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(stringBuffer);
+    writer.StartObject();
+    writer.Key("cu");
+    writer.Int(cu);
+    writer.EndObject();
+    body = stringBuffer.GetString();
+    map<string, string> parameterList;
+    SetCommonParameter(parameterList);
+    map<string, string> httpHeader;
+    httpHeader[X_LOG_BODYRAWSIZE] = apsara::ToString(body.length());
+    httpHeader[CONTENT_TYPE] = TYPE_LOG_JSON;
+    HttpMessage httpResponse;
+    SendRequest(project, HTTP_POST, operation, body, parameterList, httpHeader, httpResponse);
+    CreateSqlInstanceResponse ret;
+    ret.statusCode = httpResponse.statusCode;
+    ret.requestId = httpResponse.header[X_LOG_REQUEST_ID];
+    return ret;
+}
+UpdateSqlInstanceResponse LOGClient::UpdateSqlInstance(const std::string &project, int cu)
+{
+    std::string operation = "/sqlinstance";
+    std::string body;
+    rapidjson::StringBuffer stringBuffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(stringBuffer);
+    writer.StartObject();
+    writer.Key("cu");
+    writer.Int(cu);
+    writer.EndObject();
+    body = stringBuffer.GetString();
+    map<string, string> parameterList;
+    SetCommonParameter(parameterList);
+    map<string, string> httpHeader;
+    httpHeader[X_LOG_BODYRAWSIZE] = apsara::ToString(body.length());
+    httpHeader[CONTENT_TYPE] = TYPE_LOG_JSON;
+    HttpMessage httpResponse;
+    SendRequest(project, HTTP_POST, operation, body, parameterList, httpHeader, httpResponse);
+    UpdateSqlInstanceResponse ret;
+    ret.statusCode = httpResponse.statusCode;
+    ret.requestId = httpResponse.header[X_LOG_REQUEST_ID];
+    return ret;
+}
+ListSqlInstanceResponse LOGClient::ListSqlInstance(const std::string &project)
+{
+    std::string operation = "/sqlinstance";
+    std::string body;
+    map<string, string> parameterList;
+    SetCommonParameter(parameterList);
+    map<string, string> httpHeader;
+    httpHeader[X_LOG_BODYRAWSIZE] = apsara::ToString(body.length());
+    httpHeader[CONTENT_TYPE] = "";
+    HttpMessage httpResponse;
+    SendRequest(project, HTTP_POST, operation, body, parameterList, httpHeader, httpResponse);
+    ListSqlInstanceResponse ret;
+    ret.statusCode = httpResponse.statusCode;
+    ret.requestId = httpResponse.header[X_LOG_REQUEST_ID];
+    rapidjson::Document document;
+    try
+    {
+        ExtractJsonResult(httpResponse.content, document);
+        for (rapidjson::Value::ConstValueIterator itr = document.Begin(); itr != document.End(); ++itr)
+        {
+            SqlInstance sqlInstance;
+            ExtractJsonResult(*itr, "name", sqlInstance.name);
+            string value;
+            ExtractJsonResult(*itr, "cu", value);
+            sqlInstance.cu = atoi(value.c_str());
+            ExtractJsonResult(*itr, "updateTime", value);
+            sqlInstance.updateTime = atoi(value.c_str());
+            ExtractJsonResult(*itr, "createTime", value);
+            sqlInstance.createTime = atoi(value.c_str());
+            ret.sqlInstances.push_back(sqlInstance);
+        }
+    }
+    catch (JsonException &e)
+    {
+        throw LOGException(LOGE_BAD_RESPONSE, e.GetMessage() + "\tbad json format:" + httpResponse.content, httpResponse.header[X_LOG_REQUEST_ID], httpResponse.statusCode);
+    }
+    return ret;
+}
 
 static void ExtractTopics(HttpMessage& httpMessage, vector<string>& result)
 {

@@ -505,16 +505,35 @@ void Line::FromJson(const rapidjson::Value& value)
 
 void KeyContent::SetRequestValues(rapidjson::Writer<rapidjson::StringBuffer>& writer) const
 {
-    writer.Key("token");
-    writer.StartArray();
-    for (vector<string>::size_type i = 0;i < mToken.size();i++)
+    writer.Key("type");
+    writer.String(mIndexType.c_str());
+    if (mIndexType == "text")
     {
-        writer.String(mToken[i].c_str());
-    }
-    writer.EndArray();
+        writer.Key("token");
+        writer.StartArray();
+        for (vector<string>::size_type i = 0; i < mToken.size(); i++)
+        {
+            writer.String(mToken[i].c_str());
+        }
+        writer.EndArray();
 
-    writer.Key("caseSensitive");
-    writer.Bool(mCaseSensitive);
+        writer.Key("caseSensitive");
+        writer.Bool(mCaseSensitive);
+        writer.Key("chn");
+        writer.Bool(mChn);
+    }
+
+    if (!mAlias.empty())
+    {
+        writer.Key("alias");
+        writer.String(mAlias.c_str());
+    }
+
+    if (mDocValue)
+    {
+        writer.Key("doc_value");
+        writer.Bool(mDocValue);
+    }
 }
 
 void KeyContent::SetFullValues(rapidjson::Writer<rapidjson::StringBuffer>& writer) const
@@ -524,7 +543,7 @@ void KeyContent::SetFullValues(rapidjson::Writer<rapidjson::StringBuffer>& write
 
 void KeyContent::FromJson(const rapidjson::Value& value)
 {
-    const Value& token = GetJsonValue(value, "token");
+    const Value &token = GetJsonValue(value, "token");
     for (Value::ConstValueIterator itr = token.Begin(); itr != token.End(); ++itr)
     {
         if (itr->IsString())
@@ -539,15 +558,32 @@ void KeyContent::FromJson(const rapidjson::Value& value)
     }
 
     ExtractJsonResult(value, "caseSensitive", mCaseSensitive);
+
+    if (value.HasMember("chn"))
+    {
+        ExtractJsonResult(value, "chn", mChn);
+    }
+    if (value.HasMember("alias"))
+    {
+        ExtractJsonResult(value, "alias", mAlias);
+    }
+    if (value.HasMember("type"))
+    {
+        ExtractJsonResult(value, "type", mIndexType);
+    }
+    if (value.HasMember("doc_value"))
+    {
+        ExtractJsonResult(value, "doc_value", mDocValue);
+    }
 }
 
 void Keys::SetRequestValues(rapidjson::Writer<rapidjson::StringBuffer>& writer) const
 {
-    for(map<string, KeyContent>::const_iterator iter = mKeys.begin();iter != mKeys.end();++iter)
+    for (map<string, std::shared_ptr<KeyContent>>::const_iterator iter = mKeys.begin(); iter != mKeys.end(); ++iter)
     {
         writer.Key(iter->first.c_str());
         writer.StartObject();
-        iter->second.SetRequestValues(writer);
+        iter->second->SetRequestValues(writer);
         writer.EndObject();
     }
 }
@@ -561,19 +597,62 @@ void Keys::FromJson(const rapidjson::Value& value)
 {
     for (rapidjson::Value::ConstMemberIterator mItr = value.MemberBegin(); mItr != value.MemberEnd(); ++mItr)
     {
-        KeyContent key;
-        rapidjson::Value keyJson;
-        key.FromJson(mItr->value);
+        std::shared_ptr<KeyContent> key;
+        const rapidjson::Value &v = mItr->value;
+        if (v.HasMember("type") && v["type"].IsString() && std::string(v["type"].GetString()) == "json")
+        {
+            key.reset(new JsonKeyContent());
+        }
+        else
+        {
+            key.reset(new KeyContent());
+        }
+        key->FromJson(mItr->value);
         //cout << "KeyName:" << mItr->name.GetString() << endl;
-        mKeys.insert(map<string, KeyContent>::value_type(mItr->name.GetString(), key));
+        mKeys.insert(map<string, std::shared_ptr<KeyContent>>::value_type(mItr->name.GetString(), key));
     }
 }
 
-void Keys::AddKey(const string& key, const vector<string>& token, const bool caseSensitive)
+void Keys::AddKey(const string &key, const std::shared_ptr<KeyContent> &keyContent)
+{
+    mKeys.insert(map<string, std::shared_ptr<KeyContent>>::value_type(key, keyContent));
+}
+
+void JsonKeyContent::SetRequestValues(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
 {
     mKeys.insert(map<string, KeyContent>::value_type(key, KeyContent()));
+    KeyContent::SetRequestValues(writer);
     mKeys[key].SetToken(token);
+    writer.Key("index_all");
     mKeys[key].SetCaseSensitive(caseSensitive);
+    writer.Bool(mIndexAll);
+    if (alias.empty() == false)
+        writer.Key("max_depth");
+    mKeys[key].SetAlias(alias);
+    writer.Int(mMaxDepth);
+    if (chn)
+        writer.Key("json_keys");
+    mKeys[key].SetChnToken(chn);
+    writer.StartObject();
+    mJsonKeys.SetRequestValues(writer);
+    writer.EndObject();
+}
+
+void JsonKeyContent::FromJson(const rapidjson::Value &value)
+{
+    KeyContent::FromJson(value);
+    if (value.HasMember("index_all"))
+    {
+        ExtractJsonResult(value, "index_all", mIndexAll);
+    }
+    if (value.HasMember("max_depth"))
+    {
+        ExtractJsonResult(value, "max_depth", mMaxDepth);
+    }
+    if (value.HasMember("json_keys"))
+    {
+        mJsonKeys.FromJson(value["json_keys"]);
+    }
 }
 
 void AllKeys::SetRequestValues(Writer<StringBuffer>& writer) const
@@ -617,6 +696,11 @@ void Index::SetRequestValues(Writer<StringBuffer>& writer) const
 {
     writer.Key("ttl");
     writer.Uint(mTtl);
+    if (mLogReduceEnable)
+    {
+        writer.Key("log_reduce");
+        writer.Bool(mLogReduceEnable);
+    }
     if (mLineSet)
     {
         writer.Key("line");
@@ -630,6 +714,31 @@ void Index::SetRequestValues(Writer<StringBuffer>& writer) const
         writer.StartObject();
         mKeys.SetRequestValues(writer);
         writer.EndObject();
+    }
+    if (mMaxTextLen > 0)
+    {
+        writer.Key("max_text_len");
+        writer.Uint(mMaxTextLen);
+    }
+    if (!mLogReduceWhiteList.empty())
+    {
+        writer.Key("log_reduce_white_list");
+        writer.StartArray();
+        for (vector<string>::const_iterator iter = mLogReduceWhiteList.begin(); iter != mLogReduceWhiteList.end(); iter++)
+        {
+            writer.String((*iter).c_str());
+        }
+        writer.EndArray();
+    }
+    if (!mLogReduceBlackList.empty())
+    {
+        writer.Key("log_reduce_black_list");
+        writer.StartArray();
+        for (vector<string>::const_iterator iter = mLogReduceBlackList.begin(); iter != mLogReduceBlackList.end(); iter++)
+        {
+            writer.String((*iter).c_str());
+        }
+        writer.EndArray();
     }
 }
 
@@ -672,6 +781,44 @@ void Index::FromJson(const Value& value)
     if (value.HasMember("lastModifyTime"))
     {
         ExtractJsonResult(value, "lastModifyTime", mLastModifyTime);
+    }
+    if (value.HasMember("log_reduce"))
+    {
+        ExtractJsonResult(value, "log_reduce", mLogReduceEnable);
+    }
+    if (value.HasMember("max_text_len"))
+    {
+        ExtractJsonResult(value, "max_text_len", mMaxTextLen);
+    }
+    if (value.HasMember("log_reduce_white_list"))
+    {
+        const Value &logReduceWhiteList = GetJsonValue(value, "log_reduce_white_list");
+        for (Value::ConstValueIterator itr = logReduceWhiteList.Begin(); itr != logReduceWhiteList.End(); ++itr)
+        {
+            if (itr->IsString())
+            {
+                mLogReduceWhiteList.push_back(itr->GetString());
+            }
+            else
+            {
+                throw JsonException("ValueTypeException", "One value of member logReduceWhiteList is not string type");
+            }
+        }
+    }
+    if (value.HasMember("log_reduce_black_list"))
+    {
+        const Value &logReduceBlackList = GetJsonValue(value, "log_reduce_black_list");
+        for (Value::ConstValueIterator itr = logReduceBlackList.Begin(); itr != logReduceBlackList.End(); ++itr)
+        {
+            if (itr->IsString())
+            {
+                mLogReduceBlackList.push_back(itr->GetString());
+            }
+            else
+            {
+                throw JsonException("ValueTypeException", "One value of member logReduceBlackList is not string type");
+            }
+        }
     }
 }
 
