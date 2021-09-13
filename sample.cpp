@@ -10,6 +10,7 @@
  */
 #include "client.h"
 #include "common.h"
+#include <unistd.h>
 #include <string>
 #include <iostream>
 using namespace aliyun_log_sdk_v6;
