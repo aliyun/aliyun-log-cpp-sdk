@@ -1627,12 +1627,12 @@ LogStoreSqlResponse LOGClient::ExecuteLogStoreSql(const std::string &project, co
     map<string, string> parameterList;
     SetCommonParameter(parameterList);
     parameterList["type"] = "log";
-    parameterList["from"] = apsara::ToString(beginTime);
-    parameterList["to"] = apsara::ToString(endTime);
+    parameterList["from"] = ToString(beginTime);
+    parameterList["to"] = ToString(endTime);
     parameterList["query"] = query;
-    parameterList["powerSql"] = apsara::ToString(powerSql);
+    parameterList["powerSql"] = ToString(powerSql);
     map<string, string> httpHeader;
-    httpHeader[X_LOG_BODYRAWSIZE] = apsara::ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
     httpHeader[CONTENT_TYPE] = "";
     HttpMessage httpResponse;
     SendRequest(project, HTTP_GET, operation, body, parameterList, httpHeader, httpResponse);
@@ -1657,9 +1657,9 @@ ProjectSqlResponse LOGClient::ExecuteProjectSql(const std::string &project, cons
     map<string, string> parameterList;
     SetCommonParameter(parameterList);
     parameterList["query"] = query;
-    parameterList["powerSql"] = apsara::ToString(powerSql);
+    parameterList["powerSql"] = ToString(powerSql);
     map<string, string> httpHeader;
-    httpHeader[X_LOG_BODYRAWSIZE] = apsara::ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
     httpHeader[CONTENT_TYPE] = "";
     HttpMessage httpResponse;
     SendRequest(project, HTTP_GET, operation, body, parameterList, httpHeader, httpResponse);
@@ -1691,7 +1691,7 @@ CreateSqlInstanceResponse LOGClient::CreateSqlInstance(const std::string &projec
     map<string, string> parameterList;
     SetCommonParameter(parameterList);
     map<string, string> httpHeader;
-    httpHeader[X_LOG_BODYRAWSIZE] = apsara::ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
     httpHeader[CONTENT_TYPE] = TYPE_LOG_JSON;
     HttpMessage httpResponse;
     SendRequest(project, HTTP_POST, operation, body, parameterList, httpHeader, httpResponse);
@@ -1714,7 +1714,7 @@ UpdateSqlInstanceResponse LOGClient::UpdateSqlInstance(const std::string &projec
     map<string, string> parameterList;
     SetCommonParameter(parameterList);
     map<string, string> httpHeader;
-    httpHeader[X_LOG_BODYRAWSIZE] = apsara::ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
     httpHeader[CONTENT_TYPE] = TYPE_LOG_JSON;
     HttpMessage httpResponse;
     SendRequest(project, HTTP_POST, operation, body, parameterList, httpHeader, httpResponse);
@@ -1730,7 +1730,7 @@ ListSqlInstanceResponse LOGClient::ListSqlInstance(const std::string &project)
     map<string, string> parameterList;
     SetCommonParameter(parameterList);
     map<string, string> httpHeader;
-    httpHeader[X_LOG_BODYRAWSIZE] = apsara::ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
     httpHeader[CONTENT_TYPE] = "";
     HttpMessage httpResponse;
     SendRequest(project, HTTP_POST, operation, body, parameterList, httpHeader, httpResponse);
