@@ -26,7 +26,7 @@
 using namespace std;
 using namespace sls_logs;
 using namespace rapidjson;
-extern const char* const aliyun_log_sdk_v6::LOG_SDK_IDENTIFICATION = "sls-cpp-sdk v0.6";
+extern const char* const aliyun_log_sdk_v6::LOG_SDK_IDENTIFICATION = "sls-cpp-sdk v0.6.1";
 static string GetHostIpByHostName()
 {
     char hostname[255];
