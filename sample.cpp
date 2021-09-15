@@ -12,6 +12,7 @@
 #include "common.h"
 #include <string>
 #include <iostream>
+#include <unistd.h>
 using namespace aliyun_log_sdk_v6;
 using namespace std;
 int main(int argc,char ** argv)
