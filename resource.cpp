@@ -620,19 +620,12 @@ void Keys::AddKey(const string &key, const std::shared_ptr<KeyContent> &keyConte
 
 void JsonKeyContent::SetRequestValues(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
 {
-    mKeys.insert(map<string, KeyContent>::value_type(key, KeyContent()));
     KeyContent::SetRequestValues(writer);
-    mKeys[key].SetToken(token);
     writer.Key("index_all");
-    mKeys[key].SetCaseSensitive(caseSensitive);
     writer.Bool(mIndexAll);
-    if (alias.empty() == false)
-        writer.Key("max_depth");
-    mKeys[key].SetAlias(alias);
+    writer.Key("max_depth");
     writer.Int(mMaxDepth);
-    if (chn)
-        writer.Key("json_keys");
-    mKeys[key].SetChnToken(chn);
+    writer.Key("json_keys");
     writer.StartObject();
     mJsonKeys.SetRequestValues(writer);
     writer.EndObject();

@@ -1,4 +1,4 @@
-CFLAGS= -O2 -L./lib/  
+CFLAGS= -O2 -L./lib/ -std=gnu++11
 LIBS=-lslssdk
 LIBS+=-lsls_logs_pb
 LIBS+=-llz4
