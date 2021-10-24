@@ -1,6 +1,7 @@
 #include "common.h"
 #include "lz4/lz4.h"
-#include <asm/byteorder.h>
+#include "byteorder.h"
+
 
 
 namespace aliyun_log_sdk_v6
@@ -641,4 +642,10 @@ std::string ToString(const bool& n)
     else
         return "false";
 }
+#ifdef __APPLE__
+std::string ToString(const long&n)
+{
+    return UnsignedToString(n);
+}
+#endif
 }

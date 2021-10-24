@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.6)
 project(sls-sdk-cpp)
-
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(Protobuf REQUIRED)
 
 include_directories(${PROTOBUF_INCLUDE_DIRS})
@@ -14,6 +15,7 @@ add_library(slssdk
     adapter.cpp
     common.cpp
     ${PROTO_SRCS})
+target_include_directories(slssdk PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 
 install(TARGETS slssdk
     LIBRARY DESTINATION lib
