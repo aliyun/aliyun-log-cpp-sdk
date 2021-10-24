@@ -94,5 +94,8 @@ std::string ToString(const size_t&n);
 std::string ToString(const time_t&n);
 std::string ToString(const int64_t& n);
 std::string ToString(const bool& n);
+#ifdef __APPLE__
+std::string ToString(const long& n);
+#endif
 }
 #endif

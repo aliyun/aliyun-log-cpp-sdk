@@ -283,7 +283,7 @@ public:
 class Keys : public Resource
 {
 private:
-    std::map<std::string, std::shared_ptr<KeyContent>> mKeys;
+    std::map<std::string, std::shared_ptr<KeyContent> > mKeys;
 public:
     virtual void SetRequestValues(rapidjson::Writer<rapidjson::StringBuffer>& writer) const;
     virtual void SetFullValues(rapidjson::Writer<rapidjson::StringBuffer>& writer) const;
@@ -293,7 +293,7 @@ public:
     ~Keys() {}
 
     void AddKey(const std::string &key, const std::shared_ptr<KeyContent> &keyContent);
-    std::map<std::string, std::shared_ptr<KeyContent>> GetKeys() const { return mKeys; }
+    std::map<std::string, std::shared_ptr<KeyContent> > GetKeys() const { return mKeys; }
 };
 class JsonKeyContent : public KeyContent
 {

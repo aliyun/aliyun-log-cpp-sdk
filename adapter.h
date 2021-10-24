@@ -144,14 +144,17 @@ private:
                     return false;
             } else {
                 // FIXME: gethostbyname will block
+
+                struct  hostent *hp=NULL;
+#ifdef __APPLE__
+                hp = gethostbyname(host);
+#else
                 char    buffer[1024];
                 struct  hostent h;
-                struct  hostent *hp=NULL;
                 int     rc;
-
                 if (gethostbyname_r(host, &h, buffer, 1024, &hp, &rc) || hp == NULL)
                     return false;
-
+#endif
                 addr.sin_addr.s_addr = *((in_addr_t *) (hp->h_addr));
             }
         } else {
