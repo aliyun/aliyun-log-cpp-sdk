@@ -15,15 +15,21 @@
 namespace aliyun_log_sdk_v6
 {
 typedef enum{BASE64_SHA1_MD5} LOGSigType;
-const uint32_t CONNECT_TIMEOUT = 5; //second
+const uint32_t CONNECT_TIMEOUT = 5;  // second
 
 class RequestClosure;
 
 class CodecTool
 {
 public:
+    static std::string ToHex(const std::string& raw);
     static std::string CalcMD5(const std::string& message);
-    static std::string CalcSHA1(const std::string& message, const std::string& key);
+    // hmac-sha1
+    static std::string CalcHMACSHA1(const std::string& message, const std::string& key);
+    // hmac-sha256
+    static std::string CalcHMACSHA256(const std::string& message, const std::string& key);
+    // sha256
+    static std::string CalcSHA256(const std::string& message);
     static std::string Base64Enconde(const std::string& message);
 
     static std::string GetDateString(const std::string& dateFormat);
@@ -32,8 +38,13 @@ public:
     
     static bool StartWith(const std::string& input, const std::string& pattern);
     static std::string UrlEncode(const std::string& url);
+    static std::string LowerCase(const std::string& input);
+    static std::string Trim(const std::string& s);
+    // replace all oldStr with newStr, return result string
+    static std::string ReplaceAll(const std::string& s,
+                                  const std::string& oldStr,
+                                  const std::string& newStr);
 };
-
 
 class LOGAdapter
 {

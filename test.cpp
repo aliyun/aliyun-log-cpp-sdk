@@ -8,6 +8,7 @@ using namespace aliyun_log_sdk_v6;
 
 namespace aliyun_log_sdk_v6 {
 namespace unittest {
+bool testOk = true;
 class UnitTest {
    public:
     int total = 0, failed = 0;
@@ -34,6 +35,7 @@ void AssertTrue(UnitTest* that,
     that->total++;
     if (!val) {
         that->failed++;
+        testOk = false;
         that->errors += location + message + "\n";
     }
 }
@@ -206,5 +208,8 @@ int main() {
     SignTest test2;
     test2.RunTest();
     cout << test2.Report() << endl;
+
+    if(!testOk)
+        return -1;
     return 0;
 }

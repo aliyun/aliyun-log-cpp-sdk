@@ -8,7 +8,9 @@
 namespace aliyun_log_sdk_v6
 {
 extern const char * const DATE_FORMAT_RFC822;// "%a, %d %b %Y %H:%M:%S GMT" ///<RFC822 date formate, GMT time.
-//typedef enum {REQUEST_GET= 1, REQUEST_POST } LOG_Request_Mode;///<Http Request Method.
+extern const char* const DATE_FORMAT_ISO8601;// "%Y%m%dT%H%M%SZ"
+// typedef enum {REQUEST_GET= 1, REQUEST_POST } LOG_Request_Mode;///<Http
+// Request Method.
 typedef enum {CURSOR_MODE_BEGIN = 1, CURSOR_MODE_END} LOG_Cursor_Mode;
 const uint32_t LOG_REQUEST_TIMEOUT = 20; //second
 extern const char* const LOG_HEADSIGNATURE_PREFIX;///< "";
@@ -68,6 +70,7 @@ extern const char* const HOST;//= "Host";
 extern const char* const DATE;//= "Date";
 extern const char* const USER_AGENT;//= "User-Agent";
 extern const char* const LOG_HEADER_PREFIX;//= "x-log-";
+extern const char* const ACS_HEADER_PREFIX;//= "x-acs-";
 extern const char* const LOG_OLD_HEADER_PREFIX;//= "x-sls-";
 extern const char* const X_LOG_KEYPROVIDER;// = "x-log-keyprovider";
 extern const char* const X_LOG_APIVERSION;// = "x-log-apiversion";
@@ -77,6 +80,8 @@ extern const char* const X_LOG_SIGNATUREMETHOD;// = "x-log-signaturemethod";
 extern const char* const X_ACS_SECURITY_TOKEN;// = "x-acs-security-token";
 extern const char* const X_LOG_CURSOR;// = "cursor";
 extern const char* const X_LOG_REQUEST_ID;// = "x-log-requestid";
+extern const char* const X_LOG_CONTENT_SHA256;// = "x-log-content-sha256";
+extern const char* const X_LOG_DATE;// = "x-log-date";
 
 extern const char* const X_LOG_PROGRESS;// = "x-log-progress";
 extern const char* const X_LOG_COUNT;// = "x-log-count";
@@ -110,6 +115,8 @@ extern const char* const LOGE_SHARD_NOT_EXIST;
 extern const char* const LOGE_INVALID_CURSOR;
 extern const char* const LOGE_SHARD_WRITE_QUOTA_EXCEED;
 extern const char* const LOGE_SHARD_READ_QUOTA_EXCEED;
+extern const char* const LOGE_URL_ENCODE_ERROR;//= "UrlEncodeError";
+extern const char* const LOGE_SIGNV4_REGION_REQUIRED;  //   = "SignV4RegionRequired";
 extern const char* const LOG_LZ4;//= "lz4";
 
 extern const char* const LOG_ERROR_CODE;//= "errorCode";

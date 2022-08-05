@@ -15,6 +15,11 @@
 #define SHA1_INPUT_BYTES    (SHA1_INPUT_WORDS*sizeof(uint32_t))
 #define SHA1_DIGEST_BYTES   (SHA1_DIGEST_WORDS*sizeof(uint32_t))
 
+#define SHA256_INPUT_WORDS    16          
+#define SHA256_DIGEST_WORDS   8
+#define SHA256_INPUT_BYTES    (SHA256_INPUT_WORDS*sizeof(uint32_t))
+#define SHA256_DIGEST_BYTES   (SHA256_DIGEST_WORDS*sizeof(uint32_t))
+
 #define BIT_COUNT_WORDS     2
 #define BIT_COUNT_BYTES     (BIT_COUNT_WORDS*sizeof(uint32_t))
 
@@ -56,6 +61,7 @@ private:
     void transform();
 };
 
+// Hmac-sha1
 class HMAC
 {
 public:
@@ -94,5 +100,86 @@ std::string ToString(const size_t&n);
 std::string ToString(const time_t&n);
 std::string ToString(const int64_t& n);
 std::string ToString(const bool& n);
-}
+
+// Thanks to Stephan Brumme.
+// //////////////////////////////////////////////////////////
+// sha256.h
+// Copyright (c) 2014,2015 Stephan Brumme. All rights reserved.
+// see http://create.stephan-brumme.com/disclaimer.html
+//
+class SHA256 //: public Hash
+{
+public:
+  /// split into 64 byte blocks (=> 512 bits), hash is 32 bytes long
+  enum { BlockSize = 512 / 8, HashBytes = 32 };
+
+  /// same as reset()
+  SHA256();
+
+  /// compute SHA256 of a memory block
+  std::string operator()(const void* data, size_t numBytes);
+  /// compute SHA256 of a string, excluding final zero
+  std::string operator()(const std::string& text);
+
+  /// add arbitrary number of bytes
+  void add(const void* data, size_t numBytes);
+
+  /// return latest hash as 64 hex characters
+  std::string getHexHash();
+  /// return latest hash as bytes
+  void        getHash(unsigned char buffer[HashBytes]);
+
+  std::string getHash();
+  /// restart
+  void reset();
+
+private:
+
+  /// process 64 bytes
+  void processBlock(const void* data);
+  /// process everything left in the internal buffer
+  void processBuffer();
+
+  /// size of processed data in bytes
+  uint64_t m_numBytes;
+  /// valid bytes in m_buffer
+  size_t   m_bufferSize;
+  /// bytes not processed yet
+  uint8_t  m_buffer[BlockSize];
+
+  enum { HashValues = HashBytes / 4 };
+  /// hash, stored as integers
+  uint32_t m_hash[HashValues];
+};
+
+//hmac-sha256
+class HMACSHA256
+{
+public:
+    HMACSHA256(const uint8_t *key, size_t lkey);
+    HMACSHA256(const HMACSHA256& hm) : in(hm.in), out(hm.out) {}
+    
+    void init(const uint8_t *key, size_t lkey);
+  
+    void add(const uint8_t *data, size_t len) 
+    {
+        in.add(data, len);
+    }
+
+    std::string getHash()
+    {
+        std::string inHash = in.getHash();
+        // add to out
+        out.add(inHash.data(), SHA256_DIGEST_BYTES);
+        return out.getHash();
+    }
+
+private:
+    SHA256 in, out;
+
+};
+
+} // end of namespace aliyun_log_sdk_v6
+
+
 #endif
