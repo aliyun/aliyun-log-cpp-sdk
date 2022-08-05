@@ -1,13 +1,16 @@
 #include "adapter.h"
 #include <sys/time.h>
 #include <iostream>
-
+#include <cctype>
+#include <algorithm>
+#include "signer.h"
 using namespace std;
 
 namespace aliyun_log_sdk_v6
 {
 extern const char * const DATE_FORMAT_RFC822  =  "%a, %d %b %Y %H:%M:%S GMT"; ///<RFC822 date formate, GMT time.
-static const uint32_t MD5_BYTES=16;
+extern const char* const DATE_FORMAT_ISO8601 = "%Y%m%dT%H%M%SZ"; /// ISO8601
+static const uint32_t MD5_BYTES = 16;
 extern const char* const LOG_HEADSIGNATURE_PREFIX = "LOG ";
 
 extern const char* const LOGE_REQUEST_ERROR            = "RequestError";
@@ -48,6 +51,8 @@ extern const char* const LOGE_INVALID_REVERSE          = "InvalidReverse";
 extern const char* const LOGE_LOGSTORE_WITHOUT_SHARD   = "LogStoreWithoutShard";
 extern const char* const LOGE_SHARD_WRITE_QUOTA_EXCEED = "ShardWriteQuotaExceed";
 extern const char* const LOGE_SHARD_READ_QUOTA_EXCEED  = "ShardReadQuotaExceed";
+extern const char* const LOGE_URL_ENCODE_ERROR         = "UrlEncodeError";
+extern const char* const LOGE_SIGNV4_REGION_REQUIRED   = "SignV4RegionRequired";
 
 extern const char* const LOGSTORES = "/logstores";
 extern const char* const SHARDS = "/shards";
@@ -76,6 +81,7 @@ extern const char* const X_LOG_SIGNATUREMETHOD = "x-log-signaturemethod";
 extern const char* const X_ACS_SECURITY_TOKEN = "x-acs-security-token";
 extern const char* const X_LOG_CURSOR = "x-log-cursor";
 extern const char* const X_LOG_REQUEST_ID = "x-log-requestid";
+extern const char* const X_LOG_CONTENT_SHA256 = "x-log-content-sha256";
 
 extern const char* const X_LOG_PROGRESS = "x-log-progress";
 extern const char* const X_LOG_COUNT = "x-log-count";
@@ -83,6 +89,7 @@ extern const char *const X_LOG_PROCESSED_ROWS = "x-log-processoed-rows";
 extern const char *const X_LOG_ELASPED_MILLISECOND = "x-log-elapsed-millisecond";
 extern const char *const X_LOG_CPU_SEC = "x-log-cpu-sec";
 extern const char *const X_LOG_CPU_CORES = "x-log-cpu-cores";
+extern const char* const X_LOG_DATE = "x-log-date";
 
 extern const char* const HTTP_ACCEPT = "accept";
 extern const char* const DEFLATE = "deflate";
@@ -127,17 +134,74 @@ static std::string HexToString(const uint8_t md5[16])
     return ss;
 }
 
+std::string CodecTool::ToHex(const string& raw)
+{
+    string res;
+    res.reserve(raw.size() * 2);
+    static const char* table = "0123456789abcdef";
+    for(int i = 0; i < raw.size(); i++)
+    {
+        unsigned char j = static_cast<unsigned char>(raw[i]);
+        res += table[j >> 4];
+        res += table[j & 0x0F];
+    }
+    return res;
+}
+
+string CodecTool::Trim(const string& s) {
+    string res = s;
+    // trim left
+    res.erase(res.begin(),
+              std::find_if(res.begin(), res.end(),
+                           std::not1(std::ptr_fun<int, int>(std::isspace))));
+    // trim right
+    res.erase(std::find_if(res.rbegin(), res.rend(),
+                           std::not1(std::ptr_fun<int, int>(std::isspace)))
+                  .base(),
+              res.end());
+    return res;
+}
+
+string CodecTool::ReplaceAll(const string& s,
+                             const string& oldStr,
+                             const string& newStr) {
+    string res = s;
+    if (oldStr == newStr)
+        return res;
+    size_t pos = 0;
+    while ((pos = res.find(oldStr, pos) != string::npos)) {
+        res.replace(pos, oldStr.size(), newStr);
+        pos += newStr.size();
+    }
+    return res;
+}
+
 std::string CodecTool::CalcMD5(const std::string& message)
 {
     uint8_t md5[MD5_BYTES];
     DoMd5((const uint8_t*)message.data(), message.length(), md5);
     return HexToString(md5);
 }
-std::string CodecTool::CalcSHA1(const std::string& message, const std::string& key)
+// hmac-sha1
+std::string CodecTool::CalcHMACSHA1(const std::string& message, const std::string& key)
 {
     HMAC hmac(reinterpret_cast<const uint8_t*>(key.data()), key.size()); 
     hmac.add(reinterpret_cast<const uint8_t*>(message.data()), message.size());
     return string(reinterpret_cast<const char*>(hmac.result()),SHA1_DIGEST_BYTES);
+}
+// sha256
+std::string CodecTool::CalcSHA256(const std::string& message)
+{
+    SHA256 sha256;
+    sha256.add(message.data(), message.size());
+    return sha256.getHash();
+}
+// hmac-sha256
+std::string CodecTool::CalcHMACSHA256(const std::string& message, const std::string& key)
+{
+    HMACSHA256 hmac(reinterpret_cast<const uint8_t*>(key.data()), key.size()); 
+    hmac.add(reinterpret_cast<const uint8_t*>(message.data()), message.size());
+    return hmac.getHash();
 }
 std::string CodecTool::Base64Enconde(const std::string& message)
 {
@@ -197,9 +261,22 @@ string CodecTool::UrlEncode(const string& url)
 {   
     char *szEncoded;
     szEncoded = curl_escape(url.c_str(), url.size());
+    // pass nullptr to string => undefined behivor
+    // and since c++23 => forbidden behivor
+    if(szEncoded == nullptr) 
+       throw LOGException(LOGE_URL_ENCODE_ERROR, "Url encode failed, url:\"" + url + "\"");
     string tmpStr = szEncoded;
     curl_free(szEncoded);
     return tmpStr;
+}
+
+std::string CodecTool::LowerCase(const std::string& s)
+{
+    string res = s;
+    std::transform(s.begin(), s.end(), res.begin(), 
+        [](unsigned char c){ return std::tolower(c); }
+    );
+    return res;
 }
 
 void LOGAdapter::GetQueryString(const map<string, string>& parameterList, string &queryString)
@@ -410,12 +487,13 @@ string LOGAdapter::GetUrlSignature(const string& httpMethod, const string& opera
             osstream.append("=");
             osstream.append(iter->second);
         }
-        signature=CodecTool::Base64Enconde(CodecTool::CalcSHA1(osstream, signKey));
+        signature=CodecTool::Base64Enconde(CodecTool::CalcHMACSHA1(osstream, signKey));
         break;
     default:
         throw LOGException(LOGE_NOT_IMPLEMENTED, "Signature Version does not support.");
     }
     return signature;
 }
+
 }
 
