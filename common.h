@@ -15,11 +15,6 @@
 #define SHA1_INPUT_BYTES    (SHA1_INPUT_WORDS*sizeof(uint32_t))
 #define SHA1_DIGEST_BYTES   (SHA1_DIGEST_WORDS*sizeof(uint32_t))
 
-#define SHA256_INPUT_WORDS    16          
-#define SHA256_DIGEST_WORDS   8
-#define SHA256_INPUT_BYTES    (SHA256_INPUT_WORDS*sizeof(uint32_t))
-#define SHA256_DIGEST_BYTES   (SHA256_DIGEST_WORDS*sizeof(uint32_t))
-
 #define BIT_COUNT_WORDS     2
 #define BIT_COUNT_BYTES     (BIT_COUNT_WORDS*sizeof(uint32_t))
 
@@ -65,7 +60,7 @@ class SHA1
     uint8_t M[SHA1_INPUT_BYTES];
 
     static const uint32_t IV[SHA1_DIGEST_WORDS];
-    
+
    private: 
     void transform();
     uint8_t* result();
@@ -75,6 +70,73 @@ class SHA1
         memcpy(H, IV, sizeof(H));
     }
 };
+
+
+template <typename H>
+class HMAC
+{
+   public:
+    HMAC(const uint8_t* key, size_t lkey)
+    {
+        init(key, lkey);
+    }
+    HMAC(const H& hm) : in(hm.in), out(hm.out) {}
+
+    void init(const uint8_t* key, size_t lkey)
+    {
+        auto blockSize = H::HMAC_BLOCK_SIZE_BYTES;
+        uint8_t ipad[blockSize];
+        uint8_t opad[blockSize];
+        memset(ipad, 0x36, sizeof(ipad));
+        memset(opad, 0x5c, sizeof(opad));
+
+        // get (K' ^ ipad) and (K' ^ opad)
+        if (lkey <= blockSize)
+        {
+            axor(ipad, key, lkey);
+            axor(opad, key, lkey);
+        }
+        else
+        {
+            H tmp;
+            tmp.add(key, lkey);
+            std::string tmpHash = tmp.getHash();
+            const uint8_t* key2 =
+                reinterpret_cast<const uint8_t*>(tmpHash.data());
+            axor(ipad, key2, blockSize);
+            axor(opad, key2, blockSize);
+        }
+
+        in.add((uint8_t*)ipad, sizeof(ipad));   // (K' ^ ipad)
+        out.add((uint8_t*)opad, sizeof(opad));  // (K' ^ opad)
+        // hmac.add => in.add => (K' ^ ipad) | M
+        // hmac.results =>   H((K' ^ opad) | H((K' ^ ipad) | M))
+    }
+
+    void add(const uint8_t* data, size_t len)
+    {
+        in.add(data, len);
+    }
+
+    std::string getHash()
+    {
+        std::string inHash = in.getHash();
+        // add to out
+        out.add(reinterpret_cast<const uint8_t*>(inHash.data()),
+                H::DIGEST_BYTES);
+        return out.getHash();
+    }
+
+   private:
+    H in, out;
+    template <typename T>
+    static inline void axor(T* p1, const T* p2, size_t len)
+    {
+        for (; len != 0; --len) *p1++ ^= *p2++;
+    }
+};
+
+using HMACSHA1 = HMAC<SHA1>;
 
 class CompressAlgorithm
 {
@@ -151,72 +213,8 @@ private:
   uint32_t m_hash[HashValues];
 };
 
-template <typename H>
-class HMAC
-{
-   public:
-    HMAC(const uint8_t* key, size_t lkey)
-    {
-        init(key, lkey);
-    }
-    HMAC(const H& hm) : in(hm.in), out(hm.out) {}
-
-    void init(const uint8_t* key, size_t lkey)
-    {
-        auto blockSize = H::HMAC_BLOCK_SIZE_BYTES;
-        uint8_t ipad[blockSize];
-        uint8_t opad[blockSize];
-        memset(ipad, 0x36, sizeof(ipad));
-        memset(opad, 0x5c, sizeof(opad));
-
-        // get (K' ^ ipad) and (K' ^ opad)
-        if (lkey <= blockSize)
-        {
-            axor(ipad, key, lkey);
-            axor(opad, key, lkey);
-        }
-        else
-        {
-            H tmp;
-            tmp.add(key, lkey);
-            std::string tmpHash = tmp.getHash();
-            const uint8_t* key2 =
-                reinterpret_cast<const uint8_t*>(tmpHash.data());
-            axor(ipad, key2, blockSize);
-            axor(opad, key2, blockSize);
-        }
-
-        in.add((uint8_t*)ipad, sizeof(ipad));   // (K' ^ ipad)
-        out.add((uint8_t*)opad, sizeof(opad));  // (K' ^ opad)
-        // hmac.add => in.add => (K' ^ ipad) | M
-        // hmac.results =>   H((K' ^ opad) | H((K' ^ ipad) | M))
-    }
-
-    void add(const uint8_t* data, size_t len)
-    {
-        in.add(data, len);
-    }
-
-    std::string getHash()
-    {
-        std::string inHash = in.getHash();
-        // add to out
-        out.add(reinterpret_cast<const uint8_t*>(inHash.data()),
-                H::DIGEST_BYTES);
-        return out.getHash();
-    }
-
-   private:
-    H in, out;
-    template <typename T>
-    static inline void axor(T* p1, const T* p2, size_t len)
-    {
-        for (; len != 0; --len) *p1++ ^= *p2++;
-    }
-};
-
 using HMACSHA256 = HMAC<SHA256>;
-using HMACSHA1 = HMAC<SHA1>;
+
 
 } // end of namespace aliyun_log_sdk_v6
 
