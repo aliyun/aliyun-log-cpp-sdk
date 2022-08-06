@@ -67,10 +67,9 @@ void SignerV1::Sign(const string& httpMethod, const string& resourceUri,
         dateTime = httpHeaders[DATE];
     httpHeaders[CONTENT_LENGTH] = contentLength;
 
-    auto iter = httpHeaders.find(CONTENT_TYPE);
-    if (iter != httpHeaders.end())
+    if (httpHeaders.find(CONTENT_TYPE) != httpHeaders.end())
     {
-        contentType = iter->second;
+        contentType = httpHeaders[CONTENT_TYPE];
     }
     map<string, string> endingMap;
     osstream.append(httpMethod).append("\n");
@@ -78,20 +77,19 @@ void SignerV1::Sign(const string& httpMethod, const string& resourceUri,
     osstream.append(contentType).append("\n");
     osstream.append(dateTime).append("\n");
     // header
-    for (auto iter : httpHeaders)
+    for (auto it : httpHeaders)
     {
-        if (CodecTool::StartWith(iter.first, LOG_OLD_HEADER_PREFIX))
-        {
-            string key = iter.first;
-            endingMap.insert(std::make_pair(
-                key.replace(0, std::strlen(LOG_OLD_HEADER_PREFIX),
-                            LOG_HEADER_PREFIX),
-                iter.second));
+        string key = it.first, value = it.second;
+        if (CodecTool::StartWith(key, LOG_OLD_HEADER_PREFIX))
+        {       
+            string newKey = key.replace(0, std::strlen(LOG_OLD_HEADER_PREFIX),
+                                        LOG_HEADER_PREFIX);
+            endingMap[newKey] = value;
         }
-        else if (CodecTool::StartWith(iter.first, LOG_HEADER_PREFIX) ||
-                 CodecTool::StartWith(iter.first, ACS_HEADER_PREFIX))
+        else if (CodecTool::StartWith(key, LOG_HEADER_PREFIX) ||
+                 CodecTool::StartWith(key, ACS_HEADER_PREFIX))
         {
-            endingMap.insert(std::make_pair(iter.first, iter.second));
+            endingMap[key] = value;
         }
     }
     for (auto it : endingMap)
@@ -102,13 +100,13 @@ void SignerV1::Sign(const string& httpMethod, const string& resourceUri,
     // uri and url params
     osstream.append(resourceUri);
     if (urlParams.size() > 0) osstream.append("?");
-    for (auto iter = urlParams.begin(); iter != urlParams.end(); ++iter)
+    for (auto it = urlParams.begin(); it != urlParams.end(); ++it)
     {
-        if (iter != urlParams.begin())
+        if (it != urlParams.begin())
         {
             osstream.append("&");
         }
-        osstream.append(iter->first).append("=").append(iter->second);
+        osstream.append(it->first).append("=").append(it->second);
     }
     // calc signature and write into header
     signature = CodecTool::Base64Enconde(

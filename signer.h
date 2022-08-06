@@ -25,6 +25,7 @@ struct Credential
 class Signer
 {
    public:
+   // for sign version v4, param 'region' is required to be non-empty
     static void Sign(const std::string& httpMethod,
                      const std::string& resourceUri,
                      std::map<std::string, std::string>& httpHeaders,

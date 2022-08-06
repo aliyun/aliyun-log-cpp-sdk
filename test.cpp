@@ -187,7 +187,7 @@ class SignTest : public UnitTest
             auto headerCopy2 = httpHeaders;
             headerCopy2[DATE] = date;
             auth::Signer::Sign(httpMethod, resourceUri, headerCopy2, urlParams,
-                               payload, accessKeySecret, accessKeyId);
+                               payload,  accessKeyId , accessKeySecret, V1);
             string authorization2 = headerCopy2[AUTHORIZATION];
             cout << "signer v1:" << authorization << endl;
 
@@ -197,7 +197,7 @@ class SignTest : public UnitTest
         {
             auto headerCopy = httpHeaders;
             auth::Signer::Sign(httpMethod, resourceUri, headerCopy, urlParams,
-                               payload, accessKeySecret, accessKeyId, V4,
+                               payload, accessKeyId, accessKeySecret,  V4,
                                "cn-hangzhou");
             string authorization = headerCopy[AUTHORIZATION];
             cout << "signer v4:" << authorization << endl;
