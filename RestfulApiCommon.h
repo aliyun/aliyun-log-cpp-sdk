@@ -124,6 +124,14 @@ extern const char* const LOG_ERROR_MESSAGE;//= "errorMessage";
 
 extern const char* const LOG_SHARD_STATUS_READWRITE;// "readwrite";
 extern const char* const LOG_SHARD_STATUS_READONLY ;// "readonly";
+
+// sign version
+typedef enum
+{
+    V1,
+    V4
+} LOGSignVersion;
+
 /**
  *This class enumerates LOG ErrorCode with HTTP status.
  */

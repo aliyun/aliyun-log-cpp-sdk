@@ -492,6 +492,22 @@ public:
     void SetSlsHost(const std::string& slsHost);
     std::string GetSlsHost();
     std::string GetHostFieldSuffix();
+    void SetRegion(const std::string& region)
+    {
+        mRegion = region;
+    }
+    std::string GetRegion() const
+    {
+        return mRegion;
+    }
+    void SetSignVersion(LOGSignVersion version)
+    {
+        mSignVersion = version;
+    }
+    LOGSignVersion GetSignVersion() const
+    {
+        return mSignVersion;
+    }
 
     const std::string& GetSecurityToken()
     {
@@ -512,6 +528,8 @@ protected:
     std::string mAccessKey;
     std::string mSecurityToken;
     std::string mSource;
+    std::string mRegion;
+    LOGSignVersion mSignVersion = V1; // default sign version is v1
     bool mCompressFlag;
     int32_t mTimeout;
     std::string mUserAgent;

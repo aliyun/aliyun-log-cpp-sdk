@@ -1,26 +1,34 @@
 #include <cassert>
 #include <iostream>
+
 #include "adapter.h"
 #include "signer.h"
 
 using namespace std;
 using namespace aliyun_log_sdk_v6;
 
-namespace aliyun_log_sdk_v6 {
-namespace unittest {
+namespace aliyun_log_sdk_v6
+{
+namespace unittest
+{
 bool testOk = true;
-class UnitTest {
+class UnitTest
+{
    public:
     int total = 0, failed = 0;
     string errors;
 
-    string Report() {
+    string Report()
+    {
         string res = "======= " + TestName() + " =======\n" + errors;
         res += "total: " + to_string(total) + ", failed: " + to_string(failed) +
                "\n";
-        if (failed == 0) {
+        if (failed == 0)
+        {
             res += "All test passed";
-        } else {
+        }
+        else
+        {
             res += "Test failed";
         }
         return res;
@@ -28,12 +36,12 @@ class UnitTest {
     virtual std::string TestName() { return "Base"; };
 };
 
-void AssertTrue(UnitTest* that,
-                const string& location,
-                bool val,
-                const string& message = "expect to be true") {
+void AssertTrue(UnitTest* that, const string& location, bool val,
+                const string& message = "expect to be true")
+{
     that->total++;
-    if (!val) {
+    if (!val)
+    {
         that->failed++;
         testOk = false;
         that->errors += location + message + "\n";
@@ -49,18 +57,16 @@ void AssertTrue(UnitTest* that,
                string("") + __FILE__ + " " + __func__ + ":" + \
                    std::to_string(__LINE__),                  \
                x == y, "left = " + std::to_string(x) + ", y = ")
-#define REGISTER_TEST(name)  \
-    std::string TestName() { \
-        return #name;        \
-    }
+#define REGISTER_TEST(name) \
+    std::string TestName() { return #name; }
 
-string toHex(const string& m) {
-    return CodecTool::ToHex(m);
-}
+string toHex(const string& m) { return CodecTool::ToHex(m); }
 
-class Sha256Test : public UnitTest {
+class Sha256Test : public UnitTest
+{
    public:
-    void RunTest() {
+    void RunTest()
+    {
         // sha256
         const auto v = CodecTool::CalcSHA256("world");
         ASSERT_TRUE(
@@ -142,10 +148,12 @@ class Sha256Test : public UnitTest {
     }
     REGISTER_TEST(Sha256Test);
 };
-class SignTest : public UnitTest {
+class SignTest : public UnitTest
+{
    public:
     REGISTER_TEST(SignTest);
-    void RunTest() {
+    void RunTest()
+    {
         const string httpMethod = HTTP_GET;
         const string resourceUri = "/logstores";
         const string payload = "";
@@ -189,18 +197,18 @@ class SignTest : public UnitTest {
         {
             auto headerCopy = httpHeaders;
             auth::Signer::Sign(httpMethod, resourceUri, headerCopy, urlParams,
-                               payload, accessKeySecret, accessKeyId,
-                               auth::SIGN_V4, "cn-hangzhou");
+                               payload, accessKeySecret, accessKeyId, V4,
+                               "cn-hangzhou");
             string authorization = headerCopy[AUTHORIZATION];
             cout << "signer v4:" << authorization << endl;
-              
         }
     }
 };
 }  // namespace unittest
 }  // namespace aliyun_log_sdk_v6
 using namespace aliyun_log_sdk_v6::unittest;
-int main() {
+int main()
+{
     Sha256Test test;
     test.RunTest();
     cout << test.Report() << endl;
@@ -209,7 +217,6 @@ int main() {
     test2.RunTest();
     cout << test2.Report() << endl;
 
-    if(!testOk)
-        return -1;
+    if (!testOk) return -1;
     return 0;
 }

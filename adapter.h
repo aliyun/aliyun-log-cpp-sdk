@@ -22,28 +22,31 @@ class RequestClosure;
 class CodecTool
 {
 public:
-    static std::string ToHex(const std::string& raw);
-    static std::string CalcMD5(const std::string& message);
-    // hmac-sha1
-    static std::string CalcHMACSHA1(const std::string& message, const std::string& key);
-    // hmac-sha256
-    static std::string CalcHMACSHA256(const std::string& message, const std::string& key);
-    // sha256
-    static std::string CalcSHA256(const std::string& message);
-    static std::string Base64Enconde(const std::string& message);
+ static std::string ToHex(const std::string& raw);
+ static std::string CalcMD5(const std::string& message);
+ // hmac-sha1
+ static std::string CalcHMACSHA1(const std::string& message,
+                                 const std::string& key);
+ // hmac-sha256
+ static std::string CalcHMACSHA256(const std::string& message,
+                                   const std::string& key);
+ // sha256
+ static std::string CalcSHA256(const std::string& message);
+ static std::string Base64Enconde(const std::string& message);
 
-    static std::string GetDateString(const std::string& dateFormat);
-    static std::string GetDateString();
-    static time_t DecodeDateString(const std::string dateString, const std::string& dateFormat=DATE_FORMAT_RFC822);
-    
-    static bool StartWith(const std::string& input, const std::string& pattern);
-    static std::string UrlEncode(const std::string& url);
-    static std::string LowerCase(const std::string& input);
-    static std::string Trim(const std::string& s);
-    // replace all oldStr with newStr, return result string
-    static std::string ReplaceAll(const std::string& s,
-                                  const std::string& oldStr,
-                                  const std::string& newStr);
+ static std::string GetDateString(const std::string& dateFormat);
+ static std::string GetDateString();
+ static time_t DecodeDateString(
+     const std::string dateString,
+     const std::string& dateFormat = DATE_FORMAT_RFC822);
+
+ static bool StartWith(const std::string& input, const std::string& pattern);
+ static std::string UrlEncode(const std::string& url);
+ static std::string LowerCase(const std::string& input);
+ static std::string Trim(const std::string& s);
+ // replace all oldStr with newStr, return result string
+ static std::string ReplaceAll(const std::string& s, const std::string& oldStr,
+                               const std::string& newStr);
 };
 
 class LOGAdapter

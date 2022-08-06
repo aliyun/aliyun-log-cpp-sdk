@@ -139,7 +139,7 @@ std::string CodecTool::ToHex(const string& raw)
     string res;
     res.reserve(raw.size() * 2);
     static const char* table = "0123456789abcdef";
-    for(int i = 0; i < raw.size(); i++)
+    for (int i = 0; i < raw.size(); i++)
     {
         unsigned char j = static_cast<unsigned char>(raw[i]);
         res += table[j >> 4];
@@ -148,7 +148,8 @@ std::string CodecTool::ToHex(const string& raw)
     return res;
 }
 
-string CodecTool::Trim(const string& s) {
+string CodecTool::Trim(const string& s)
+{
     string res = s;
     // trim left
     res.erase(res.begin(),
@@ -162,14 +163,14 @@ string CodecTool::Trim(const string& s) {
     return res;
 }
 
-string CodecTool::ReplaceAll(const string& s,
-                             const string& oldStr,
-                             const string& newStr) {
+string CodecTool::ReplaceAll(const string& s, const string& oldStr,
+                             const string& newStr)
+{
     string res = s;
-    if (oldStr == newStr)
-        return res;
+    if (oldStr == newStr) return res;
     size_t pos = 0;
-    while ((pos = res.find(oldStr, pos) != string::npos)) {
+    while ((pos = res.find(oldStr, pos) != string::npos))
+    {
         res.replace(pos, oldStr.size(), newStr);
         pos += newStr.size();
     }
@@ -183,11 +184,13 @@ std::string CodecTool::CalcMD5(const std::string& message)
     return HexToString(md5);
 }
 // hmac-sha1
-std::string CodecTool::CalcHMACSHA1(const std::string& message, const std::string& key)
+std::string CodecTool::CalcHMACSHA1(const std::string& message,
+                                    const std::string& key)
 {
-    HMAC hmac(reinterpret_cast<const uint8_t*>(key.data()), key.size()); 
+    HMAC hmac(reinterpret_cast<const uint8_t*>(key.data()), key.size());
     hmac.add(reinterpret_cast<const uint8_t*>(message.data()), message.size());
-    return string(reinterpret_cast<const char*>(hmac.result()),SHA1_DIGEST_BYTES);
+    return string(reinterpret_cast<const char*>(hmac.result()),
+                  SHA1_DIGEST_BYTES);
 }
 // sha256
 std::string CodecTool::CalcSHA256(const std::string& message)
@@ -197,12 +200,14 @@ std::string CodecTool::CalcSHA256(const std::string& message)
     return sha256.getHash();
 }
 // hmac-sha256
-std::string CodecTool::CalcHMACSHA256(const std::string& message, const std::string& key)
+std::string CodecTool::CalcHMACSHA256(const std::string& message,
+                                      const std::string& key)
 {
-    HMACSHA256 hmac(reinterpret_cast<const uint8_t*>(key.data()), key.size()); 
+    HMACSHA256 hmac(reinterpret_cast<const uint8_t*>(key.data()), key.size());
     hmac.add(reinterpret_cast<const uint8_t*>(message.data()), message.size());
     return hmac.getHash();
 }
+
 std::string CodecTool::Base64Enconde(const std::string& message)
 {
     std::istringstream iss(message);
@@ -273,9 +278,8 @@ string CodecTool::UrlEncode(const string& url)
 std::string CodecTool::LowerCase(const std::string& s)
 {
     string res = s;
-    std::transform(s.begin(), s.end(), res.begin(), 
-        [](unsigned char c){ return std::tolower(c); }
-    );
+    std::transform(s.begin(), s.end(), res.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
     return res;
 }
 

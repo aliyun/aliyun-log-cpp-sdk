@@ -1,6 +1,7 @@
 #include "client.h"
 #include "adapter.h"
 #include "common.h"
+#include "signer.h"
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
@@ -460,8 +461,8 @@ void LOGClient::SetCommonHeader(map<string, string>& httpHeader, int32_t content
     httpHeader[USER_AGENT] = mUserAgent;
     httpHeader[X_LOG_APIVERSION] = LOG_API_VERSION;
     httpHeader[X_LOG_SIGNATUREMETHOD] = HMAC_SHA1;
-    httpHeader[DATE] = CodecTool::GetDateString();
-    httpHeader[CONTENT_LENGTH] = ToString(contentLength);
+    // httpHeader[DATE] = CodecTool::GetDateString(); // do in signer
+    // httpHeader[CONTENT_LENGTH] = ToString(contentLength); // do in signer
     if(!mSecurityToken.empty())
     {
         httpHeader[X_ACS_SECURITY_TOKEN] = mSecurityToken;
@@ -488,9 +489,12 @@ void LOGClient::SendRequest(const string& project, const string& httpMethod, con
 {
     string host = GetHost(project);
     SetCommonHeader(header, body.length(), project);
-    string signature = LOGAdapter::GetUrlSignature(httpMethod, url, header, parameterList, body, GetAccessKey());
-    header[AUTHORIZATION] = LOG_HEADSIGNATURE_PREFIX + GetAccessKeyId() + ':' + signature;
-    
+    // string signature = LOGAdapter::GetUrlSignature(httpMethod, url, header, parameterList, body, GetAccessKey());
+    // header[AUTHORIZATION] = LOG_HEADSIGNATURE_PREFIX + GetAccessKeyId() + ':' + signature;
+    auth::Signer::Sign(httpMethod, url, header, parameterList, body,
+                       GetAccessKeyId(), GetAccessKey(), GetSignVersion(),
+                       GetRegion());
+
     string queryString;
     LOGAdapter::GetQueryString(parameterList, queryString);
    
