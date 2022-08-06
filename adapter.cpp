@@ -187,10 +187,9 @@ std::string CodecTool::CalcMD5(const std::string& message)
 std::string CodecTool::CalcHMACSHA1(const std::string& message,
                                     const std::string& key)
 {
-    HMAC hmac(reinterpret_cast<const uint8_t*>(key.data()), key.size());
+    HMACSHA1 hmac(reinterpret_cast<const uint8_t*>(key.data()), key.size());
     hmac.add(reinterpret_cast<const uint8_t*>(message.data()), message.size());
-    return string(reinterpret_cast<const char*>(hmac.result()),
-                  SHA1_DIGEST_BYTES);
+    return hmac.getHash();
 }
 // sha256
 std::string CodecTool::CalcSHA256(const std::string& message)

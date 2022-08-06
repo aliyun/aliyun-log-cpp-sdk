@@ -454,77 +454,6 @@ uint8_t *SHA1::result()
     return (uint8_t*)H;
 }
 
-template<typename T>
-inline void axor(T *p1, const T *p2, size_t len) 
-{
-    for (; len != 0; --len) *p1++ ^= *p2++;
-}
-
-HMAC::HMAC(const uint8_t *key, size_t lkey)
-{
-    init(key, lkey);
-}
-
-void HMAC::init(const uint8_t *key, size_t lkey)
-{
-    in.init();
-    out.init();
-    
-    uint8_t ipad[SHA1_INPUT_BYTES];
-    uint8_t opad[SHA1_INPUT_BYTES];
-    memset(ipad, 0x36, sizeof(ipad)); 
-    memset(opad, 0x5c, sizeof(opad));
-    
-    if (lkey <= SHA1_INPUT_BYTES) {
-        axor(ipad, key, lkey); 
-        axor(opad, key, lkey);
-    }
-    else {
-		SHA1 tmp; 
-        tmp.add(key, lkey); 
-		const uint8_t *key2 = tmp.result();
-		axor(ipad, key2, SHA1_DIGEST_BYTES); 
-		axor(opad, key2, SHA1_DIGEST_BYTES);
-    }
-    
-    in.add((uint8_t*)ipad, sizeof(ipad)); 
-    out.add((uint8_t*)opad, sizeof(opad));
-}
-
-HMACSHA256::HMACSHA256(const uint8_t *key, size_t lkey)
-{
-    init(key, lkey);
-}
-
-// HMAC(K, M) = H( (K' ^ opad) | H((K' ^ ipad) | M) )
-void HMACSHA256::init(const uint8_t *key, size_t lkey)
-{
-    
-    uint8_t ipad[SHA256_INPUT_BYTES];
-    uint8_t opad[SHA256_INPUT_BYTES];
-    memset(ipad, 0x36, sizeof(ipad)); 
-    memset(opad, 0x5c, sizeof(opad));
-    
-    // get (K' ^ ipad) and (K' ^ opad)
-    if (lkey <= SHA256_INPUT_BYTES) {
-        axor(ipad, key, lkey); 
-        axor(opad, key, lkey);
-    }
-    else {
-		SHA256 tmp; 
-    tmp.add(key, lkey); 
-    std::string tmpHash = tmp.getHash();
-		const uint8_t *key2 = reinterpret_cast<const uint8_t*>(tmpHash.data());
-		axor(ipad, key2, SHA256_DIGEST_BYTES); 
-		axor(opad, key2, SHA256_DIGEST_BYTES);
-    }
-    
-    in.add((uint8_t*)ipad, sizeof(ipad));  // (K' ^ ipad)
-    out.add((uint8_t*)opad, sizeof(opad)); // (K' ^ opad)
-    // hmac.add => in.add => (K' ^ ipad) | M
-    // hmac.results =>   H((K' ^ opad) | H((K' ^ ipad) | M))
-}
-
 void Base64Encoding(std::istream& is, std::ostream& os, char makeupChar, const char *alphabet)
 {
     int out[4];
@@ -683,12 +612,6 @@ std::string ToString(const bool& n)
 //
 
 //#define SHA2_224_SEED_VECTOR
-
-/// same as reset()
-SHA256::SHA256()
-{
-  reset();
-}
 
 
 /// restart

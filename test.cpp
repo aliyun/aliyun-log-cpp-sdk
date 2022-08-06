@@ -91,13 +91,12 @@ class Sha256Test : public UnitTest
         // hmac-sha1 add twice
         string message = "hello", message2 = "world";
         {
-            HMAC hmac(reinterpret_cast<const uint8_t*>(key.data()), key.size());
+            HMACSHA1 hmac(reinterpret_cast<const uint8_t*>(key.data()), key.size());
             hmac.add(reinterpret_cast<const uint8_t*>(message.data()),
                      message.size());
             hmac.add(reinterpret_cast<const uint8_t*>(message2.data()),
                      message2.size());
-            string res = string(reinterpret_cast<const char*>(hmac.result()),
-                                SHA1_DIGEST_BYTES);
+            string res = hmac.getHash();
             string res2 = CodecTool::CalcHMACSHA1(message + message2, key);
             ASSERT_TRUE(res == res2);
         }
