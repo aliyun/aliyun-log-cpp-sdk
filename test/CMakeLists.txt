@@ -20,8 +20,6 @@ ExternalProject_Add(
 ExternalProject_Get_Property(doctest source_dir)
 set(DOCTEST_INCLUDE_DIR ${source_dir}/doctest CACHE INTERNAL "Path to include folder for doctest")
 
-add_definitions(-D__ALIYUN_LOG_UNITTEST__)
-
 file(GLOB UNITTEST_SRCS *_unittest.cpp)
 message("unittest files: ")
 foreach(unittest ${UNITTEST_SRCS})

@@ -6,6 +6,36 @@
 #include <vector>
 
 #include "RestfulApiCommon.h"
+#include "adapter.h"
+
+// SLS_DEFINE_DEBUGABLE_STRING(name, func) defines a string.
+// Its value can be set by using SetDebug##Name##(value) in unittest files.
+#ifdef __ALIYUN_LOG_UNITTEST__
+#define SLS_DEFINE_DEBUGABLE_STRING(name, func)         \
+   private:                                             \
+    std::string mDebug##name;                           \
+                                                        \
+   public:                                              \
+    std::string GetDebug##name()                        \
+    {                                                   \
+        if (!mDebug##name.empty()) return mDebug##name; \
+        return func();                                  \
+    }                                                   \
+    void SetDebug##name(const std::string& val)         \
+    {                                                   \
+        mDebug##name = val;                             \
+    }
+#else
+#define SLS_DEFINE_DEBUGABLE_STRING(name, func) \
+   public:                                      \
+    std::string GetDebug##name()                \
+    {                                           \
+        return func();                          \
+    }
+#endif
+
+// If not in unittest or value not set, returns func(__args__)
+#define SLS_DEBUGABLE_STRING_VALUE(name, ...) GetDebug##name(##__VA_ARGS__)
 
 namespace aliyun_log_sdk_v6
 {
@@ -25,7 +55,7 @@ struct Credential
 class Signer
 {
    public:
-   // for sign version v4, param 'region' is required to be non-empty
+    // for sign version v4, param 'region' is required to be non-empty
     static void Sign(const std::string& httpMethod,
                      const std::string& resourceUri,
                      std::map<std::string, std::string>& httpHeaders,
@@ -64,6 +94,8 @@ class SignerV1 : public Signer
 
    private:
     std::string GetDateTimeString();
+
+    SLS_DEFINE_DEBUGABLE_STRING(DateTime, GetDateTimeString);
 };
 
 // sign version v4
@@ -126,6 +158,9 @@ class SignerV4 : public Signer
 
    private:
     const std::string mRegion;
+
+    SLS_DEFINE_DEBUGABLE_STRING(DateTime, GetDateTimeString);
+    SLS_DEFINE_DEBUGABLE_STRING(Date, GetDateString);
 };
 
 }  // end of namespace auth

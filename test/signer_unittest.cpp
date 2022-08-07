@@ -12,9 +12,10 @@
 
 using namespace std;
 using namespace aliyun_log_sdk_v6;
+using namespace aliyun_log_sdk_v6::auth;
 
 #ifndef COUT_EX
-#define COUT_EX std::cout<< (__FILE__) << ":" << (__LINE__) << " "
+#define COUT_EX std::cout << (__FILE__) << ":" << (__LINE__) << " "
 #endif
 
 static string toHex(const string& m)
@@ -126,7 +127,6 @@ TEST_CASE("Hasher")
     }
 }
 
-
 TEST_CASE("Signer")
 {
     const string httpMethod = HTTP_GET;
@@ -176,6 +176,16 @@ TEST_CASE("Signer")
                            "cn-hangzhou");
         string authorization = headerCopy[AUTHORIZATION];
         COUT_EX << "signer v4:" << authorization << endl;
+    }
+    SUBCASE("macro SLS_DEFINE_DEBUGABLE_STRING")
+    {
+        auto headerCopy = httpHeaders;
+        auth::SignerV4 v4({accessKeyId, accessKeySecret}, "cn-hangzhou");
+        v4.SetDebugDateTime("hello");
+        v4.SetDebugDate("hello-date");
+        v4.Sign(httpMethod, resourceUri, headerCopy, urlParams, payload);
+        auto date = headerCopy[X_LOG_DATE];
+        REQUIRE_EQ(date, "hello");
     }
 }
 #endif

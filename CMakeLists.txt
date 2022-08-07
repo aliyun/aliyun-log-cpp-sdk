@@ -44,6 +44,7 @@ endif()
 # unittest
 if (ENABLE_UNITTEST)
     enable_testing()
+    add_definitions(-D__ALIYUN_LOG_UNITTEST__)
     add_subdirectory(test) 
 endif()
 

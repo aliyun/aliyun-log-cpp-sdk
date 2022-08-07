@@ -6,7 +6,6 @@
 #include <locale>
 
 #include "RestfulApiCommon.h"
-#include "adapter.h"
 
 using namespace std;
 using namespace aliyun_log_sdk_v6;
@@ -59,7 +58,7 @@ void SignerV1::Sign(const string& httpMethod, const string& resourceUri,
         contentMd5 = CodecTool::CalcMD5(content);
         httpHeaders[CONTENT_MD5] = contentMd5;  // add md5 to header
     }
-    string dateTime = GetDateTimeString();
+    string dateTime = SLS_DEBUGABLE_STRING_VALUE(DateTime);
     // set http header
     if (httpHeaders.find(DATE) == httpHeaders.end())
         httpHeaders[DATE] = dateTime;
@@ -81,7 +80,7 @@ void SignerV1::Sign(const string& httpMethod, const string& resourceUri,
     {
         string key = it.first, value = it.second;
         if (CodecTool::StartWith(key, LOG_OLD_HEADER_PREFIX))
-        {       
+        {
             string newKey = key.replace(0, std::strlen(LOG_OLD_HEADER_PREFIX),
                                         LOG_HEADER_PREFIX);
             endingMap[newKey] = value;
@@ -125,7 +124,8 @@ void SignerV4::Sign(const string& httpMethod, const string& resourceUri,
                     map<string, string>& httpHeaders,
                     const map<string, string>& urlParams, const string& payload)
 {
-    string date = GetDateString(), dateTime = GetDateTimeString();
+    string date = SLS_DEBUGABLE_STRING_VALUE(Date),
+           dateTime = SLS_DEBUGABLE_STRING_VALUE(DateTime);
     string contentLength = std::to_string(payload.size());
 
     // hexed sha256 of payload(http body)
