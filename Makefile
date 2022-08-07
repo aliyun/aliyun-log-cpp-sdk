@@ -7,9 +7,6 @@ LIBS+=-lcurl
 LIBS+=-lprotobuf
 LIBS+= -lpthread
 
-test: test.o libslssdk.a libsls_logs_pb.a
-	g++ -o  test test.o  $(CFLAGS) $(LIBDIR) $(LIBS)
-
 main:  sample.o libslssdk.a libsls_logs_pb.a
 	g++ -o sample sample.o  $(CFLAGS) $(LIBDIR) $(LIBS)
 
@@ -41,9 +38,7 @@ signer.o: signer.cpp
 sample.o:sample.cpp proto.cc
 	g++ -c  sample.cpp $(CFLAGS)
 
-test.o: test.cpp proto.cc
-	g++ -c  test.cpp $(CFLAGS)
 
 
 clean:
-	rm -f adapter.o common.o resource.o client.o sample.o sample signer.o test.o test sls_logs.pb.o lib/libslssdk.a sls_logs.pb.h sls_logs.pb.cc lib/libsls_logs_pb.a
+	rm -f adapter.o common.o resource.o client.o sample.o sample signer.o sls_logs.pb.o lib/libslssdk.a sls_logs.pb.h sls_logs.pb.cc lib/libsls_logs_pb.a

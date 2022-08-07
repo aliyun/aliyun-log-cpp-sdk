@@ -93,3 +93,18 @@ make install
 ```
  g++ -o your_program your_program.o -O2 -lslssdk
 ```
+
+# test
+
+The unittest uses [doctest](https://github.com/doctest/doctest) from github.
+
+## using CMake
+
+```
+mkdir -p build && cd build
+cmake .. -DENABLE_UNITTEST=ON
+make && make test
+
+```
+
+The log files for the unittest are in `build/Testing`.

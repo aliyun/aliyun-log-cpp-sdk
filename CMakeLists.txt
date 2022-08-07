@@ -1,5 +1,8 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 2.8.12)
 project(sls-sdk-cpp)
+
+option(ENABLE_BUILD_SAMPLE "enable build sample" OFF)
+option(ENABLE_UNITTEST "enable unittest" OFF)
 
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
@@ -11,9 +14,12 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 find_package(Protobuf REQUIRED)
 find_package(Threads REQUIRED)
 find_package(CURL REQUIRED)
-include_directories(${PROTOBUF_INCLUDE_DIRS} ${CURL_INCLUDE_DIRS} ${PROTOBUF_INCLUDE_DIRS})
+include_directories(${CMAKE_BINARY_DIR}
+    ${PROJECT_SOURCE_DIR}
+    ${PROTOBUF_INCLUDE_DIRS}
+    ${CURL_INCLUDE_DIRS}
+    ${PROTOBUF_INCLUDE_DIRS})
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS sls_logs.proto)
-include_directories(${CMAKE_BINARY_DIR})
 
 # build lib slssdk
 add_library(slssdk client.cpp
@@ -26,17 +32,20 @@ target_link_libraries(slssdk
     Threads::Threads
     ${PROTOBUF_LIBRARIES}
     ${CURL_LIBRARIES}
-    ${CMAKE_SOURCE_DIR}/lib/liblz4.a)
+    ${PROJECT_SOURCE_DIR}/lib/liblz4.a)
+
 
 # build bin sample
-add_executable(sample sample.cpp)
-target_link_libraries(sample slssdk)
+if (ENABLE_BUILD_SAMPLE)
+    add_executable(sample sample.cpp)
+    target_link_libraries(sample slssdk)
+endif()
 
-# build bin unittest
-add_executable(unittest test.cpp)
-target_link_libraries(unittest slssdk)
-enable_testing()
-add_test(NAME unittest COMMAND unittest)
+# unittest
+if (ENABLE_UNITTEST)
+    enable_testing()
+    add_subdirectory(test) 
+endif()
 
 # install lib slssdk
 install(TARGETS slssdk
