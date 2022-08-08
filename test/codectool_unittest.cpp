@@ -26,15 +26,20 @@ TEST_CASE("codec tool")
 {
     SUBCASE("ToHex")
     {
-        auto hex2uint = [](char h)
-        {
-            if (h >= '0' && h <= '9') return h - '0';
-            return h - 'a' + 10;
-        };
-        auto hexpair2uint = [&hex2uint](char h1, char h2)
-        { return hex2uint(h1) * 16 + hex2uint(h2); };
-        vector<uint32_t> testcase1 = {};
-        CHECK_EQ(CodecTool::ToHex(""), "");
+        auto vec2str = [](const vector<uint8_t>& i)
+        { return string(i.begin(), i.end()); };
+        CHECK_EQ(CodecTool::ToHex(vec2str(vector<uint8_t>{})), "");
+        CHECK_EQ(CodecTool::ToHex(vec2str(vector<uint8_t>{15})), "0f");
+        CHECK_EQ(CodecTool::ToHex(vec2str(vector<uint8_t>{255})), "ff");
+        CHECK_EQ(CodecTool::ToHex(vec2str(vector<uint8_t>{0})), "00");
+        CHECK_EQ(CodecTool::ToHex(vec2str(vector<uint8_t>{254, 16, 8, 161})),
+                 "fe1008a1");
+        CHECK_EQ(CodecTool::ToHex(vec2str(vector<uint8_t>{9, 91})), "095b");
+        CHECK_EQ(CodecTool::ToHex(vec2str(vector<uint8_t>{9, 180, 200, 17})),
+                 "09b4c811");
+
+        CHECK_NE(CodecTool::ToHex(vec2str(vector<uint8_t>{9, 180, 200, 17})),
+                 "");
     }
     SUBCASE("LowerCase")
     {
@@ -79,16 +84,16 @@ TEST_CASE("Hasher")
         SUBCASE("sha256 add once")
         {
             const auto v = CodecTool::CalcSHA256("world");
-            REQUIRE_EQ(toHex(v),
+            CHECK_EQ(toHex(v),
                        "486ea46224d1bb4fb680f34f7c9ad96a8f24ec88be73ea8e5a6c652"
                        "60e9cb8a7");
-            REQUIRE_EQ(toHex(CodecTool::CalcSHA256("hello, world")),
+            CHECK_EQ(toHex(CodecTool::CalcSHA256("hello, world")),
                        "09ca7e4eaa6e8ae9c7d261167129184883644d07dfba7cbfbc4c8a2"
                        "e08360d5b");
-            REQUIRE_EQ(toHex(CodecTool::CalcSHA256("")),
+            CHECK_EQ(toHex(CodecTool::CalcSHA256("")),
                        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991"
                        "b7852b855");
-            REQUIRE_EQ(toHex(CodecTool::CalcSHA256(
+            CHECK_EQ(toHex(CodecTool::CalcSHA256(
                            "asdas,,zckoaq|+asdasmnzxk adaslv121+-@#1")),
                        "9391127e0d567ef778527c57a9f8f867c7c2c964c8706f8deb92ede"
                        "dec54aba7");
@@ -105,8 +110,8 @@ TEST_CASE("Hasher")
             string m = message + message2;
             sha256_2.add(reinterpret_cast<const uint8_t*>(m.data()), m.size());
             string res2 = sha256_2.getHexHash();
-            REQUIRE_EQ(res, res2);
-            REQUIRE_EQ(m, "helloworld");
+            CHECK_EQ(res, res2);
+            CHECK_EQ(m, "helloworld");
             string res3 = toHex(CodecTool::CalcSHA256(message + message2));
             string res4 = toHex(CodecTool::CalcSHA256(m));
         }
@@ -120,7 +125,7 @@ TEST_CASE("Hasher")
             SUBCASE("hmac-sha1 add once")
             {
                 COUT_EX << toHex(CodecTool::CalcHMACSHA1("world", key)) << endl;
-                REQUIRE_EQ(toHex(CodecTool::CalcHMACSHA1("world", key)),
+                CHECK_EQ(toHex(CodecTool::CalcHMACSHA1("world", key)),
                            "95c426aac427a0bd09cbd96757ec6260429fa7c0");
             }
             SUBCASE("hmac-sha1 add twice")
@@ -134,24 +139,24 @@ TEST_CASE("Hasher")
                 vector<uint8_t> hash = hmac.getHash();
                 string res(hash.begin(), hash.end());
                 string res2 = CodecTool::CalcHMACSHA1(message + message2, key);
-                REQUIRE_EQ(res, res2);
+                CHECK_EQ(res, res2);
             }
 
             SUBCASE("hmac-sha256")
             {
                 SUBCASE("hmac-sha256 add once")
                 {
-                    REQUIRE_EQ(toHex(CodecTool::CalcHMACSHA256("world", key)),
+                    CHECK_EQ(toHex(CodecTool::CalcHMACSHA256("world", key)),
                                "be705bbb4879669206f3ff4863b30aa90ef36b4f1b0adf9"
                                "c8706d6a91f05218d");
-                    REQUIRE_EQ(
+                    CHECK_EQ(
                         toHex(CodecTool::CalcHMACSHA256("hello, world", key)),
                         "68492565a04121909ff0757b000b032435e0ca5bc43b8307f8a83d"
                         "3bd0fdb387");
-                    REQUIRE_EQ(toHex(CodecTool::CalcHMACSHA256("aa", key)),
+                    CHECK_EQ(toHex(CodecTool::CalcHMACSHA256("aa", key)),
                                "5ddc9210595d8bf35d4c488c21ced173beacc2ac774666a"
                                "323f2c86414c611b1");
-                    REQUIRE_EQ(
+                    CHECK_EQ(
                         toHex(CodecTool::CalcHMACSHA256(
                             "asdas,,zckoaq|+asdasmnzxk adaslv121+-@#1", key)),
                         "799d699e383a04a4e1f36fa3c0ea68bbe748de8f3ba57d9d77a8d9"
@@ -170,7 +175,7 @@ TEST_CASE("Hasher")
                     string res(hash.begin(), hash.end());
                     string res2 =
                         CodecTool::CalcHMACSHA256(message + message2, key);
-                    REQUIRE_EQ(res, res2);
+                    CHECK_EQ(res, res2);
                 }
             }
         }

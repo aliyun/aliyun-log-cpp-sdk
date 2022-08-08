@@ -4,6 +4,7 @@
 #include "signer.h"
 
 #include <iostream>
+#include <regex>
 
 #include "RestfulApiCommon.h"
 #include "adapter.h"
@@ -22,7 +23,6 @@ static string toHex(const string& m)
 {
     return CodecTool::ToHex(m);
 }
-
 
 TEST_CASE("Signer")
 {
@@ -63,7 +63,7 @@ TEST_CASE("Signer")
         string authorization2 = headerCopy2[AUTHORIZATION];
         COUT_EX << "signer v1:" << authorization << endl;
 
-        REQUIRE_EQ(authorization, authorization2);
+        CHECK_EQ(authorization, authorization2);
     }
     SUBCASE("macro SLS_DEFINE_DEBUGABLE_STRING")
     {
@@ -73,7 +73,7 @@ TEST_CASE("Signer")
         v4.SetDebugDate("hello-date");
         v4.Sign(httpMethod, resourceUri, headerCopy, urlParams, payload);
         auto date = headerCopy[X_LOG_DATE];
-        REQUIRE_EQ(date, "hello");
+        CHECK_EQ(date, "hello");
     }
 
     SUBCASE("v4")
@@ -94,8 +94,13 @@ TEST_CASE("Signer")
             string authorization = emptyHeader[AUTHORIZATION];
             COUT_EX << "signer v4:" << authorization << endl;
             string expected =
-                "SLS4-HMAC-SHA256 Credential=acsddda21dsd/20220808/cn-shanghai/sls/aliyun_v4_request,SignedHeaders=x-log-content-sha256;x-log-date,Signature=8a10a5e723cb2e75964816de660b2c16a58af8bc0261f7f0722d832468c76ce8";
-            REQUIRE_EQ(authorization, expected);
+                "SLS4-HMAC-SHA256 "
+                "Credential=acsddda21dsd/20220808/cn-shanghai/sls/"
+                "aliyun_v4_request,SignedHeaders=x-log-content-sha256;x-log-"
+                "date,Signature="
+                "8a10a5e723cb2e75964816de660b2c16a58af8bc0261f7f0722d832468c76c"
+                "e8";
+            CHECK_EQ(authorization, expected);
         }
 
         SUBCASE("empty payload")
@@ -107,8 +112,13 @@ TEST_CASE("Signer")
             string authorization = headerCopy[AUTHORIZATION];
             COUT_EX << "signer v4:" << authorization << endl;
             string expected =
-                "SLS4-HMAC-SHA256 Credential=acsddda21dsd/20220808/cn-hangzhou/sls/aliyun_v4_request,SignedHeaders=x-acs-ppp;x-log-content-sha256;x-log-date;x-log-test,Signature=17277e433834a91c193f2dd6f237fc9b33c653f13f4c87e9e73a5f7fcabc6631";
-            REQUIRE_EQ(authorization, expected);
+                "SLS4-HMAC-SHA256 "
+                "Credential=acsddda21dsd/20220808/cn-hangzhou/sls/"
+                "aliyun_v4_request,SignedHeaders=x-acs-ppp;x-log-content-"
+                "sha256;x-log-date;x-log-test,Signature="
+                "17277e433834a91c193f2dd6f237fc9b33c653f13f4c87e9e73a5f7fcabc66"
+                "31";
+            CHECK_EQ(authorization, expected);
         }
 
         SUBCASE("method get")
@@ -119,7 +129,12 @@ TEST_CASE("Signer")
             string authorization = headerCopy[AUTHORIZATION];
             COUT_EX << "signer v4:" << authorization << endl;
             string expected =
-                "SLS4-HMAC-SHA256 Credential=acsddda21dsd/20220808/cn-hangzhou/sls/aliyun_v4_request,SignedHeaders=x-acs-ppp;x-log-content-sha256;x-log-date;x-log-test,Signature=ef98c6596c88b80d12366ec42f4fab6d82037d961d84f2e8c52ab10908406470";
+                "SLS4-HMAC-SHA256 "
+                "Credential=acsddda21dsd/20220808/cn-hangzhou/sls/"
+                "aliyun_v4_request,SignedHeaders=x-acs-ppp;x-log-content-"
+                "sha256;x-log-date;x-log-test,Signature="
+                "ef98c6596c88b80d12366ec42f4fab6d82037d961d84f2e8c52ab109084064"
+                "70";
             REQUIRE_EQ(authorization, expected);
         }
 
@@ -130,8 +145,13 @@ TEST_CASE("Signer")
             string authorization = headerCopy[AUTHORIZATION];
             COUT_EX << "signer v4:" << authorization << endl;
             string expected =
-                "SLS4-HMAC-SHA256 Credential=acsddda21dsd/20220808/cn-hangzhou/sls/aliyun_v4_request,SignedHeaders=x-acs-ppp;x-log-content-sha256;x-log-date;x-log-test,Signature=348d28cb4aa259a5302105b52d7d0ecde7ab415b3c0eb3a452f2a2fd38468991";
-            REQUIRE_EQ(authorization, expected);
+                "SLS4-HMAC-SHA256 "
+                "Credential=acsddda21dsd/20220808/cn-hangzhou/sls/"
+                "aliyun_v4_request,SignedHeaders=x-acs-ppp;x-log-content-"
+                "sha256;x-log-date;x-log-test,Signature="
+                "348d28cb4aa259a5302105b52d7d0ecde7ab415b3c0eb3a452f2a2fd384689"
+                "91";
+            CHECK_EQ(authorization, expected);
         }
 
         SUBCASE("uri and url params with / + * ~")
@@ -145,8 +165,55 @@ TEST_CASE("Signer")
             string authorization = headerCopy[AUTHORIZATION];
             COUT_EX << "signer v4:" << authorization << endl;
             string expected =
-                "SLS4-HMAC-SHA256 Credential=acsddda21dsd/20220808/cn-hangzhou/sls/aliyun_v4_request,SignedHeaders=x-acs-ppp;x-log-content-sha256;x-log-date;x-log-test,Signature=d79c9358725537e03e3e0ff6d375853f36e2a7f853a2960053a498eefbbb42f5";
-            REQUIRE_EQ(authorization, expected);
+                "SLS4-HMAC-SHA256 "
+                "Credential=acsddda21dsd/20220808/cn-hangzhou/sls/"
+                "aliyun_v4_request,SignedHeaders=x-acs-ppp;x-log-content-"
+                "sha256;x-log-date;x-log-test,Signature="
+                "d79c9358725537e03e3e0ff6d375853f36e2a7f853a2960053a498eefbbb42"
+                "f5";
+            CHECK_EQ(authorization, expected);
+        }
+
+        SUBCASE("ISO8601 time format")
+        {
+            SUBCASE("dateTime")
+            {
+                auto dateTime =
+                    CodecTool::GetDateString(DATETIME_FORMAT_ISO8601);
+                std::regex re(
+                    "^\\s*((((1[6-9]|[2-9]\\d)\\d{2})(0[13578]|1[02])(0[1-9]|["
+                    "12]"
+                    "\\d|3[01]))|(((1[6-9]|[2-9]\\d)\\d{2})(0[469]|11)(0?[1-9]|"
+                    "[12]"
+                    "\\d|30))|(((1[6-9]|[2-9]\\d)\\d{2})02(0[1-9]|1\\d|2[0-8]))"
+                    "|((("
+                    "1[6-9]|[2-9]\\d)[13579][26])0229)|(((1[6-9]|[2-9]\\d)["
+                    "2468]["
+                    "048])0229)|(((1[6-9]|[2-9]\\d)0[48])0229)|(([13579]6)"
+                    "000229)|("
+                    "([2468][048])000229)|(([3579]2)000229))(T(2[0-3]|[0-1][0-"
+                    "9])(["
+                    "0-5][0-9])([0-5][0-9])Z$)");
+                CHECK(std::regex_match(dateTime, re));
+            }
+            SUBCASE("date")
+            {
+                auto date = CodecTool::GetDateString(DATE_FORMAT_ISO8601);
+
+                std::regex re2(
+                    "^\\s*((((1[6-9]|[2-9]\\d)\\d{2})(0[13578]|1[02])(0[1-9]|["
+                    "12]"
+                    "\\d|3[01]))|(((1[6-9]|[2-9]\\d)\\d{2})(0[469]|11)(0?[1-9]|"
+                    "[12]"
+                    "\\d|30))|(((1[6-9]|[2-9]\\d)\\d{2})02(0[1-9]|1\\d|2[0-8]))"
+                    "|((("
+                    "1[6-9]|[2-9]\\d)[13579][26])0229)|(((1[6-9]|[2-9]\\d)["
+                    "2468]["
+                    "048])0229)|(((1[6-9]|[2-9]\\d)0[48])0229)|(([13579]6)"
+                    "000229)|("
+                    "([2468][048])000229)|(([3579]2)000229))$");
+                CHECK(std::regex_match(date, re2));
+            }
         }
     }
 }
