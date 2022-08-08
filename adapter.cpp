@@ -169,8 +169,9 @@ string CodecTool::ReplaceAll(const string& s, const string& oldStr,
     string res = s;
     if (oldStr == newStr) return res;
     size_t pos = 0;
-    while ((pos = res.find(oldStr, pos) != string::npos))
+    while (res.find(oldStr, pos) != string::npos)
     {
+        pos = res.find(oldStr, pos);
         res.replace(pos, oldStr.size(), newStr);
         pos += newStr.size();
     }

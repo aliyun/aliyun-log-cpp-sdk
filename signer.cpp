@@ -280,8 +280,8 @@ string SignerV4::UrlEncode(const string& val, bool ignoreSlash)
         }
         return res;
     };
-    if (!ignoreSlash) return replaceEachInMap(val, CHARACTER_WITHOUT_SLASH);
-    return replaceEachInMap(val, CHARACTER_WITH_SLASH);
+    if (!ignoreSlash) return replaceEachInMap(encoded, CHARACTER_WITHOUT_SLASH);
+    return replaceEachInMap(encoded, CHARACTER_WITH_SLASH);
 }
 
 string SignerV4::BuildScope(const string& date) const

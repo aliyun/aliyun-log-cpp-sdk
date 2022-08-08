@@ -129,9 +129,9 @@ TEST_CASE("Hasher")
 
 TEST_CASE("Signer")
 {
-    const string httpMethod = HTTP_GET;
+    const string httpMethod = HTTP_POST;
     const string resourceUri = "/logstores";
-    const string payload = "";
+    const string payload = "adasd= -asd zcas";
     const string accessKeyId = "acsddda21dsd";
     const string accessKeySecret = "zxasdasdasw2";
     const string region = "";
@@ -168,15 +168,6 @@ TEST_CASE("Signer")
 
         REQUIRE_EQ(authorization, authorization2);
     }
-    SUBCASE("v4")
-    {
-        auto headerCopy = httpHeaders;
-        auth::Signer::Sign(httpMethod, resourceUri, headerCopy, urlParams,
-                           payload, accessKeyId, accessKeySecret, V4,
-                           "cn-hangzhou");
-        string authorization = headerCopy[AUTHORIZATION];
-        COUT_EX << "signer v4:" << authorization << endl;
-    }
     SUBCASE("macro SLS_DEFINE_DEBUGABLE_STRING")
     {
         auto headerCopy = httpHeaders;
@@ -186,6 +177,104 @@ TEST_CASE("Signer")
         v4.Sign(httpMethod, resourceUri, headerCopy, urlParams, payload);
         auto date = headerCopy[X_LOG_DATE];
         REQUIRE_EQ(date, "hello");
+    }
+
+    SUBCASE("v4")
+    {
+        SignerV4 v4({accessKeyId, accessKeySecret}, "cn-hangzhou");
+        string debugDate = "20220808T014928Z";
+        v4.SetDebugDateTime(debugDate);
+        v4.SetDebugDate(debugDate);
+        SUBCASE("empty header and url params and region shanghai")
+        {
+            map<string, string> emptyHeader, emptyUrlParams;
+            SignerV4 v4Shanghai({accessKeyId, accessKeySecret}, "cn-shanghai");
+            v4Shanghai.SetDebugDateTime(debugDate);
+            v4Shanghai.SetDebugDate(debugDate);
+            v4Shanghai.Sign(httpMethod, resourceUri, emptyHeader,
+                            emptyUrlParams, payload);
+            string authorization = emptyHeader[AUTHORIZATION];
+            COUT_EX << "signer v4:" << authorization << endl;
+            string expected =
+                "SLS4-HMAC-SHA256 "
+                "Credential=acsddda21dsd/20220808T014928Z/cn-shanghai/sls/"
+                "aliyun_v4_request,SignedHeaders=x-log-content-sha256;x-log-"
+                "date,Signature="
+                "9074743df84d12aa71714c238bff987cb4d752c857237a47cae1dc55ca751c"
+                "76";
+            REQUIRE_EQ(authorization, expected);
+        }
+
+        SUBCASE("empty payload")
+        {
+            auto headerCopy = httpHeaders;
+            auto emptyPayload = "";
+            v4.Sign(httpMethod, resourceUri, headerCopy, urlParams,
+                    emptyPayload);
+            string authorization = headerCopy[AUTHORIZATION];
+            COUT_EX << "signer v4:" << authorization << endl;
+            string expected =
+                "SLS4-HMAC-SHA256 "
+                "Credential=acsddda21dsd/20220808T014928Z/cn-hangzhou/sls/"
+                "aliyun_v4_request,SignedHeaders=x-acs-ppp;x-log-content-"
+                "sha256;x-log-date;x-log-test,Signature="
+                "12edc42d33de2c9e218592fd3cdf16c1b278a45ee4278badb30d46276f1235"
+                "53";
+            REQUIRE_EQ(authorization, expected);
+        }
+
+        SUBCASE("method get")
+        {
+            auto headerCopy = httpHeaders;
+            auto emptyPayload = "";
+            v4.Sign(HTTP_GET, resourceUri, headerCopy, urlParams, emptyPayload);
+            string authorization = headerCopy[AUTHORIZATION];
+            COUT_EX << "signer v4:" << authorization << endl;
+            string expected =
+                "SLS4-HMAC-SHA256 "
+                "Credential=acsddda21dsd/20220808T014928Z/cn-hangzhou/sls/"
+                "aliyun_v4_request,SignedHeaders=x-acs-ppp;x-log-content-"
+                "sha256;x-log-date;x-log-test,Signature="
+                "74b970832224169945525a1aba87e825dee9bb806d09d27be8037d8c9064ee"
+                "bb";
+            REQUIRE_EQ(authorization, expected);
+        }
+
+        SUBCASE("variable header and url params")
+        {
+            auto headerCopy = httpHeaders;
+            v4.Sign(httpMethod, resourceUri, headerCopy, urlParams, payload);
+            string authorization = headerCopy[AUTHORIZATION];
+            COUT_EX << "signer v4:" << authorization << endl;
+            string expected =
+                "SLS4-HMAC-SHA256 "
+                "Credential=acsddda21dsd/20220808T014928Z/cn-hangzhou/sls/"
+                "aliyun_v4_request,SignedHeaders=x-acs-ppp;x-log-content-"
+                "sha256;x-log-date;x-log-test,Signature="
+                "1d27812dd151fdfab6aaf128281686092abbed5947f3344ac3b9fa9373f9bb"
+                "8d";
+            REQUIRE_EQ(authorization, expected);
+        }
+
+        SUBCASE("uri and url params with / + * ~")
+        {
+            auto headerCopy = httpHeaders;
+            string uri = "/logstores/hello/a+*~bb/cc";
+            auto urlParamsCopy = urlParams;
+            urlParamsCopy["abs-ij*asd/vc"] = "a~js+d ada";
+            urlParamsCopy["a abAas123/vc"] = "a~jdad a2ADFs+d ada";
+            v4.Sign(httpMethod, uri, headerCopy, urlParamsCopy, payload);
+            string authorization = headerCopy[AUTHORIZATION];
+            COUT_EX << "signer v4:" << authorization << endl;
+            string expected =
+                "SLS4-HMAC-SHA256 "
+                "Credential=acsddda21dsd/20220808T014928Z/cn-hangzhou/sls/"
+                "aliyun_v4_request,SignedHeaders=x-acs-ppp;x-log-content-"
+                "sha256;x-log-date;x-log-test,Signature="
+                "0ded3f358f138d42e9eeb7381ed53f2c8c8a7495d0bf18ced57b20ba09ad10"
+                "00";
+            REQUIRE_EQ(authorization, expected);
+        }
     }
 }
 #endif
