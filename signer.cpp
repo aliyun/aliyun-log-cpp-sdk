@@ -29,9 +29,6 @@ void Signer::Sign(const string& httpMethod, const string& resourceUri,
 
         case V4:
         {
-            if (region.empty())
-                throw LOGException(LOGE_SIGNV4_REGION_REQUIRED,
-                                   "Signature Version 4 need param 'region'.");
             SignerV4({accessKeyId, accessKeySecret}, region)
                 .Sign(httpMethod, resourceUri, httpHeaders, urlParams, payload);
             break;
@@ -124,6 +121,10 @@ void SignerV4::Sign(const string& httpMethod, const string& resourceUri,
                     map<string, string>& httpHeaders,
                     const map<string, string>& urlParams, const string& payload)
 {
+    // check region
+    if (mRegion.empty())
+        throw LOGException(LOGE_SIGNV4_REGION_REQUIRED,
+                           "Signature Version 4 need param 'region'.");
     string date = SLS_DEBUGABLE_STRING_VALUE(Date),
            dateTime = SLS_DEBUGABLE_STRING_VALUE(DateTime);
     string contentLength = std::to_string(payload.size());

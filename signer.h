@@ -159,6 +159,10 @@ class SignerV4 : public Signer
    private:
     const std::string mRegion;
 
+#ifdef __ALIYUN_LOG_UNITTEST__
+    friend class SignerV4Unittest;
+#endif
+
     SLS_DEFINE_DEBUGABLE_STRING(DateTime, GetDateTimeString);
     SLS_DEFINE_DEBUGABLE_STRING(Date, GetDateString);
 };

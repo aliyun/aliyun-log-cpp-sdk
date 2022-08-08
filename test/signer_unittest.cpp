@@ -24,6 +24,21 @@ static string toHex(const string& m)
     return CodecTool::ToHex(m);
 }
 
+namespace aliyun_log_sdk_v6
+{
+namespace auth
+{
+class SignerV4Unittest
+{
+   public:
+    static std::string UrlEncode(const std::string& url, bool ignoreSlash)
+    {
+        return SignerV4::UrlEncode(url, ignoreSlash);
+    }
+};
+}  // namespace auth
+}  // namespace aliyun_log_sdk_v6
+
 TEST_CASE("Signer")
 {
     const string httpMethod = HTTP_POST;
@@ -213,6 +228,46 @@ TEST_CASE("Signer")
                     "000229)|("
                     "([2468][048])000229)|(([3579]2)000229))$");
                 CHECK(std::regex_match(date, re2));
+            }
+        }
+
+        SUBCASE("no region should throws an exception")
+        {
+            SignerV4 v4({accessKeyId, accessKeySecret}, "");
+            auto headerCopy = httpHeaders;
+            CHECK_THROWS(v4.Sign(httpMethod, resourceUri, headerCopy, urlParams,
+                                 payload));
+        }
+
+        SUBCASE("url encode")
+        {
+            SUBCASE("ignore slash")
+            {
+                CHECK_EQ(SignerV4Unittest::UrlEncode("", true), "");
+                CHECK_EQ(SignerV4Unittest::UrlEncode("/logstores/hello", true),
+                         "/logstores/hello");
+                CHECK_EQ(SignerV4Unittest::UrlEncode(
+                             "/logstores/hello?-*~/test", true),
+                         "/logstores/hello%3F-%2A~/test");
+                CHECK_EQ(SignerV4Unittest::UrlEncode(
+                             "/loa871_-+dres/hel lo?-*~/test", true),
+                         "/loa871_-%2Bdres/hel%20lo%3F-%2A~/test");
+                CHECK_EQ(SignerV4Unittest::UrlEncode("-+*", true), "-%2B%2A");
+                CHECK_EQ(SignerV4Unittest::UrlEncode("/", true), "/");
+            }
+            SUBCASE("with slash")
+            {
+                CHECK_EQ(SignerV4Unittest::UrlEncode("", false), "");
+                CHECK_EQ(SignerV4Unittest::UrlEncode("/logstores/hello", false),
+                         "%2Flogstores%2Fhello");
+                CHECK_EQ(SignerV4Unittest::UrlEncode(
+                             "/logstores/hel lo?-*~/test", false),
+                         "%2Flogstores%2Fhel%20lo%3F-%2A~%2Ftest");
+                CHECK_EQ(SignerV4Unittest::UrlEncode(
+                             "/loa871_-+dres/hello?-*~/test", false),
+                         "%2Floa871_-%2Bdres%2Fhello%3F-%2A~%2Ftest");
+                CHECK_EQ(SignerV4Unittest::UrlEncode("-+*", false), "-%2B%2A");
+                CHECK_EQ(SignerV4Unittest::UrlEncode("/", false), "%2F");
             }
         }
     }
