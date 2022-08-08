@@ -96,8 +96,8 @@ TEST_CASE("Signer")
     {
         auto headerCopy = httpHeaders;
         auth::SignerV4 v4({accessKeyId, accessKeySecret}, "cn-hangzhou");
-        SignerUnittestHelper::SetV4DateTime(v4,"hello");
-        SignerUnittestHelper::SetV4Date(v4,"hello-date");
+        SignerUnittestHelper::SetV4DateTime(v4, "hello");
+        SignerUnittestHelper::SetV4Date(v4, "hello-date");
         v4.Sign(httpMethod, resourceUri, headerCopy, urlParams, payload);
         auto date = headerCopy[X_LOG_DATE];
         CHECK_EQ(date, "hello");
@@ -108,8 +108,8 @@ TEST_CASE("Signer")
         SignerV4 v4({accessKeyId, accessKeySecret}, "cn-hangzhou");
         string debugDate = "20220808";
         string debugDateTime = "20220808T032330Z";
-        SignerUnittestHelper::SetV4DateTime(v4,debugDateTime);
-        SignerUnittestHelper::SetV4Date(v4,debugDate);
+        SignerUnittestHelper::SetV4DateTime(v4, debugDateTime);
+        SignerUnittestHelper::SetV4Date(v4, debugDate);
         SUBCASE("empty header and url params and region shanghai")
         {
             map<string, string> emptyHeader, emptyUrlParams;
@@ -256,21 +256,24 @@ TEST_CASE("Signer")
             SUBCASE("ignore slash")
             {
                 CHECK_EQ(SignerUnittestHelper::V4UrlEncode("", true), "");
-                CHECK_EQ(SignerUnittestHelper::V4UrlEncode("/logstores/hello", true),
-                         "/logstores/hello");
+                CHECK_EQ(
+                    SignerUnittestHelper::V4UrlEncode("/logstores/hello", true),
+                    "/logstores/hello");
                 CHECK_EQ(SignerUnittestHelper::V4UrlEncode(
                              "/logstores/hello?-*~/test", true),
                          "/logstores/hello%3F-%2A~/test");
                 CHECK_EQ(SignerUnittestHelper::V4UrlEncode(
                              "/loa871_-+dres/hel lo?-*~/test", true),
                          "/loa871_-%2Bdres/hel%20lo%3F-%2A~/test");
-                CHECK_EQ(SignerUnittestHelper::V4UrlEncode("-+*", true), "-%2B%2A");
+                CHECK_EQ(SignerUnittestHelper::V4UrlEncode("-+*", true),
+                         "-%2B%2A");
                 CHECK_EQ(SignerUnittestHelper::V4UrlEncode("/", true), "/");
             }
             SUBCASE("with slash")
             {
                 CHECK_EQ(SignerUnittestHelper::V4UrlEncode("", false), "");
-                CHECK_EQ(SignerUnittestHelper::V4UrlEncode("/logstores/hello", false),
+                CHECK_EQ(SignerUnittestHelper::V4UrlEncode("/logstores/hello",
+                                                           false),
                          "%2Flogstores%2Fhello");
                 CHECK_EQ(SignerUnittestHelper::V4UrlEncode(
                              "/logstores/hel lo?-*~/test", false),
@@ -278,10 +281,53 @@ TEST_CASE("Signer")
                 CHECK_EQ(SignerUnittestHelper::V4UrlEncode(
                              "/loa871_-+dres/hello?-*~/test", false),
                          "%2Floa871_-%2Bdres%2Fhello%3F-%2A~%2Ftest");
-                CHECK_EQ(SignerUnittestHelper::V4UrlEncode("-+*", false), "-%2B%2A");
+                CHECK_EQ(SignerUnittestHelper::V4UrlEncode("-+*", false),
+                         "-%2B%2A");
                 CHECK_EQ(SignerUnittestHelper::V4UrlEncode("/", false), "%2F");
             }
         }
     }
+}
+
+// todo delete this
+TEST_CASE("client stg")
+{
+    string endpoint = "cn-hangzhou-staging-intranet.sls.aliyuncs.com";
+    string uri = "/logstores";
+    string project = "shuizhao-test";
+    string accessKeyId = "";
+    string accessKeySecret = "";
+    string region = "cn-hangzhou";
+    auto client =
+        make_unique<LOGClient>(endpoint, accessKeyId, accessKeySecret,
+                               LOG_REQUEST_TIMEOUT, "127.0.0.1", false);
+    client->SetRegion(region);
+    SUBCASE("Logstore")
+    {
+        try
+        {
+            string logstoreName = "test-cpp-v4";
+            {
+                auto resp = client->ListLogStores(project);
+                REQUIRE_EQ(resp.statusCode, 200);
+                REQUIRE_GE(resp.result.size(), 0);
+            }
+            {
+                LogStore logstore(logstoreName, 30, 2);
+                auto resp = client->CreateLogStore(project, logstore);
+                REQUIRE_EQ(resp.statusCode, 200);
+            }
+            {
+                auto resp = client->ListLogStores(project);
+                REQUIRE_EQ(resp.statusCode, 200);
+                REQUIRE_GE(resp.result.size(), 1);
+            }
+        }
+        catch (LOGException& e)
+        {
+            COUT_EX << e.GetErrorCode() << ": " << e.GetMessage() << endl;
+        }
+    }
+    SUBCASE("CreateLogStore and DeleteLogstore") {}
 }
 #endif
