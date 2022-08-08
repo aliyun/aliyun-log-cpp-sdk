@@ -55,7 +55,8 @@ void SignerV1::Sign(const string& httpMethod, const string& resourceUri,
         contentMd5 = CodecTool::CalcMD5(content);
         httpHeaders[CONTENT_MD5] = contentMd5;  // add md5 to header
     }
-    string dateTime = SLS_STRING_VALUE_IF_NOT_EMPTY(mDebugDateTime, GetDateTimeString);
+    string dateTime =
+        SLS_STRING_VALUE_IF_NOT_EMPTY(mDebugDateTime, GetDateTimeString);
     // set http header
     if (httpHeaders.find(DATE) == httpHeaders.end())
         httpHeaders[DATE] = dateTime;
@@ -78,9 +79,9 @@ void SignerV1::Sign(const string& httpMethod, const string& resourceUri,
         string key = it.first, value = it.second;
         if (CodecTool::StartWith(key, LOG_OLD_HEADER_PREFIX))
         {
-            string newKey = key.replace(0, std::strlen(LOG_OLD_HEADER_PREFIX),
-                                        LOG_HEADER_PREFIX);
-            endingMap[newKey] = value;
+            string newPrefixKey = key.replace(
+                0, std::strlen(LOG_OLD_HEADER_PREFIX), LOG_HEADER_PREFIX);
+            endingMap[newPrefixKey] = value;
         }
         else if (CodecTool::StartWith(key, LOG_HEADER_PREFIX) ||
                  CodecTool::StartWith(key, ACS_HEADER_PREFIX))
@@ -126,7 +127,8 @@ void SignerV4::Sign(const string& httpMethod, const string& resourceUri,
         throw LOGException(LOGE_SIGNV4_REGION_REQUIRED,
                            "Signature Version 4 need param 'region'.");
     string date = SLS_STRING_VALUE_IF_NOT_EMPTY(mDebugDate, GetDateString);
-    string dateTime = SLS_STRING_VALUE_IF_NOT_EMPTY(mDebugDateTime, GetDateTimeString);
+    string dateTime =
+        SLS_STRING_VALUE_IF_NOT_EMPTY(mDebugDateTime, GetDateTimeString);
     string contentLength = std::to_string(payload.size());
 
     // hexed sha256 of payload(http body)
@@ -192,12 +194,12 @@ map<string, string> SignerV4::BuildCanonicalHeaders(
     map<string, string> canonicalHeaders;
     for (auto it : httpHeaders)
     {
-        auto lowerKey = CodecTool::LowerCase(it.first);
-        if (DEFAULT_SIGNED_HEADERS.count(lowerKey) ||
-            lowerKey.find(LOG_HEADER_PREFIX) == 0 ||
-            lowerKey.find(ACS_HEADER_PREFIX) == 0)
+        auto lowerCasedKey = CodecTool::LowerCase(it.first);
+        if (DEFAULT_SIGNED_HEADERS.count(lowerCasedKey) ||
+            lowerCasedKey.find(LOG_HEADER_PREFIX) == 0 ||
+            lowerCasedKey.find(ACS_HEADER_PREFIX) == 0)
         {
-            canonicalHeaders[lowerKey] = it.second;
+            canonicalHeaders[lowerCasedKey] = it.second;
         }
     }
     return canonicalHeaders;
@@ -231,15 +233,15 @@ string SignerV4::BuildCanonicalRequest(
     ss << UrlEncode(resourceUri, true) << "\n";
 
     // canonical url params + "\n"
-    map<string, string> canoUrlParams;  // trimed and url encoded
+    map<string, string> canonicalUrlParams;  // trimed and url encoded
     for (auto it : urlParams)
     {
-        canoUrlParams[UrlEncode(CodecTool::Trim(it.first), false)] =
+        canonicalUrlParams[UrlEncode(CodecTool::Trim(it.first), false)] =
             UrlEncode(CodecTool::Trim(it.second), false);
     }
     string separator = "";
     stringstream us;  // cano url stringstream
-    for (auto it : canoUrlParams)
+    for (auto it : canonicalUrlParams)
     {
         us << separator << it.first;
         if (!it.second.empty()) us << "=" << it.second;

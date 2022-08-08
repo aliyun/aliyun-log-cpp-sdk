@@ -82,6 +82,13 @@ cmake .. && make
 
 > The target files are in `build/bin` and `build/lib`
 
+- build sample program (optional)
+
+```
+mkdir -p build && cd build
+cmake .. -DENABLE_BUILD_SAMPLE=ON && make
+```
+
 - install libs and header files
 
 ```

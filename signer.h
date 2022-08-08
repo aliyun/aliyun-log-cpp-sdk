@@ -71,7 +71,7 @@ class SignerV1 : public Signer
                       const std::string& content);
 
    private:
-    std::string GetDateTimeString();
+    static std::string GetDateTimeString();
     std::string mDebugDateTime; // for unittest
 
 #ifdef __ALIYUN_LOG_UNITTEST__
@@ -125,7 +125,7 @@ class SignerV4 : public Signer
                                           const std::string& signature,
                                           const std::string& scope);
 
-   private:
+   private: // constants
     static const std::string SECRET_KEY_PREFIX;  // = "aliyun_v4";
     static const std::string SLS_PRODUCT_NAME;   // = "sls";
     static const std::string TERMINATOR;         // = "aliyun_v4_request";
