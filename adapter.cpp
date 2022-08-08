@@ -9,7 +9,8 @@ using namespace std;
 namespace aliyun_log_sdk_v6
 {
 extern const char * const DATE_FORMAT_RFC822  =  "%a, %d %b %Y %H:%M:%S GMT"; ///<RFC822 date formate, GMT time.
-extern const char* const DATE_FORMAT_ISO8601 = "%Y%m%dT%H%M%SZ"; /// ISO8601
+extern const char* const DATE_FORMAT_ISO8601 = "%Y%m%d"; /// ISO8601
+extern const char* const DATETIME_FORMAT_ISO8601 = "%Y%m%dT%H%M%SZ"; /// ISO8601
 static const uint32_t MD5_BYTES = 16;
 extern const char* const LOG_HEADSIGNATURE_PREFIX = "LOG ";
 
@@ -190,14 +191,16 @@ std::string CodecTool::CalcHMACSHA1(const std::string& message,
 {
     HMACSHA1 hmac(reinterpret_cast<const uint8_t*>(key.data()), key.size());
     hmac.add(reinterpret_cast<const uint8_t*>(message.data()), message.size());
-    return hmac.getHash();
+    vector<uint8_t> res = hmac.getHash();
+    return string(res.begin(), res.end());
 }
 // sha256
 std::string CodecTool::CalcSHA256(const std::string& message)
 {
     SHA256 sha256;
     sha256.add(message.data(), message.size());
-    return sha256.getHash();
+    vector<uint8_t> res = sha256.getHash();
+    return string(res.begin(), res.end());
 }
 // hmac-sha256
 std::string CodecTool::CalcHMACSHA256(const std::string& message,
@@ -205,7 +208,8 @@ std::string CodecTool::CalcHMACSHA256(const std::string& message,
 {
     HMACSHA256 hmac(reinterpret_cast<const uint8_t*>(key.data()), key.size());
     hmac.add(reinterpret_cast<const uint8_t*>(message.data()), message.size());
-    return hmac.getHash();
+    vector<uint8_t> res = hmac.getHash();
+    return string(res.begin(), res.end());
 }
 
 std::string CodecTool::Base64Enconde(const std::string& message)

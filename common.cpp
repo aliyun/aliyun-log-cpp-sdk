@@ -969,20 +969,7 @@ std::string SHA256::getHexHash()
   return result;
 }
 
-std::string SHA256::getHash()
-{
-  // compute hash (as raw bytes)
-  unsigned char rawHash[HashBytes];
-  getHash(rawHash);
 
-  std::string result;
-  result.reserve(HashBytes);
-  for (int i = 0; i < HashBytes; i++)
-  {
-    result += rawHash[i];
-  }
-  return result;
-}
 
 /// return latest hash as bytes
 void SHA256::getHash(unsigned char buffer[SHA256::HashBytes])
@@ -1010,7 +997,7 @@ void SHA256::getHash(unsigned char buffer[SHA256::HashBytes])
 
 
 /// compute SHA256 of a memory block
-std::string SHA256::operator()(const void* data, size_t numBytes)
+std::vector<uint8_t> SHA256::operator()(const void* data, size_t numBytes)
 {
   reset();
   add(data, numBytes);
@@ -1019,7 +1006,7 @@ std::string SHA256::operator()(const void* data, size_t numBytes)
 
 
 /// compute SHA256 of a string, excluding final zero
-std::string SHA256::operator()(const std::string& text)
+std::vector<uint8_t> SHA256::operator()(const std::string& text)
 {
   reset();
   add(text.c_str(), text.size());

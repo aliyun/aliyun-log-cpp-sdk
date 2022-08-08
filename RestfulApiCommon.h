@@ -8,7 +8,8 @@
 namespace aliyun_log_sdk_v6
 {
 extern const char * const DATE_FORMAT_RFC822;// "%a, %d %b %Y %H:%M:%S GMT" ///<RFC822 date formate, GMT time.
-extern const char* const DATE_FORMAT_ISO8601;// "%Y%m%dT%H%M%SZ"
+extern const char* const DATE_FORMAT_ISO8601;// "%Y%m%d"
+extern const char* const DATETIME_FORMAT_ISO8601;// "%Y%m%dT%H%M%SZ"
 // typedef enum {REQUEST_GET= 1, REQUEST_POST } LOG_Request_Mode;///<Http
 // Request Method.
 typedef enum {CURSOR_MODE_BEGIN = 1, CURSOR_MODE_END} LOG_Cursor_Mode;

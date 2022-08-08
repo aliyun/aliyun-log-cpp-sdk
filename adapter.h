@@ -22,6 +22,7 @@ class RequestClosure;
 class CodecTool
 {
 public:
+ // return lower case hex
  static std::string ToHex(const std::string& raw);
  static std::string CalcMD5(const std::string& message);
  // hmac-sha1

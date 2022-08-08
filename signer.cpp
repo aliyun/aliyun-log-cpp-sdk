@@ -132,7 +132,7 @@ void SignerV4::Sign(const string& httpMethod, const string& resourceUri,
     string sha256Payload = EMPTY_STRING_SHA256;
     if (!payload.empty())
     {
-        sha256Payload = CodecTool::ToHex(SHA256()(payload));
+        sha256Payload = CodecTool::ToHex(CodecTool::CalcSHA256(payload));
     }
 
     // set http header
@@ -182,7 +182,7 @@ string SignerV4::GetDateString()
 
 string SignerV4::GetDateTimeString()
 {
-    return CodecTool::GetDateString(DATE_FORMAT_ISO8601);
+    return CodecTool::GetDateString(DATETIME_FORMAT_ISO8601);
 }
 
 map<string, string> SignerV4::BuildCanonicalHeaders(
@@ -293,7 +293,7 @@ string SignerV4::BuildSignMessage(const string& canonicalRequest,
                                   const string& dateTime, const string& scope)
 {
     return SLS4_HMAC_SHA256 + "\n" + dateTime + "\n" + scope + "\n" +
-           CodecTool::ToHex(SHA256()(canonicalRequest));
+           CodecTool::ToHex(CodecTool::CalcSHA256(canonicalRequest));
 }
 
 string SignerV4::BuildSignKey(const string& accessKeySecret,

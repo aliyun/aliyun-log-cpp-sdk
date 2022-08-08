@@ -46,10 +46,10 @@ class SHA1
     }
 
     void add(const uint8_t* data, size_t len);
-    std::string getHash()
+    std::vector<uint8_t> getHash()
     {
-        auto res = result();
-        return std::string(reinterpret_cast<const char*>(res), DIGEST_BYTES);
+        const uint8_t* const res = result();
+        return std::vector<uint8_t>(res, res + DIGEST_BYTES);
     }
     static constexpr size_t DIGEST_BYTES = 20;
     static constexpr size_t HMAC_BLOCK_SIZE_BYTES = 64;
@@ -98,11 +98,10 @@ class HMAC
         }
         else
         {
-            H tmp;
-            tmp.add(key, lkey);
-            std::string tmpHash = tmp.getHash();
-            const uint8_t* key2 =
-                reinterpret_cast<const uint8_t*>(tmpHash.data());
+            H keyHasher;
+            keyHasher.add(key, lkey);
+            std::vector<uint8_t> keyHash = keyHasher.getHash();
+            const uint8_t* key2 = &keyHash.front();
             axor(ipad, key2, blockSize);
             axor(opad, key2, blockSize);
         }
@@ -118,12 +117,11 @@ class HMAC
         in.add(data, len);
     }
 
-    std::string getHash()
+    std::vector<uint8_t> getHash()
     {
-        std::string inHash = in.getHash();
+        const std::vector<uint8_t> inHash = in.getHash();
         // add to out
-        out.add(reinterpret_cast<const uint8_t*>(inHash.data()),
-                H::DIGEST_BYTES);
+        out.add(&inHash.front(), H::DIGEST_BYTES);
         return out.getHash();
     }
 
@@ -174,7 +172,20 @@ public:
   {
       add(reinterpret_cast<const void *>(data), numBytes);
   }
-  std::string getHash();
+  std::vector<uint8_t> getHash()
+  {
+      // compute hash (as raw bytes)
+      unsigned char rawHash[HashBytes];
+      getHash(rawHash);
+
+      std::vector<uint8_t> result;
+      result.reserve(HashBytes);
+      for (int i = 0; i < HashBytes; i++)
+      {
+          result.push_back(static_cast<uint8_t>(rawHash[i]));
+      }
+      return result;
+  }
 
   static constexpr size_t DIGEST_BYTES = 32;
   static constexpr size_t HMAC_BLOCK_SIZE_BYTES = 64;
@@ -186,9 +197,9 @@ public:
   /// add arbitrary number of bytes
   void add(const void* data, size_t numBytes);
   /// compute SHA256 of a memory block
-  std::string operator()(const void* data, size_t numBytes);
+  std::vector<uint8_t> operator()(const void* data, size_t numBytes);
   /// compute SHA256 of a string, excluding final zero
-  std::string operator()(const std::string& text);
+  std::vector<uint8_t> operator()(const std::string& text);
 
 private:
   /// split into 64 byte blocks (=> 512 bits), hash is 32 bytes long
