@@ -8,34 +8,12 @@
 #include "RestfulApiCommon.h"
 #include "adapter.h"
 
-// SLS_DEFINE_DEBUGABLE_STRING(name, func) defines a string.
-// Its value can be set by using SetDebug##Name##(value) in unittest files.
-#ifdef __ALIYUN_LOG_UNITTEST__
-#define SLS_DEFINE_DEBUGABLE_STRING(name, func)         \
-   private:                                             \
-    std::string mDebug##name;                           \
-                                                        \
-   public:                                              \
-    std::string GetDebug##name()                        \
-    {                                                   \
-        if (!mDebug##name.empty()) return mDebug##name; \
-        return func();                                  \
-    }                                                   \
-    void SetDebug##name(const std::string& val)         \
-    {                                                   \
-        mDebug##name = val;                             \
-    }
-#else
-#define SLS_DEFINE_DEBUGABLE_STRING(name, func) \
-   public:                                      \
-    std::string GetDebug##name()                \
-    {                                           \
-        return func();                          \
-    }
-#endif
 
-// If not in unittest or value not set, returns func(__args__)
-#define SLS_DEBUGABLE_STRING_VALUE(name, ...) GetDebug##name(##__VA_ARGS__)
+// Return debugVal if not empty, else returns func(__args__)
+#ifndef SLS_STRING_VALUE_IF_NOT_EMPTY
+#define SLS_STRING_VALUE_IF_NOT_EMPTY(debugVal, func, ...) \
+        (debugVal.empty() ? func(##__VA_ARGS__) : debugVal) 
+#endif
 
 namespace aliyun_log_sdk_v6
 {
@@ -94,8 +72,11 @@ class SignerV1 : public Signer
 
    private:
     std::string GetDateTimeString();
+    std::string mDebugDateTime; // for unittest
 
-    SLS_DEFINE_DEBUGABLE_STRING(DateTime, GetDateTimeString);
+#ifdef __ALIYUN_LOG_UNITTEST__
+    friend class SignerUnittestHelper;
+#endif
 };
 
 // sign version v4
@@ -158,13 +139,11 @@ class SignerV4 : public Signer
 
    private:
     const std::string mRegion;
+    std::string mDebugDateTime, mDebugDate; // for unittest
 
 #ifdef __ALIYUN_LOG_UNITTEST__
-    friend class SignerV4Unittest;
+    friend class SignerUnittestHelper;
 #endif
-
-    SLS_DEFINE_DEBUGABLE_STRING(DateTime, GetDateTimeString);
-    SLS_DEFINE_DEBUGABLE_STRING(Date, GetDateString);
 };
 
 }  // end of namespace auth

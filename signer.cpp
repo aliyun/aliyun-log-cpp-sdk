@@ -55,7 +55,7 @@ void SignerV1::Sign(const string& httpMethod, const string& resourceUri,
         contentMd5 = CodecTool::CalcMD5(content);
         httpHeaders[CONTENT_MD5] = contentMd5;  // add md5 to header
     }
-    string dateTime = SLS_DEBUGABLE_STRING_VALUE(DateTime);
+    string dateTime = SLS_STRING_VALUE_IF_NOT_EMPTY(mDebugDateTime, GetDateTimeString);
     // set http header
     if (httpHeaders.find(DATE) == httpHeaders.end())
         httpHeaders[DATE] = dateTime;
@@ -125,8 +125,8 @@ void SignerV4::Sign(const string& httpMethod, const string& resourceUri,
     if (mRegion.empty())
         throw LOGException(LOGE_SIGNV4_REGION_REQUIRED,
                            "Signature Version 4 need param 'region'.");
-    string date = SLS_DEBUGABLE_STRING_VALUE(Date),
-           dateTime = SLS_DEBUGABLE_STRING_VALUE(DateTime);
+    string date = SLS_STRING_VALUE_IF_NOT_EMPTY(mDebugDate, GetDateString);
+    string dateTime = SLS_STRING_VALUE_IF_NOT_EMPTY(mDebugDateTime, GetDateTimeString);
     string contentLength = std::to_string(payload.size());
 
     // hexed sha256 of payload(http body)

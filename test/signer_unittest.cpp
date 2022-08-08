@@ -28,12 +28,24 @@ namespace aliyun_log_sdk_v6
 {
 namespace auth
 {
-class SignerV4Unittest
+class SignerUnittestHelper
 {
    public:
-    static std::string UrlEncode(const std::string& url, bool ignoreSlash)
+    static std::string V4UrlEncode(const std::string& url, bool ignoreSlash)
     {
         return SignerV4::UrlEncode(url, ignoreSlash);
+    }
+    static void SetV4DateTime(SignerV4& v4, const std::string& s)
+    {
+        v4.mDebugDateTime = s;
+    }
+    static void SetV4Date(SignerV4& v4, const std::string& s)
+    {
+        v4.mDebugDate = s;
+    }
+    static void SetV1DateTime(SignerV1& v1, const std::string& s)
+    {
+        v1.mDebugDateTime = s;
     }
 };
 }  // namespace auth
@@ -80,12 +92,12 @@ TEST_CASE("Signer")
 
         CHECK_EQ(authorization, authorization2);
     }
-    SUBCASE("macro SLS_DEFINE_DEBUGABLE_STRING")
+    SUBCASE("set debug date")
     {
         auto headerCopy = httpHeaders;
         auth::SignerV4 v4({accessKeyId, accessKeySecret}, "cn-hangzhou");
-        v4.SetDebugDateTime("hello");
-        v4.SetDebugDate("hello-date");
+        SignerUnittestHelper::SetV4DateTime(v4,"hello");
+        SignerUnittestHelper::SetV4Date(v4,"hello-date");
         v4.Sign(httpMethod, resourceUri, headerCopy, urlParams, payload);
         auto date = headerCopy[X_LOG_DATE];
         CHECK_EQ(date, "hello");
@@ -96,14 +108,14 @@ TEST_CASE("Signer")
         SignerV4 v4({accessKeyId, accessKeySecret}, "cn-hangzhou");
         string debugDate = "20220808";
         string debugDateTime = "20220808T032330Z";
-        v4.SetDebugDateTime(debugDateTime);
-        v4.SetDebugDate(debugDate);
+        SignerUnittestHelper::SetV4DateTime(v4,debugDateTime);
+        SignerUnittestHelper::SetV4Date(v4,debugDate);
         SUBCASE("empty header and url params and region shanghai")
         {
             map<string, string> emptyHeader, emptyUrlParams;
             SignerV4 v4Shanghai({accessKeyId, accessKeySecret}, "cn-shanghai");
-            v4Shanghai.SetDebugDateTime(debugDateTime);
-            v4Shanghai.SetDebugDate(debugDate);
+            SignerUnittestHelper::SetV4DateTime(v4Shanghai, debugDateTime);
+            SignerUnittestHelper::SetV4Date(v4Shanghai, debugDate);
             v4Shanghai.Sign(httpMethod, resourceUri, emptyHeader,
                             emptyUrlParams, payload);
             string authorization = emptyHeader[AUTHORIZATION];
@@ -243,31 +255,31 @@ TEST_CASE("Signer")
         {
             SUBCASE("ignore slash")
             {
-                CHECK_EQ(SignerV4Unittest::UrlEncode("", true), "");
-                CHECK_EQ(SignerV4Unittest::UrlEncode("/logstores/hello", true),
+                CHECK_EQ(SignerUnittestHelper::V4UrlEncode("", true), "");
+                CHECK_EQ(SignerUnittestHelper::V4UrlEncode("/logstores/hello", true),
                          "/logstores/hello");
-                CHECK_EQ(SignerV4Unittest::UrlEncode(
+                CHECK_EQ(SignerUnittestHelper::V4UrlEncode(
                              "/logstores/hello?-*~/test", true),
                          "/logstores/hello%3F-%2A~/test");
-                CHECK_EQ(SignerV4Unittest::UrlEncode(
+                CHECK_EQ(SignerUnittestHelper::V4UrlEncode(
                              "/loa871_-+dres/hel lo?-*~/test", true),
                          "/loa871_-%2Bdres/hel%20lo%3F-%2A~/test");
-                CHECK_EQ(SignerV4Unittest::UrlEncode("-+*", true), "-%2B%2A");
-                CHECK_EQ(SignerV4Unittest::UrlEncode("/", true), "/");
+                CHECK_EQ(SignerUnittestHelper::V4UrlEncode("-+*", true), "-%2B%2A");
+                CHECK_EQ(SignerUnittestHelper::V4UrlEncode("/", true), "/");
             }
             SUBCASE("with slash")
             {
-                CHECK_EQ(SignerV4Unittest::UrlEncode("", false), "");
-                CHECK_EQ(SignerV4Unittest::UrlEncode("/logstores/hello", false),
+                CHECK_EQ(SignerUnittestHelper::V4UrlEncode("", false), "");
+                CHECK_EQ(SignerUnittestHelper::V4UrlEncode("/logstores/hello", false),
                          "%2Flogstores%2Fhello");
-                CHECK_EQ(SignerV4Unittest::UrlEncode(
+                CHECK_EQ(SignerUnittestHelper::V4UrlEncode(
                              "/logstores/hel lo?-*~/test", false),
                          "%2Flogstores%2Fhel%20lo%3F-%2A~%2Ftest");
-                CHECK_EQ(SignerV4Unittest::UrlEncode(
+                CHECK_EQ(SignerUnittestHelper::V4UrlEncode(
                              "/loa871_-+dres/hello?-*~/test", false),
                          "%2Floa871_-%2Bdres%2Fhello%3F-%2A~%2Ftest");
-                CHECK_EQ(SignerV4Unittest::UrlEncode("-+*", false), "-%2B%2A");
-                CHECK_EQ(SignerV4Unittest::UrlEncode("/", false), "%2F");
+                CHECK_EQ(SignerUnittestHelper::V4UrlEncode("-+*", false), "-%2B%2A");
+                CHECK_EQ(SignerUnittestHelper::V4UrlEncode("/", false), "%2F");
             }
         }
     }
