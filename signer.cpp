@@ -126,6 +126,12 @@ void SignerV4::Sign(const string& httpMethod, const string& resourceUri,
     if (mRegion.empty())
         throw LOGException(LOGE_SIGNV4_REGION_REQUIRED,
                            "Signature Version 4 need param 'region'.");
+    
+    // if content-type value is empty string, server will ignore it.
+    // So we add a default value here.
+    if(httpHeaders.find(CONTENT_TYPE) != httpHeaders.end() && httpHeaders[CONTENT_TYPE].empty())
+        httpHeaders[CONTENT_TYPE] = TYPE_LOG_JSON;
+
     string date = SLS_STRING_VALUE_IF_NOT_EMPTY(mDebugDate, GetDateString);
     string dateTime =
         SLS_STRING_VALUE_IF_NOT_EMPTY(mDebugDateTime, GetDateTimeString);
@@ -166,16 +172,16 @@ void SignerV4::Sign(const string& httpMethod, const string& resourceUri,
     httpHeaders[AUTHORIZATION] = authorization;
 
     // todo: comment this
-    cout << "[sha256Payload]:" << endl << sha256Payload << endl;
-    cout << "[dateTime]:" << endl << dateTime << endl;
-    cout << "[date]:" << endl << date << endl;
-    cout << "[scope]:" << endl << scope << endl;
-    cout << "[signedHeaderStr]:" << endl << signedHeaderStr << endl;
-    cout << "[canonicalRequest]:" << endl << canonicalRequest << endl;
-    cout << "[signMessage]:" << endl << signMessage << endl;
-    cout << "[signKey]:" << endl << CodecTool::ToHex(signKey) << endl;
-    cout << "[signature]:" << endl << signature << endl;
-    cout << "[authorization]:" << endl << authorization << endl;
+    // cout << "[sha256Payload]:" << endl << sha256Payload << endl;
+    // cout << "[dateTime]:" << endl << dateTime << endl;
+    // cout << "[date]:" << endl << date << endl;
+    // cout << "[scope]:" << endl << scope << endl;
+    // cout << "[signedHeaderStr]:" << endl << signedHeaderStr << endl;
+    // cout << "[canonicalRequest]:" << endl << canonicalRequest << endl;
+    // cout << "[signMessage]:" << endl << signMessage << endl;
+    // cout << "[signKey]:" << endl << CodecTool::ToHex(signKey) << endl;
+    // cout << "[signature]:" << endl << signature << endl;
+    // cout << "[authorization]:" << endl << authorization << endl;
 }
 
 string SignerV4::GetDateString()

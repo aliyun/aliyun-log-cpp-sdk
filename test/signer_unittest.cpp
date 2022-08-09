@@ -10,6 +10,8 @@
 #include "adapter.h"
 #include "doctest.h"
 #include "resource.h"
+#include <thread>
+#include <chrono>
 
 using namespace std;
 using namespace aliyun_log_sdk_v6;
@@ -201,48 +203,6 @@ TEST_CASE("Signer")
             CHECK_EQ(authorization, expected);
         }
 
-        SUBCASE("ISO8601 time format")
-        {
-            SUBCASE("dateTime")
-            {
-                auto dateTime =
-                    CodecTool::GetDateString(DATETIME_FORMAT_ISO8601);
-                std::regex re(
-                    "^\\s*((((1[6-9]|[2-9]\\d)\\d{2})(0[13578]|1[02])(0[1-9]|["
-                    "12]"
-                    "\\d|3[01]))|(((1[6-9]|[2-9]\\d)\\d{2})(0[469]|11)(0?[1-9]|"
-                    "[12]"
-                    "\\d|30))|(((1[6-9]|[2-9]\\d)\\d{2})02(0[1-9]|1\\d|2[0-8]))"
-                    "|((("
-                    "1[6-9]|[2-9]\\d)[13579][26])0229)|(((1[6-9]|[2-9]\\d)["
-                    "2468]["
-                    "048])0229)|(((1[6-9]|[2-9]\\d)0[48])0229)|(([13579]6)"
-                    "000229)|("
-                    "([2468][048])000229)|(([3579]2)000229))(T(2[0-3]|[0-1][0-"
-                    "9])(["
-                    "0-5][0-9])([0-5][0-9])Z$)");
-                CHECK(std::regex_match(dateTime, re));
-            }
-            SUBCASE("date")
-            {
-                auto date = CodecTool::GetDateString(DATE_FORMAT_ISO8601);
-
-                std::regex re2(
-                    "^\\s*((((1[6-9]|[2-9]\\d)\\d{2})(0[13578]|1[02])(0[1-9]|["
-                    "12]"
-                    "\\d|3[01]))|(((1[6-9]|[2-9]\\d)\\d{2})(0[469]|11)(0?[1-9]|"
-                    "[12]"
-                    "\\d|30))|(((1[6-9]|[2-9]\\d)\\d{2})02(0[1-9]|1\\d|2[0-8]))"
-                    "|((("
-                    "1[6-9]|[2-9]\\d)[13579][26])0229)|(((1[6-9]|[2-9]\\d)["
-                    "2468]["
-                    "048])0229)|(((1[6-9]|[2-9]\\d)0[48])0229)|(([13579]6)"
-                    "000229)|("
-                    "([2468][048])000229)|(([3579]2)000229))$");
-                CHECK(std::regex_match(date, re2));
-            }
-        }
-
         SUBCASE("no region should throws an exception")
         {
             SignerV4 v4({accessKeyId, accessKeySecret}, "");
@@ -289,45 +249,4 @@ TEST_CASE("Signer")
     }
 }
 
-// todo delete this
-TEST_CASE("client stg")
-{
-    string endpoint = "cn-hangzhou-staging-intranet.sls.aliyuncs.com";
-    string uri = "/logstores";
-    string project = "shuizhao-test";
-    string accessKeyId = "";
-    string accessKeySecret = "";
-    string region = "cn-hangzhou";
-    auto client =
-        make_unique<LOGClient>(endpoint, accessKeyId, accessKeySecret,
-                               LOG_REQUEST_TIMEOUT, "127.0.0.1", false);
-    client->SetRegion(region);
-    SUBCASE("Logstore")
-    {
-        try
-        {
-            string logstoreName = "test-cpp-v4";
-            {
-                auto resp = client->ListLogStores(project);
-                REQUIRE_EQ(resp.statusCode, 200);
-                REQUIRE_GE(resp.result.size(), 0);
-            }
-            {
-                LogStore logstore(logstoreName, 30, 2);
-                auto resp = client->CreateLogStore(project, logstore);
-                REQUIRE_EQ(resp.statusCode, 200);
-            }
-            {
-                auto resp = client->ListLogStores(project);
-                REQUIRE_EQ(resp.statusCode, 200);
-                REQUIRE_GE(resp.result.size(), 1);
-            }
-        }
-        catch (LOGException& e)
-        {
-            COUT_EX << e.GetErrorCode() << ": " << e.GetMessage() << endl;
-        }
-    }
-    SUBCASE("CreateLogStore and DeleteLogstore") {}
-}
 #endif

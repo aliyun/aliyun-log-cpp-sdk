@@ -110,8 +110,6 @@ The unittest uses [doctest](https://github.com/doctest/doctest) from github.
 ```
 mkdir -p build && cd build
 cmake .. -DENABLE_UNITTEST=ON
-make && make test
+make
 
 ```
-
-The log files for the unittest are in `build/Testing`.
