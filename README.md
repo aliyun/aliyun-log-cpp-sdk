@@ -16,15 +16,15 @@ lz4 : use lib/liblz4.a
 ## using make file
 
 - execute "make" in this dir, then get
-  ```
-     lib/libslssdk.a
-     lib/libsls_logs_pb.a
-     lib/liblz4.a
-  ```
+```
+    lib/libslssdk.a
+    lib/libsls_logs_pb.a
+    lib/liblz4.a
+```
 - build your own program
 
 ```
-        g++ -o your_program your_program.o   -O2 -L./lib/   -lslssdk -llz4 -lcurl -lprotobuf
+g++ -o your_program your_program.o -O2 -L./lib/ -lslssdk -llz4 -lcurl -lprotobuf
 
 ```
 
@@ -76,40 +76,26 @@ Protobuf and curl are required.
 - build lib slssdk
 
 ```
-mkdir -p build && cd build
-cmake .. && make
+  mkdir -p build && cd build
+  cmake .. && make
 ```
 
 > The target files are in `build/bin` and `build/lib`
 
-- build sample program (optional)
-
-```
-mkdir -p build && cd build
-cmake .. -DENABLE_BUILD_SAMPLE=ON && make
-```
 
 - install libs and header files
 
 ```
-make install
+  make install
 ```
 
 - build your own program
 
 ```
- g++ -o your_program your_program.o -O2 -lslssdk
+  g++ -o your_program your_program.o -O2 -lslssdk
 ```
 
-# test
-
-The unittest uses [doctest](https://github.com/doctest/doctest) from github.
-
-## using CMake
-
+- run unittest
 ```
-mkdir -p build && cd build
-cmake .. -DENABLE_UNITTEST=ON
-make
-
+  make test
 ```

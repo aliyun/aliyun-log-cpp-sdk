@@ -9,19 +9,13 @@
 #include "adapter.h"
 
 
-// Return debugVal if not empty, else returns func(__args__)
-#ifndef SLS_STRING_VALUE_IF_NOT_EMPTY
-#define SLS_STRING_VALUE_IF_NOT_EMPTY(debugVal, func, ...) \
-        (debugVal.empty() ? func(##__VA_ARGS__) : debugVal) 
-#endif
-
 namespace aliyun_log_sdk_v6
 {
 namespace auth
 {
 struct Credential
 {
-    std::string accessKeySecret, accessKeyId;
+    std::string accessKeyId, accessKeySecret;
     Credential(const std::string& accessKeyId,
                const std::string& accessKeySecret)
         : accessKeyId(accessKeyId), accessKeySecret(accessKeySecret)
@@ -72,7 +66,6 @@ class SignerV1 : public Signer
 
    private:
     static std::string GetDateTimeString();
-    std::string mDebugDateTime; // for unittest
 
 #ifdef __ALIYUN_LOG_UNITTEST__
     friend class SignerUnittestHelper;
@@ -139,7 +132,6 @@ class SignerV4 : public Signer
 
    private:
     const std::string mRegion;
-    std::string mDebugDateTime, mDebugDate; // for unittest
 
 #ifdef __ALIYUN_LOG_UNITTEST__
     friend class SignerUnittestHelper;

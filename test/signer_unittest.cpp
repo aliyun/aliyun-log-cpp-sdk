@@ -3,15 +3,15 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "signer.h"
 
+#include <chrono>
 #include <iostream>
 #include <regex>
+#include <thread>
 
 #include "RestfulApiCommon.h"
 #include "adapter.h"
 #include "doctest.h"
 #include "resource.h"
-#include <thread>
-#include <chrono>
 
 using namespace std;
 using namespace aliyun_log_sdk_v6;
@@ -21,10 +21,7 @@ using namespace aliyun_log_sdk_v6::auth;
 #define COUT_EX std::cout << (__FILE__) << ":" << (__LINE__) << " "
 #endif
 
-static string toHex(const string& m)
-{
-    return CodecTool::ToHex(m);
-}
+static string toHex(const string& m) { return CodecTool::ToHex(m); }
 
 namespace aliyun_log_sdk_v6
 {
@@ -36,18 +33,6 @@ class SignerUnittestHelper
     static std::string V4UrlEncode(const std::string& url, bool ignoreSlash)
     {
         return SignerV4::UrlEncode(url, ignoreSlash);
-    }
-    static void SetV4DateTime(SignerV4& v4, const std::string& s)
-    {
-        v4.mDebugDateTime = s;
-    }
-    static void SetV4Date(SignerV4& v4, const std::string& s)
-    {
-        v4.mDebugDate = s;
-    }
-    static void SetV1DateTime(SignerV1& v1, const std::string& s)
-    {
-        v1.mDebugDateTime = s;
     }
 };
 }  // namespace auth
@@ -61,18 +46,22 @@ TEST_CASE("Signer")
     const string accessKeyId = "acsddda21dsd";
     const string accessKeySecret = "zxasdasdasw2";
     const string region = "";
+    string debugDate = "20220808";
+    string debugDateTime = "20220808T032330Z";
     const map<string, string> httpHeaders = {{"hello", "world"},
                                              {"hello-Text", "a12X- "},
                                              {" Ko ", ""},
                                              {"", "AA"},
                                              {"x-log-test", "het123"},
-                                             {"x-acs-ppp", "dds"}},
+                                             {"x-acs-ppp", "dds"},
+                                             {X_LOG_DATE, debugDateTime}},
                               urlParams = {
                                   {" abc", "efg"},
                                   {" agc ", ""},
                                   {"", "efg"},
                                   {"A-bc", "eFg"},
                               };
+
     SUBCASE("v1")
     {
         string date = CodecTool::GetDateString();
@@ -98,26 +87,20 @@ TEST_CASE("Signer")
     {
         auto headerCopy = httpHeaders;
         auth::SignerV4 v4({accessKeyId, accessKeySecret}, "cn-hangzhou");
-        SignerUnittestHelper::SetV4DateTime(v4, "hello");
-        SignerUnittestHelper::SetV4Date(v4, "hello-date");
+        headerCopy[X_LOG_DATE] = "20220707T010100Z";
         v4.Sign(httpMethod, resourceUri, headerCopy, urlParams, payload);
-        auto date = headerCopy[X_LOG_DATE];
-        CHECK_EQ(date, "hello");
+        auto dateTime = headerCopy[X_LOG_DATE];
+        CHECK_EQ(dateTime, "20220707T010100Z");
     }
 
     SUBCASE("v4")
     {
         SignerV4 v4({accessKeyId, accessKeySecret}, "cn-hangzhou");
-        string debugDate = "20220808";
-        string debugDateTime = "20220808T032330Z";
-        SignerUnittestHelper::SetV4DateTime(v4, debugDateTime);
-        SignerUnittestHelper::SetV4Date(v4, debugDate);
         SUBCASE("empty header and url params and region shanghai")
         {
             map<string, string> emptyHeader, emptyUrlParams;
             SignerV4 v4Shanghai({accessKeyId, accessKeySecret}, "cn-shanghai");
-            SignerUnittestHelper::SetV4DateTime(v4Shanghai, debugDateTime);
-            SignerUnittestHelper::SetV4Date(v4Shanghai, debugDate);
+            emptyHeader[X_LOG_DATE] = debugDateTime;
             v4Shanghai.Sign(httpMethod, resourceUri, emptyHeader,
                             emptyUrlParams, payload);
             string authorization = emptyHeader[AUTHORIZATION];

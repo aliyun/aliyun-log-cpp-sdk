@@ -25,13 +25,14 @@ public:
  // return lower case hex
  static std::string ToHex(const std::string& raw);
  static std::string CalcMD5(const std::string& message);
- // hmac-sha1
- static std::string CalcHMACSHA1(const std::string& message,
-                                 const std::string& key);
- // hmac-sha256
- static std::string CalcHMACSHA256(const std::string& message,
-                                   const std::string& key);
- // sha256
+ /* 
+ * Warning: calc hmac-sha1 !!!
+ * This function is deprecated, use CaclHMACSHA1 instead.
+ * Just for back-compatibility 
+ */
+ static std::string CalcSHA1(const std::string& message, const std::string& key);
+ static std::string CalcHMACSHA1(const std::string& message, const std::string& key);
+ static std::string CalcHMACSHA256(const std::string& message, const std::string& key);
  static std::string CalcSHA256(const std::string& message);
  static std::string Base64Enconde(const std::string& message);
 

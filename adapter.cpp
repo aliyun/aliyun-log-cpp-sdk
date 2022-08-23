@@ -3,7 +3,7 @@
 #include <iostream>
 #include <cctype>
 #include <algorithm>
-#include "signer.h"
+
 using namespace std;
 
 namespace aliyun_log_sdk_v6
@@ -140,7 +140,7 @@ std::string CodecTool::ToHex(const string& raw)
     string res;
     res.reserve(raw.size() * 2);
     static const char* table = "0123456789abcdef";
-    for (int i = 0; i < raw.size(); i++)
+    for (size_t i = 0; i < raw.size(); i++)
     {
         unsigned char j = static_cast<unsigned char>(raw[i]);
         res += table[j >> 4];
@@ -193,6 +193,11 @@ std::string CodecTool::CalcHMACSHA1(const std::string& message,
     hmac.add(reinterpret_cast<const uint8_t*>(message.data()), message.size());
     vector<uint8_t> res = hmac.getHash();
     return string(res.begin(), res.end());
+}
+// hmac-sha1, deprecated, for back-compatibility
+string CodecTool::CalcSHA1(const std::string& message, const std::string& key)
+{
+    return CodecTool::CalcHMACSHA1(message, key);
 }
 // sha256
 std::string CodecTool::CalcSHA256(const std::string& message)

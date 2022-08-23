@@ -55,13 +55,12 @@ void SignerV1::Sign(const string& httpMethod, const string& resourceUri,
         contentMd5 = CodecTool::CalcMD5(content);
         httpHeaders[CONTENT_MD5] = contentMd5;  // add md5 to header
     }
-    string dateTime =
-        SLS_STRING_VALUE_IF_NOT_EMPTY(mDebugDateTime, GetDateTimeString);
+    string dateTime = GetDateTimeString();
     // set http header
     if (httpHeaders.find(DATE) == httpHeaders.end())
         httpHeaders[DATE] = dateTime;
     else
-        dateTime = httpHeaders[DATE];
+        dateTime = httpHeaders[DATE];  // for debugging
     httpHeaders[CONTENT_LENGTH] = contentLength;
 
     if (httpHeaders.find(CONTENT_TYPE) != httpHeaders.end())
@@ -132,9 +131,12 @@ void SignerV4::Sign(const string& httpMethod, const string& resourceUri,
     if(httpHeaders.find(CONTENT_TYPE) != httpHeaders.end() && httpHeaders[CONTENT_TYPE].empty())
         httpHeaders[CONTENT_TYPE] = TYPE_LOG_JSON;
 
-    string date = SLS_STRING_VALUE_IF_NOT_EMPTY(mDebugDate, GetDateString);
-    string dateTime =
-        SLS_STRING_VALUE_IF_NOT_EMPTY(mDebugDateTime, GetDateTimeString);
+    string date = GetDateString(), dateTime = GetDateTimeString();
+    if(httpHeaders.find(X_LOG_DATE) != httpHeaders.end())
+    {
+        dateTime = httpHeaders[X_LOG_DATE]; // for debugging
+        date = dateTime.substr(0, 8);
+    }
     string contentLength = std::to_string(payload.size());
 
     // hexed sha256 of payload(http body)
@@ -171,7 +173,7 @@ void SignerV4::Sign(const string& httpMethod, const string& resourceUri,
     // write to header
     httpHeaders[AUTHORIZATION] = authorization;
 
-    // todo: comment this
+    // comment this
     // cout << "[sha256Payload]:" << endl << sha256Payload << endl;
     // cout << "[dateTime]:" << endl << dateTime << endl;
     // cout << "[date]:" << endl << date << endl;
@@ -338,6 +340,6 @@ const string SignerV4::EMPTY_STRING_SHA256 =
 const unordered_set<string> SignerV4::DEFAULT_SIGNED_HEADERS = {
     CodecTool::LowerCase(CONTENT_TYPE), CodecTool::LowerCase(HOST)};
 const unordered_map<string, string> SignerV4::CHARACTER_WITHOUT_SLASH = {
-    {"+", "%20"}, {"*", "%2A"}, {"%7E", "~"}};
+    {"+", "%20"}, {"*", "%2A"}};
 const unordered_map<string, string> SignerV4::CHARACTER_WITH_SLASH = {
-    {"+", "%20"}, {"*", "%2A"}, {"%7E", "~"}, {"%2F", "/"}};
+    {"+", "%20"}, {"*", "%2A"}, {"%2F", "/"}};
