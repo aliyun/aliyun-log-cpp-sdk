@@ -492,22 +492,10 @@ public:
     void SetSlsHost(const std::string& slsHost);
     std::string GetSlsHost();
     std::string GetHostFieldSuffix();
-    void SetRegion(const std::string& region)
-    {
-        mRegion = region;
-    }
-    std::string GetRegion() const
-    {
-        return mRegion;
-    }
-    void SetSignVersion(LOGSignVersion version)
-    {
-        mSignVersion = version;
-    }
-    LOGSignVersion GetSignVersion() const
-    {
-        return mSignVersion;
-    }
+    void SetRegion(const std::string& region);
+    std::string GetRegion();
+    void SetSignVersion(LOGSignVersion version);
+    LOGSignVersion GetSignVersion();    
 
     const std::string& GetSecurityToken()
     {
@@ -548,6 +536,20 @@ private:
     void SetCommonHeader(std::map<std::string, std::string>& httpHeader, int32_t contentLength, const std::string& project="");
     void SetCommonParameter(std::map<std::string, std::string>& parameterList);
     std::string GetHost(const std::string& project);
+
+   private:
+    class PthreadLockGuard
+    {
+       private:
+        pthread_spinlock_t& mSpinLock;
+
+       public:
+        PthreadLockGuard(pthread_spinlock_t& lock) : mSpinLock(lock)
+        {
+            pthread_spin_lock(&mSpinLock);
+        }
+        ~PthreadLockGuard() { pthread_spin_unlock(&mSpinLock); }
+    };
 };
 }
 #endif

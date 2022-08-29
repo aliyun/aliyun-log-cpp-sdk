@@ -444,7 +444,38 @@ void LOGClient::SetSlsHost(const string& slsHost)
         mIsHostRawIp = true;
     else
         mIsHostRawIp = false;
+
+    if(!mIsHostRawIp)
+    {
+        auto region = CodecTool::ParseRegionFromHost(host);
+        if(!region.empty())
+        {
+            mRegion = region;
+        }
+    }
+    
     pthread_spin_unlock(&mSpinLock);
+}
+
+void LOGClient::SetRegion(const std::string& region)
+{
+    PthreadLockGuard lock(mSpinLock);
+    mRegion = region;
+}
+std::string LOGClient::GetRegion()
+{
+    PthreadLockGuard lock(mSpinLock);
+    return mRegion;
+}
+void LOGClient::SetSignVersion(LOGSignVersion version)
+{
+    PthreadLockGuard lock(mSpinLock);
+    mSignVersion = version;
+}
+LOGSignVersion LOGClient::GetSignVersion()
+{
+    PthreadLockGuard lock(mSpinLock);
+    return mSignVersion;
 }
 
 void LOGClient::SetCommonHeader(map<string, string>& httpHeader, int32_t contentLength, const string& project)

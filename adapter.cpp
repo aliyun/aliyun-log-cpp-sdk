@@ -1,8 +1,10 @@
 #include "adapter.h"
+
 #include <sys/time.h>
-#include <iostream>
-#include <cctype>
+
 #include <algorithm>
+#include <cctype>
+#include <iostream>
 
 using namespace std;
 
@@ -177,6 +179,51 @@ string CodecTool::ReplaceAll(const string& s, const string& oldStr,
         pos += newStr.size();
     }
     return res;
+}
+
+string CodecTool::ParseRegionFromHost(const std::string& host)
+{
+    /*     static string hostPattern =
+            R"(^(?:https?:\/\/)?([a-zA-Z0-9]+(?:-[a-zA-Z0-9]+)+?)(?:-intranet|-share)?\..*)";
+        std::regex expr(hostPattern);
+        smatch result;
+        if(std::regex_search(host, result, expr) && result.size() == 2)
+         return result[2].str() */
+
+    // if g++ version <= 4.8, use non-regex
+    string result = host;
+    size_t startPos = 0;
+    if (result.find("http://") != string::npos)
+    {
+        startPos = 7;
+    }
+    else if (result.find("https://") != string::npos)
+    {
+        startPos = 8;
+    }
+    size_t endPos = 0;
+    if ((endPos = result.find(".", startPos)) != string::npos)
+    {
+        result = result.substr(startPos, endPos - startPos);
+        bool isRawIp = true;
+        for (auto c : result)
+        {
+            if (c < '0' || c > '9')
+            {
+                isRawIp = false;
+                break;
+            }
+        }
+        if (isRawIp) return "";
+
+        if ((endPos = result.rfind("-intranet")) != string::npos ||
+            (endPos = result.rfind("-share")) != string::npos)
+        {
+            return result.substr(0, endPos);
+        }
+        return result;
+    }
+    return "";
 }
 
 std::string CodecTool::CalcMD5(const std::string& message)

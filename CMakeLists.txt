@@ -1,9 +1,6 @@
 cmake_minimum_required(VERSION 2.8.12)
 project(sls-sdk-cpp)
 
-option(ENABLE_BUILD_SAMPLE "enable build sample" OFF)
-option(ENABLE_UNITTEST "enable unittest" OFF)
-
 # using c++ 11
 set(CMAKE_CXX_STANDARD 11)
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
@@ -25,8 +22,6 @@ include_directories(${CMAKE_BINARY_DIR}
 
 # generate protobuf files    
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS sls_logs.proto)
-
-
 
 # target lib [slssdk]
 add_library(slssdk client.cpp
@@ -52,17 +47,14 @@ endif()
 
 
 # build bin [sample]
-if (ENABLE_BUILD_SAMPLE)
-    add_executable(sample sample.cpp)
-    target_link_libraries(sample slssdk)
-endif()
+add_executable(sample sample.cpp)
+target_link_libraries(sample slssdk)
+
 
 # unittest
-if (ENABLE_UNITTEST)
-    enable_testing()
-    add_definitions(-D__ALIYUN_LOG_UNITTEST__)
-    add_subdirectory(test) 
-endif()
+enable_testing()
+add_definitions(-D__ALIYUN_LOG_UNITTEST__)
+add_subdirectory(test) 
 
 # install lib slssdk
 install(TARGETS slssdk

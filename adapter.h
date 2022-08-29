@@ -49,6 +49,7 @@ public:
  // replace all oldStr with newStr, return result string
  static std::string ReplaceAll(const std::string& s, const std::string& oldStr,
                                const std::string& newStr);
+ static std::string ParseRegionFromHost(const std::string& host);
 };
 
 class LOGAdapter
