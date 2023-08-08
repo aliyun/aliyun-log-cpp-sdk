@@ -11,8 +11,10 @@ This is the C++ SDK version 0.6.0 for SLS
 - msvc on windows  
 # Dependency
 
-- protobuf: require version 2.4.1 ,
-          install protoc on your machine or use lib/libprotobuf_static.a
+- protobuf: require version 2.4.1.
+
+install `protoc` on your machine or use `lib/libprotobuf_static.a`. You can download pre-compiled binary from [protobuf release page](https://github.com/protocolbuffers/protobuf/releases).  
+The version of protobuf and protoc should be matched.   
 
 - curl
 
@@ -23,17 +25,20 @@ Third-party libraries can be installed from source code, or using package manage
 It is recommended to use apt on ubuntu, yum on centOS, 
 and [vcpkg](https://github.com/microsoft/vcpkg) on windows.  
 
+If any package not found, you can search and download it from official website of the distribution system. 
+
 Ubuntu      
 
 ```bash
-sudo apt install libtool libprotobuf-dev protobuf-compiler liblz4-tool curl libcurl4-openssl-dev 
+sudo apt install libprotobuf-dev protobuf-compiler liblz4-dev libcurl4-openssl-dev 
 ```
 
 CentOS  
 
 ```bash  
-sudo yum install protobuf-devel lz4-devel lz4 libcurl-devel libcurl 
+sudo yum install protobuf-devel protobuf-compiler lz4-devel libcurl-devel
 ```
+
 
 Windows   
 
@@ -46,12 +51,12 @@ vcpkg install protobuf:x64-windows lz4:x64-windows curl:x64-windows
 
 # Build
 ## Support Build Tools
-1. Makefiles (gcc only)
+1. Makefile (gcc only)
 2. CMake (gcc and msvc) with generators (Makefiles and MsBuild)
 ## Build Tutorial
 > The command-line tool protoc will be used to read the definition from file [sls_logs.proto](sls_logs.proto), and generate the corresponding header file (sls_logs.pb.h) and source file (sls_logs.pb.cc). These files will be automatically updated everytime the proto file updated, please do not modify them manually.
 
-## Using Makefiles
+## Using Makefile
 
 1. Execute command `make -j` from the project root directory to generate the following files.   
 
@@ -100,6 +105,43 @@ If you use `MsBuild` as CMake generator, use the commands below.
 
 ```bash  
 msbuild sls-sdk-cpp.sln
+```
+
+## Using SConscript
+
++ suppose your working directory is $root
+
++ mkdir $root/slssdk
+
++ copy 
+    ```
+    adapter.cpp  client.cpp  common.cpp  resource.cpp  
+    adapter.h  client.h  common.h  resource.h  RestfulApiCommon.h 
+    sls_logs.proto  
+    include
+    ```
+    to $root/slssdk
+
++ build sls sdk lib 
+
+```
+env.aProto('sls_logs.proto')
+env.aStaticLibrary(target = 'sls_logs_pb_cpp', source=['sls_logs.pb.cc'])
+
+slssdk_obj = env.Object([Glob('*.cpp')])
+env.aStaticLibrary(target = 'slssdk' ,source = [slssdk_obj])
+```
+
++ copy 
+```
+lib/liblz4.a lib/libprotobuf_static.a
+```
+to $root/slssdk/
+
++  build your own program
+
+```
+env.aProgram(target= 'sample1' ,source=['sample.cpp'], LIBS=['slssdk','sls_logs_pb_cpp','lz4','curl','protobuf_static'])
 ```
 
 # Sample Code

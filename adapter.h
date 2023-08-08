@@ -125,7 +125,7 @@ private:
         }
         return true;
     }
-    public:
+
     static bool ParseHost(const char* host, std::string& ip);
     
     bool RemoveTimeOutDnsCache()

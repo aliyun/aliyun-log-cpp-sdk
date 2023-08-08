@@ -404,7 +404,10 @@ const uint32_t SHA1::IV[SHA1_DIGEST_WORDS] = {
 #if defined(_MSC_VER) // needs to be first because msvc doesn't short-circuit after failing defined(__has_builtin)
 #include <stdlib.h>
 #define __sls_bswap32(x) _byteswap_ulong((x))
-#elif ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)) || (defined(__has_builtin) && __has_builtin(__builtin_bswap64))
+#elif (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)
+#include <asm/byteorder.h>
+#define __sls_bswap32(x) __builtin_bswap32((x))
+#elif defined(__has_builtin) && __has_builtin(__builtin_bswap64)
 #include <asm/byteorder.h>
 #define __sls_bswap32(x) __builtin_bswap32((x))
 #else

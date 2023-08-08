@@ -4,3 +4,6 @@ build/
 *.pb.h
 *.pb.cc
 out/
+lib/libsls_logs_pb.a
+lib/libslssdk.a
+*.o

@@ -18,7 +18,7 @@ libsls_logs_pb.a : sls_logs.pb.cc
 	g++ -c  sls_logs.pb.cc
 	ar rc lib/libsls_logs_pb.a sls_logs.pb.o
 
-proto.cc: sls_logs.proto
+sls_logs.pb.cc: sls_logs.proto
 	protoc  --cpp_out=./ sls_logs.proto
 
 adapter.o:   adapter.cpp

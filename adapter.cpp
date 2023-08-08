@@ -11,7 +11,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #define SLS_MSVC_CLEANUP WSACleanup()
-#elif // only linux 
+#else // only linux 
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <netdb.h>
@@ -181,7 +181,7 @@ std::string CodecTool::GetDateString()
 
 #if defined(_MSC_VER)
 // for windows on msvc
-time_t CodecTool::DecodeDateString(const std::string &dateString, const std::string &dateFormat)
+time_t CodecTool::DecodeDateString(const std::string& dateString, const std::string& dateFormat)
 {
     std::tm tm = {};
     std::istringstream input(dateString);
@@ -196,7 +196,7 @@ time_t CodecTool::DecodeDateString(const std::string &dateString, const std::str
 }
 #else
 // for linux on gcc
-time_t CodecTool::DecodeDateString(const std::string dateString, const std::string &dateFormat)
+time_t CodecTool::DecodeDateString(const std::string& dateString, const std::string& dateFormat)
 {
     struct tm t;
     memset(&t, 0, sizeof(t));

@@ -13,8 +13,9 @@
 
 # 依赖的第三方库
 
-- protobuf: 要求版本不低于 2.4.1, 需要安装 protoc 工具，用于从 proto 文件生成 protobuf 头文件与源文件  
-
+- protobuf: 要求版本不低于 2.5.0。  
+ 还需要安装 `protoc` 工具，用于从 proto 文件生成 protobuf 头文件与源文件。可以从 [protobuf 发布页面](https://github.com/protocolbuffers/protobuf/releases) 下载已编译好的二进制文件。  
+protoc 与 protobuf 的版本应该相符，避免兼容性问题。  
 - curl
 
 - lz4
@@ -22,16 +23,18 @@
 ## 第三方库安装方式
 第三方库可以通过源码编译安装，或者使用包管理工具安装。ubuntu 下推荐使用 apt、centos 推荐使用 yum、windows 推荐使用 [vcpkg](https://github.com/microsoft/vcpkg) 进行安装。  
 
-Ubuntu系统    
+如果有些包未找到，可以去发行版系统的官方网站搜索并下载安装，或者从源码构建安装。  
+
+Ubuntu      
 
 ```bash
-sudo apt install libtool libprotobuf-dev protobuf-compiler liblz4-tool curl libcurl4-openssl-dev 
+sudo apt install libprotobuf-dev protobuf-compiler liblz4-dev libcurl4-openssl-dev 
 ```
 
-CentOS系统  
+CentOS  
 
 ```bash  
-sudo yum install protobuf-devel lz4-devel lz4 libcurl-devel libcurl 
+sudo yum install protobuf-devel protobuf-compiler lz4-devel libcurl-devel
 ```
 
 Windows系统  
@@ -44,12 +47,12 @@ vcpkg install protobuf:x64-windows lz4:x64-windows curl:x64-windows
 
 # 编译构建
 ## 支持的构建工具
-1. Makefiles (支持编译器 gcc)
+1. Makefile (支持编译器 gcc)
 2. CMake (支持编译器 gcc 和 msvc)
 ## 编译过程
 > 在下面的编译过程中，会利用 protoc 工具从 [sls_logs.proto](sls_logs.proto) 文件中读取定义，并生成相应的头文件(sls_logs.pb.h)与源文件(sls_logs.pb.cc)。这些文件会在 proto 定义更新后被自动更新，请不要手动修改这些生成的文件。  
 
-## 使用 Makefiles 构建
+## 使用 Makefile 构建
 
 1. 在项目根目录执行命令 `make -j`，自动生成以下文件。
 
@@ -96,6 +99,39 @@ make -j
 
 ```bash  
 msbuild sls-sdk-cpp.sln
+```
+
+## 使用 SConscript（不推荐）
+
++ 项目根目录记作 $root，首先创建目录 `mkdir $root/slssdk`
+
++ 拷贝以下文件到项目根目录
+```
+adapter.cpp  client.cpp  common.cpp  resource.cpp  
+adapter.h  client.h  common.h  resource.h  RestfulApiCommon.h 
+sls_logs.proto  
+include
+```
+
++ 构建 sls sdk 库文件
+
+```
+env.aProto('sls_logs.proto')
+env.aStaticLibrary(target = 'sls_logs_pb_cpp', source=['sls_logs.pb.cc'])
+
+slssdk_obj = env.Object([Glob('*.cpp')])
+env.aStaticLibrary(target = 'slssdk' ,source = [slssdk_obj])
+```
+
++ 拷贝以下文件到 $root/slssdk/
+```
+lib/liblz4.a lib/libprotobuf_static.a
+```
+
++  构建你的程序
+
+```
+env.aProgram(target= 'sample1' ,source=['sample.cpp'], LIBS=['slssdk','sls_logs_pb_cpp','lz4','curl','protobuf_static'])
 ```
 
 # 样例
