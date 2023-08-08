@@ -14,10 +14,10 @@ add_library(slssdk STATIC
     ${PROTO_HDRS})
 
 include_directories(slssdk ${CMAKE_CURRENT_SOURCE_DIR}/include)
+# protobuf
 target_include_directories(slssdk PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
-
 target_include_directories(slssdk PUBLIC ${PROTOBUF_INCLUDE_DIRS})
-
+# curl
 find_package(CURL REQUIRED)
 target_include_directories(slssdk PUBLIC ${CURL_INCLUDE_DIR})
 

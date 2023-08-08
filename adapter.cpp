@@ -166,7 +166,7 @@ std::string CodecTool::Base64Enconde(const std::string& message)
 }
 static constexpr size_t DATE_BUFFER_SIZE = 128;
 
-std::string CodecTool::GetDateString(const std::string &dateFormat)
+std::string CodecTool::GetDateString(const std::string& dateFormat)
 {
     std::time_t time = std::time({});
     char buffer[DATE_BUFFER_SIZE];
@@ -456,7 +456,7 @@ string LOGAdapter::GetUrlSignature(const string& httpMethod, const string& opera
 
 #if defined(_MSC_VER)
 // for msvc on windows
-bool DnsCache::ParseHost(const char *host, std::string &ip)
+bool DnsCache::ParseHost(const char* host, std::string& ip)
 {
     WSADATA _wsaData;
     if (WSAStartup(MAKEWORD(2, 2), &_wsaData) != 0)
@@ -504,7 +504,7 @@ bool DnsCache::ParseHost(const char *host, std::string &ip)
 }
 #else
 // for gcc on linux
-bool DnsCache::ParseHost(const char *host, std::string &ip)
+bool DnsCache::ParseHost(const char *host, std::string& ip)
 {
     struct sockaddr_in addr;
 

@@ -8,7 +8,6 @@
  *  year of creation of the work.
  *
  */
-
 #include "client.h"
 #include "common.h"
 #include <string>

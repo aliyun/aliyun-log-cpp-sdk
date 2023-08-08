@@ -7,7 +7,7 @@
 
 # 支持的系统与平台
 
-- gcc (version >= 4.8) on linux  
+- gcc (version >= 4.9) on linux  
  
 - msvc on windows  
 

@@ -6,7 +6,7 @@ This is the C++ SDK version 0.6.0 for SLS
 
 # Supported Platforms
 
-- gcc (version >= 4.8) on linux  
+- gcc (version >= 4.9) on linux  
 
 - msvc on windows  
 # Dependency
@@ -107,7 +107,7 @@ If you use `MsBuild` as CMake generator, use the commands below.
 msbuild sls-sdk-cpp.sln
 ```
 
-## Using SConscript
+## Using SConscript(not recommended)
 
 + suppose your working directory is $root
 
