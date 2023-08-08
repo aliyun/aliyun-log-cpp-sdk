@@ -3,15 +3,12 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <netdb.h>
-#include <arpa/inet.h>      // inet_addr
-#include <sys/ioctl.h>
+
 #include "common.h"
 #include "client.h"
 #include "RestfulApiCommon.h"
-#include <curl/curl.h>
+#include <mutex>
+
 namespace aliyun_log_sdk_v6
 {
 typedef enum{BASE64_SHA1_MD5} LOGSigType;
@@ -28,7 +25,7 @@ public:
 
     static std::string GetDateString(const std::string& dateFormat);
     static std::string GetDateString();
-    static time_t DecodeDateString(const std::string dateString, const std::string& dateFormat=DATE_FORMAT_RFC822);
+    static time_t DecodeDateString(const std::string& dateString, const std::string& dateFormat=DATE_FORMAT_RFC822);
     
     static bool StartWith(const std::string& input, const std::string& pattern);
     static std::string UrlEncode(const std::string& url);
@@ -38,6 +35,7 @@ public:
 class LOGAdapter
 {
 public:
+    using curl_off_t = long long;
     static void GetQueryString(const std::map<std::string, std::string>& parameterList, std::string &queryString);
     static void Send(const std::string& httpMethod, const std::string& host, const int32_t port, const std::string& url, const std::string& queryString, const std::map<std::string, std::string>& header, const std::string& body, const int32_t timeout, HttpMessage& httpMessage, const curl_off_t maxspeed = 0);
     static void AsynSend(const std::string& httpMethod, const std::string& host, const int32_t port, const std::string& url, const std::string& queryString, const std::map<std::string, std::string>& header, const std::string& body, const int32_t timeout, RequestClosure* callBack);
@@ -52,11 +50,9 @@ public:
     {
         mUpdateTime = time(NULL);
         mDnsTTL = dnsTTL;
-        pthread_mutex_init(& mDnsCacheLock, NULL);
     }
     ~DnsCache()
     {
-        pthread_mutex_destroy(& mDnsCacheLock);
     }
     
     static DnsCache* GetInstance()
@@ -69,8 +65,8 @@ public:
     {
         int32_t currentTime = time(NULL);
         bool status = false;
-        
-        pthread_mutex_lock(& mDnsCacheLock);
+
+        const std::lock_guard<std::mutex> lock(mMutex);
         
         std::map<std::string, std::pair<std::string, int32_t> >::iterator itr = mDnsCacheData.find(host);
         if (itr==mDnsCacheData.end() || currentTime-(itr->second).second>=3)
@@ -93,7 +89,6 @@ public:
             }
         }
         
-        pthread_mutex_unlock(& mDnsCacheLock);
         return status;
     }
     
@@ -101,7 +96,7 @@ public:
     {
         bool found = false;
         
-        pthread_mutex_lock(& mDnsCacheLock);
+        std::unique_lock<std::mutex> lock(mMutex);
         
         if (! RemoveTimeOutDnsCache()) // not time out
         {
@@ -112,9 +107,8 @@ public:
                 found = true;
             } // else found=false
         }
-        
-        pthread_mutex_unlock(& mDnsCacheLock);
-        
+
+        lock.unlock();        
         if (! found) // time out or not found
             return UpdateHostInDnsCache(host, address);
         return found;
@@ -131,35 +125,8 @@ private:
         }
         return true;
     }
-
-    static bool ParseHost(const char* host, std::string& ip) {
-        struct sockaddr_in  addr;
-
-        memset(&addr, 0, sizeof(addr));
-        addr.sin_family = AF_INET;
-
-        if (host && host[0]) {
-            if (IsRawIp(host)) {
-                if ((addr.sin_addr.s_addr = inet_addr(host)) == INADDR_NONE)
-                    return false;
-            } else {
-                // FIXME: gethostbyname will block
-                char    buffer[1024];
-                struct  hostent h;
-                struct  hostent *hp=NULL;
-                int     rc;
-
-                if (gethostbyname_r(host, &h, buffer, 1024, &hp, &rc) || hp == NULL)
-                    return false;
-
-                addr.sin_addr.s_addr = *((in_addr_t *) (hp->h_addr));
-            }
-        } else {
-            addr.sin_addr.s_addr = htonl(INADDR_ANY);
-        }
-        ip = inet_ntoa(addr.sin_addr);
-        return true;
-    }
+    public:
+    static bool ParseHost(const char* host, std::string& ip);
     
     bool RemoveTimeOutDnsCache()
     {
@@ -176,7 +143,7 @@ private:
     
     int32_t mUpdateTime;
     int32_t mDnsTTL;
-    pthread_mutex_t mDnsCacheLock;
+    std::mutex mMutex;
     std::map<std::string, std::pair<std::string, int32_t> > mDnsCacheData;
 };
 

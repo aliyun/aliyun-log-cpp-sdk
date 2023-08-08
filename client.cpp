@@ -4,22 +4,38 @@
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
-#include <sys/ioctl.h>
-#include <arpa/inet.h>
-#include <iostream>
-#include <curl/curl.h>
-#include <unistd.h> 
-#include <netdb.h>
-#include <sys/socket.h> 
-#include <netinet/in.h> 
-#include <sys/ioctl.h> 
-#include <net/if.h> 
-#include <net/if_arp.h>
-#include <string>
-#include <cstdlib>
 
-#include <iostream>
 #include <cstdio>
+#include <cstdlib>
+#include <curl/curl.h>
+#include <iostream>
+#include <string>
+
+#if defined(_MSC_VER)
+#pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "iphlpapi.lib")
+#include <iphlpapi.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#ifdef GetMessage
+#undef GetMessage
+#endif // GetMessage
+#define SLS_MSVC_CLEANUP WSACleanup()
+#define SLS_MSVC_STARTUP WSADATA _wsaData; \
+int iRet = WSAStartup(MAKEWORD(2, 2), &_wsaData);
+#else
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <net/if.h>
+#include <net/if_arp.h>
+
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#define SLS_MSVC_CLEANUP
+#define SLS_MSVC_STARTUP
+#endif
 
 #define ETH_NAME "eth0"
 
@@ -29,27 +45,76 @@ using namespace rapidjson;
 extern const char* const aliyun_log_sdk_v6::LOG_SDK_IDENTIFICATION = "sls-cpp-sdk v0.6.1";
 static string GetHostIpByHostName()
 {
+    SLS_MSVC_STARTUP;
     char hostname[255];
     gethostname(hostname, 255);
     struct hostent* entry = gethostbyname(hostname);
     if (entry == NULL)
     {
+        SLS_MSVC_CLEANUP;
         return string();
     }
     struct in_addr* addr = (struct in_addr*)entry -> h_addr_list[0];
     if (addr == NULL)
     {
+        SLS_MSVC_CLEANUP;
         return string();
     }
     char* ipaddr = inet_ntoa(*addr);
     if (ipaddr == NULL)
     {
+        SLS_MSVC_CLEANUP;
         return string();
     }
+    SLS_MSVC_CLEANUP;
     return string(ipaddr);
 }
 
-
+#if defined(_MSC_VER)
+// for msvc on windows, get ipv4 address, return first available
+static string GetHostIpByETHName()
+{
+    PMIB_IPADDRTABLE pIPAddrTable = (MIB_IPADDRTABLE *)malloc(sizeof(MIB_IPADDRTABLE));
+    if (!pIPAddrTable)
+    {
+        return "";
+    }
+    DWORD dwSize = 0, dwRetVal = 0;
+    if (GetIpAddrTable(pIPAddrTable, &dwSize, 0) == ERROR_INSUFFICIENT_BUFFER)
+    {
+        free(pIPAddrTable);
+        pIPAddrTable = (MIB_IPADDRTABLE *)malloc(dwSize); // re-allocate
+    }
+    // second call
+    if ((dwRetVal = GetIpAddrTable(pIPAddrTable, &dwSize, 0)) != NO_ERROR)
+    {
+        for (int i = 0; i < (int)pIPAddrTable->dwNumEntries; ++i)
+        {
+            // ignore disconnected / deleted / transient ip addresses
+            if (pIPAddrTable->table[i].wType & (MIB_IPADDR_DELETED | MIB_IPADDR_DISCONNECTED | MIB_IPADDR_TRANSIENT))
+            {
+                continue;
+            }
+            struct in_addr addr;
+            addr.S_un.S_addr = (u_long)pIPAddrTable->table[i].dwAddr;
+            string ip = inet_ntoa(addr);
+            if (ip == "127.0.0.1") // rm loopback
+            {
+                continue;
+            }
+            free(pIPAddrTable);
+            return ip;
+        }
+    }
+    if (pIPAddrTable)
+    {
+        free(pIPAddrTable);
+        pIPAddrTable = NULL;
+    }
+    return "";
+}
+#else
+// for gcc on linux
 static string GetHostIpByETHName()
 {
     int   sock;    
@@ -82,6 +147,7 @@ static string GetHostIpByETHName()
     }
     return string(ipaddr);
 }
+#endif
 
 static string GetHostIp()
 {
@@ -306,7 +372,6 @@ LOGClient::LOGClient(const string& slsHost, const string& accessKeyId, const str
     mGetDateString(CodecTool::GetDateString),
     mLOGSend(LOGAdapter::Send)
 {
-    pthread_spin_init(&mSpinLock, PTHREAD_PROCESS_PRIVATE);
     SetSlsHost(slsHost);
     if(mSource=="")
     {
@@ -333,7 +398,6 @@ LOGClient::LOGClient(const string& slsHost, const string& accessKeyId, const str
     mGetDateString(CodecTool::GetDateString),
     mLOGSend(LOGAdapter::Send)
 {
-    pthread_spin_init(&mSpinLock, PTHREAD_PROCESS_PRIVATE);
     SetSlsHost(slsHost);
     if(mSource=="")
     {
@@ -348,7 +412,6 @@ LOGClient::LOGClient(const string& slsHost, const string& accessKeyId, const str
 
 LOGClient::~LOGClient() throw()
 {
-    pthread_spin_destroy(&mSpinLock);
 }
 
 static void ConvertLogGroup(const vector<LogItem>& logGroup, LogGroup& pbLogGroup)
@@ -372,52 +435,46 @@ static void ConvertLogGroup(const vector<LogItem>& logGroup, LogGroup& pbLogGrou
 
 void LOGClient::SetAccessKey(const string& accessKey)
 {
-    pthread_spin_lock(&mSpinLock);
+    const std::lock_guard<std::mutex> lock(mMutex);
     mAccessKey = accessKey;
-    pthread_spin_unlock(&mSpinLock);
 }
 
 string LOGClient::GetAccessKey()
 {
-    pthread_spin_lock(&mSpinLock);
+    const std::lock_guard<std::mutex> lock(mMutex);
     string accessKey = mAccessKey;
-    pthread_spin_unlock(&mSpinLock);
     return accessKey;
 }
 
 void LOGClient::SetAccessKeyId(const string& accessKeyId)
 {
-    pthread_spin_lock(&mSpinLock);
+    const std::lock_guard<std::mutex> lock(mMutex);
     mAccessKeyId = accessKeyId;
-    pthread_spin_unlock(&mSpinLock);
 }
 
 string LOGClient::GetAccessKeyId()
 {
-    pthread_spin_lock(&mSpinLock);
+    const std::lock_guard<std::mutex> lock(mMutex);
     string accessKeyId = mAccessKeyId;
-    pthread_spin_unlock(&mSpinLock);
     return accessKeyId;
 }
 
 string LOGClient::GetSlsHost()
 {
-    pthread_spin_lock(&mSpinLock);
+    const std::lock_guard<std::mutex> lock(mMutex);
     string slsHost = mSlsHost;
-    pthread_spin_unlock(&mSpinLock);
     return slsHost;
 }
 
 string LOGClient::GetHostFieldSuffix()
 {
-    pthread_spin_lock(&mSpinLock);
+    const std::lock_guard<std::mutex> lock(mMutex);
     string hostFieldSuffix = mHostFieldSuffix;
-    pthread_spin_unlock(&mSpinLock);
     return hostFieldSuffix;
 }
 void LOGClient::SetSlsHost(const string& slsHost)
 {
-    pthread_spin_lock(&mSpinLock);
+    const std::lock_guard<std::mutex> lock(mMutex);
     //mSlsHost = slsHost;
     size_t  bpos = slsHost.find("://");
     if(bpos == string::npos)
@@ -443,7 +500,6 @@ void LOGClient::SetSlsHost(const string& slsHost)
         mIsHostRawIp = true;
     else
         mIsHostRawIp = false;
-    pthread_spin_unlock(&mSpinLock);
 }
 
 void LOGClient::SetCommonHeader(map<string, string>& httpHeader, int32_t contentLength, const string& project)
@@ -864,7 +920,7 @@ static void ExtractHeartbeat(HttpMessage& httpMessage, std::vector<uint32_t>& sh
     try
     {
         ExtractJsonResult(httpMessage.content, doc);
-        typeof(doc.GetArray()) array = doc.GetArray();
+        auto array = doc.GetArray();
         for (Value::ConstValueIterator itr = array.Begin(); itr != array.End(); ++itr)
         {
             shards.push_back(itr->GetUint());
@@ -881,7 +937,7 @@ static void ExtractConsumerGroupCheckpoints(HttpMessage& httpMessage, vector<Con
     try
     {
         ExtractJsonResult(httpMessage.content, doc);
-        typeof(doc.GetArray()) array = doc.GetArray();
+        auto array = doc.GetArray();
         for (Value::ConstValueIterator itr = array.Begin(); itr != array.End(); ++itr)
         {
             ConsumerGroupCheckpoint cp((*itr)["shard"].GetUint(), (*itr)["checkpoint"].GetString(), (*itr)["updateTime"].GetUint64());
@@ -899,7 +955,7 @@ static void ExtractConsumerGroups(HttpMessage& httpMessage, vector<ConsumerGroup
     try
     {
         ExtractJsonResult(httpMessage.content, doc);
-        typeof(doc.GetArray()) array = doc.GetArray();
+        auto array = doc.GetArray();
         for (Value::ConstValueIterator itr = array.Begin(); itr != array.End(); ++itr)
         {
             ConsumerGroup group((*itr)["name"].GetString(), (*itr)["timeout"].GetUint(), (*itr)["order"].GetBool());

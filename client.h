@@ -7,8 +7,8 @@
 #include "RestfulApiCommon.h"
 #include "sls_logs.pb.h"
 #include "resource.h"
-#include <pthread.h>
-#include "curl/curl.h"
+#include <mutex>
+
 namespace ehttp
 {
 class HttpController;
@@ -310,7 +310,8 @@ public:
     LOGClient(const std::string& slsHost, const std::string& accessKeyId, const std::string& accessKey, int32_t timeout=LOG_REQUEST_TIMEOUT, const std::string& source="", bool compressFlag=true);
     LOGClient(const std::string& slsHost, const std::string& accessKeyId, const std::string& accessKey, const std::string& securityToken, int32_t timeout=LOG_REQUEST_TIMEOUT, const std::string& source="", bool compressFlag=true);
     ~LOGClient() throw();
-
+    
+    using curl_off_t = long long;
     CreateConsumerGroupResponse CreateConsumerGroup(const std::string& project , 
             const std::string& logstore, 
             const std::string& consumergroup, 
@@ -518,7 +519,7 @@ protected:
     std::string mKeyProvider;
     std::string mHostFieldSuffix;
     bool mIsHostRawIp;
-    pthread_spinlock_t mSpinLock;
+    std::mutex mMutex;
     //HttpMessage (*mLOGSend)(const std::string& url, const std::map<std::string, std::string>& header, const std::string& body, const LOG_Request_Mode requestMode, int32_t timeout); 
     std::string (*mGetDateString)();
     void (*mLOGSend)(const std::string& httpMethod, const std::string& host, const int32_t port, const std::string& url, const std::string& queryString, const std::map<std::string, std::string>& header, const std::string& body, const int32_t timeout, HttpMessage& httpMessage, const curl_off_t maxspeed); 

@@ -1,7 +1,5 @@
 #include "common.h"
 #include "lz4/lz4.h"
-#include <asm/byteorder.h>
-
 
 namespace aliyun_log_sdk_v6
 {
@@ -374,6 +372,58 @@ const uint32_t SHA1::IV[SHA1_DIGEST_WORDS] = {
     0xC3D2E1F0
 };
 
+// Detect cpu endian
+#if !defined(__LITTLE_ENDIAN__) && !defined(__BIG_ENDIAN__)
+#if (defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) ||  \
+    (defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN) ||              \
+    (defined(_BYTE_ORDER) && _BYTE_ORDER == _BIG_ENDIAN) ||                 \
+    (defined(BYTE_ORDER) && BYTE_ORDER == BIG_ENDIAN) ||                    \
+    (defined(__sun) && defined(__SVR4) && defined(_BIG_ENDIAN)) ||          \
+    defined(__ARMEB__) || defined(__THUMBEB__) || defined(__AARCH64EB__) || \
+    defined(_MIBSEB) || defined(__MIBSEB) || defined(__MIBSEB__) ||         \
+    defined(_M_PPC)
+#define __SLS_BIG_ENDIAN__
+#elif (defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) || /* gcc */      \
+    (defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN) /* linux header */ ||           \
+    (defined(_BYTE_ORDER) && _BYTE_ORDER == _LITTLE_ENDIAN) ||                                 \
+    (defined(BYTE_ORDER) && BYTE_ORDER == LITTLE_ENDIAN) /* mingw header */ ||                 \
+    (defined(__sun) && defined(__SVR4) && defined(_LITTLE_ENDIAN)) || /* solaris */            \
+    defined(__ARMEL__) || defined(__THUMBEL__) || defined(__AARCH64EL__) ||                    \
+    defined(_MIPSEL) || defined(__MIPSEL) || defined(__MIPSEL__) ||                            \
+    defined(_M_IX86) || defined(_M_X64) || defined(_M_IA64) || /* msvc for intel processors */ \
+    defined(_M_ARM)                                            /* msvc code on arm executes in little endian mode */
+#define __SLS_LITTLE_ENDIAN__
+#endif
+#endif
+
+#if !defined(__SLS_LITTLE_ENDIAN__) & !defined(__SLS_BIG_ENDIAN__)
+#error "UNKNOWN Platform / endianness. Configure endianness checks for this platform or set explicitly."
+#endif
+
+/* Define byte-swap functions, using fast processor-native built-ins where possible */
+#if defined(_MSC_VER) // needs to be first because msvc doesn't short-circuit after failing defined(__has_builtin)
+#include <stdlib.h>
+#define __sls_bswap32(x) _byteswap_ulong((x))
+#elif ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)) || (defined(__has_builtin) && __has_builtin(__builtin_bswap64))
+#include <asm/byteorder.h>
+#define __sls_bswap32(x) __builtin_bswap32((x))
+#else
+// fall back to function
+static inline uint32_t __sls_bswap32(uint32_t x)
+{
+    return ((((x)&0xff000000u) >> 24) |
+            (((x)&0x00ff0000u) >> 8) |
+            (((x)&0x0000ff00u) << 8) |
+            (((x)&0x000000ffu) << 24));
+}
+#endif
+
+#if defined(__SLS_LITTLE_ENDIAN__)
+#define __sls_cpu_to_be32(x) __sls_bswap32((x))
+#else
+#define __sls_cpu_to_be32(x) (x)
+#endif
+
 /*
 * the message must be the big-endian32 (or left-most word) 
 * before calling the transform() function.
@@ -382,7 +432,7 @@ const static uint32_t iii=1;
 const static bool littleEndian = *(uint8_t*)&iii!=0;
 inline void	make_big_endian32(uint32_t *data, unsigned n) 
 {
-    if (littleEndian) for (; n>0; ++data,--n) *data = __cpu_to_be32(*data);
+    if (littleEndian) for (; n>0; ++data,--n) *data = __sls_cpu_to_be32(*data);
 }
 
 inline size_t min(size_t a,size_t b) {return a<b ? a : b;}

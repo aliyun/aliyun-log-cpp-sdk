@@ -1,6 +1,24 @@
 #include "adapter.h"
-#include <sys/time.h>
 #include <iostream>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
+#include <curl/curl.h>
+
+#if defined(_MSC_VER)
+#pragma comment(lib,"ws2_32.lib")
+#include <stdlib.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#define SLS_MSVC_CLEANUP WSACleanup()
+#elif // only linux 
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <sys/ioctl.h>
+#define SLS_MSVC_CLEANUP
+#endif
 
 using namespace std;
 
@@ -146,36 +164,54 @@ std::string CodecTool::Base64Enconde(const std::string& message)
     Base64Encoding(iss, oss);
     return oss.str();
 }
+static constexpr size_t DATE_BUFFER_SIZE = 128;
 
-std::string CodecTool::GetDateString(const std::string& dateFormat)
+std::string CodecTool::GetDateString(const std::string &dateFormat)
 {
-    time_t now_time;
-    time(&now_time);
-    char buffer[128]={'\0'};
-    tm timeInfo;
-    gmtime_r(&now_time, &timeInfo);
-    strftime(buffer, 128, dateFormat.c_str(), &timeInfo);
+    std::time_t time = std::time({});
+    char buffer[DATE_BUFFER_SIZE];
+    memset(buffer, 0, sizeof(buffer));
+    std::strftime(buffer, DATE_BUFFER_SIZE, dateFormat.c_str(), std::gmtime(&time));
     return string(buffer);
 }
 std::string CodecTool::GetDateString()
 {
     return GetDateString(DATE_FORMAT_RFC822);
 }
-time_t CodecTool::DecodeDateString(const std::string dateString, const std::string& dateFormat)
+
+#if defined(_MSC_VER)
+// for windows on msvc
+time_t CodecTool::DecodeDateString(const std::string &dateString, const std::string &dateFormat)
 {
-  struct tm t;
-  memset(&t, 0, sizeof(t));
-  t.tm_sec = -1;
-  strptime(dateString.c_str(), dateFormat.c_str(),&t);
-  if(t.tm_sec == -1)
-  {
-      throw LOGException(LOGE_PARAMETER_INVALID, string("Invalid date string:") + dateString + ",format:" + dateFormat);
-  }
-  struct timezone tz;
-  struct timeval tv;
-  gettimeofday(&tv, &tz);
-  return mktime(&t)-tz.tz_minuteswest*60;
+    std::tm tm = {};
+    std::istringstream input(dateString);
+    input.imbue(std::locale(setlocale(LC_ALL, nullptr)));
+    input >> std::get_time(&tm, dateFormat.c_str());
+    if (input.fail())
+    {
+        throw LOGException(LOGE_PARAMETER_INVALID, string("Invalid date string:") +
+                                                       dateString + ",format:" + dateFormat);
+    }
+    return _mkgmtime(&tm);
 }
+#else
+// for linux on gcc
+time_t CodecTool::DecodeDateString(const std::string dateString, const std::string &dateFormat)
+{
+    struct tm t;
+    memset(&t, 0, sizeof(t));
+    t.tm_sec = -1;
+    strptime(dateString.c_str(), dateFormat.c_str(), &t);
+    if (t.tm_sec == -1)
+    {
+        throw LOGException(LOGE_PARAMETER_INVALID, string("Invalid date string:") + dateString + ",format:" + dateFormat);
+    }
+    struct timezone tz;
+    struct timeval tv;
+    gettimeofday(&tv, &tz);
+    return mktime(&t) - tz.tz_minuteswest * 60;
+}
+#endif
 
 bool CodecTool::StartWith(const std::string& input, const std::string& pattern)
 {
@@ -417,5 +453,92 @@ string LOGAdapter::GetUrlSignature(const string& httpMethod, const string& opera
     }
     return signature;
 }
+
+#if defined(_MSC_VER)
+// for msvc on windows
+bool DnsCache::ParseHost(const char *host, std::string &ip)
+{
+    WSADATA _wsaData;
+    if (WSAStartup(MAKEWORD(2, 2), &_wsaData) != 0)
+    {
+        return false;
+    }
+
+    in_addr addr;
+    memset(&addr, 0, sizeof(addr));
+
+    if (!host || !host[0])
+    {
+        addr.s_addr = htonl(INADDR_ANY);
+        ip = inet_ntoa(addr);
+        SLS_MSVC_CLEANUP;
+        return true;
+    }
+
+    if (IsRawIp(host) && (addr.s_addr = inet_addr(host)) == INADDR_NONE)
+    {
+        SLS_MSVC_CLEANUP;
+        return false;
+    }
+
+    struct addrinfo *result = NULL, *rp = NULL;
+    struct addrinfo hints;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET; // only for ipv4 now
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+    if (getaddrinfo(host, NULL, &hints, &result) != 0)
+    {
+        SLS_MSVC_CLEANUP;
+        return false;
+    }
+    for (rp = result; rp != NULL; rp = rp->ai_next)
+    {
+        struct sockaddr_in *addr2 = (struct sockaddr_in *)rp->ai_addr;
+        ip = inet_ntoa(addr2->sin_addr);
+        SLS_MSVC_CLEANUP;
+        return true;
+    }
+    SLS_MSVC_CLEANUP;
+    return false;
+}
+#else
+// for gcc on linux
+bool DnsCache::ParseHost(const char *host, std::string &ip)
+{
+    struct sockaddr_in addr;
+
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+
+    if (host && host[0])
+    {
+        if (IsRawIp(host))
+        {
+            if ((addr.sin_addr.s_addr = inet_addr(host)) == INADDR_NONE)
+                return false;
+        }
+        else
+        {
+            // FIXME: gethostbyname will block
+            char buffer[1024];
+            struct hostent h;
+            struct hostent *hp = NULL;
+            int rc;
+
+            if (gethostbyname_r(host, &h, buffer, 1024, &hp, &rc) || hp == NULL)
+                return false;
+
+            addr.sin_addr.s_addr = *((in_addr_t *)(hp->h_addr));
+        }
+    }
+    else
+    {
+        addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    }
+    ip = inet_ntoa(addr.sin_addr);
+    return true;
+}
+#endif
 }
 

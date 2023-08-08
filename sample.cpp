@@ -8,80 +8,85 @@
  *  year of creation of the work.
  *
  */
+
 #include "client.h"
 #include "common.h"
 #include <string>
 #include <iostream>
-#include <unistd.h>
+#include <thread>
+#include <chrono>
+#include <memory>
+
 using namespace aliyun_log_sdk_v6;
 using namespace std;
-int main(int argc,char ** argv)
+int main(int argc, char **argv)
 {
     string endpoint = "cn-hangzhou-corp.sls.aliyuncs.com";
     string accessKeyId = "";
     string accessKey = "";
-    string project="";
-    string logstore="";
+    string project = "";
+    string logstore = "";
     string topic = "";
-    LOGClient * ptr = new LOGClient(endpoint,accessKeyId,accessKey,LOG_REQUEST_TIMEOUT,"127.0.0.1",false);
+    auto clientPtr = make_shared<LOGClient>(endpoint, accessKeyId, accessKey, LOG_REQUEST_TIMEOUT, "127.0.0.1", false);
     vector<LogItem> logGroup;
-    for (int i = 0;i < 1;++i)
+    for (int i = 0; i < 2; ++i)
     {
         logGroup.push_back(LogItem());
-        LogItem & item =  logGroup.back();
-        item.timestamp = time(NULL) ;
-        item.source="127.0.0.1";
-        item.topic=topic;
-        item.data.push_back(make_pair<string,string>("status","200"));
-        item.data.push_back(make_pair<string,string>("latency","126"));
+        LogItem &item = logGroup.back();
+        item.timestamp = time(NULL);
+        item.source = "127.0.0.1";
+        item.topic = topic;
+        item.data.push_back({"status", "200"});
+        item.data.push_back({"latency", "126"});
     }
-    try{
-        //ptr-> CreateConsumerGroup(project, logstore, "hahhah", 10, true);
-        ptr -> DeleteConsumerGroup(project,logstore,"test-consumer-group");
+    try
+    {
+        // ptr-> CreateConsumerGroup(project, logstore, "hahhah", 10, true);
+        clientPtr->DeleteConsumerGroup(project, logstore, "test-consumer-group");
         uint32_t shardId = 2;
-        int32_t beginTime =  time(NULL);
-        ptr -> PostLogStoreLogs(project,logstore,topic,logGroup);
-        sleep(1);
-        ptr -> PostLogStoreLogs(project,logstore,topic,logGroup);
-        sleep(1);
-        int32_t endTime = time(NULL);
-        ptr -> PostLogStoreLogs(project,logstore,topic,logGroup);
-        sleep(1);
-        ptr -> PostLogStoreLogs(project,logstore,topic,logGroup);
-        sleep(1);
-        GetCursorResponse beginCursorResp = ptr->GetCursor(project, logstore, shardId, beginTime);
-        GetCursorResponse endCursorResp = ptr->GetCursor(project, logstore, shardId, endTime);
-        GetBatchLogResponse getLogResp = ptr->GetBatchLog(project, logstore, shardId, 1000, beginCursorResp.result);
+        auto beginTime = time(NULL);
+        clientPtr->PostLogStoreLogs(project, logstore, topic, logGroup);
+        this_thread::sleep_for(chrono::seconds(1));
+        clientPtr->PostLogStoreLogs(project, logstore, topic, logGroup);
+        this_thread::sleep_for(chrono::seconds(1));
+        auto endTime = time(NULL);
+        clientPtr->PostLogStoreLogs(project, logstore, topic, logGroup);
+        this_thread::sleep_for(chrono::seconds(1));
+        clientPtr->PostLogStoreLogs(project, logstore, topic, logGroup);
+        this_thread::sleep_for(chrono::seconds(1));
+        GetCursorResponse beginCursorResp = clientPtr->GetCursor(project, logstore, shardId, beginTime);
+        GetCursorResponse endCursorResp = clientPtr->GetCursor(project, logstore, shardId, endTime);
+        GetBatchLogResponse getLogResp = clientPtr->GetBatchLog(project, logstore, shardId, 1000, beginCursorResp.result);
         cout << getLogResp.result.logGroups.size() << "\t" << getLogResp.result.logGroupCount << endl;
-        getLogResp = ptr->GetBatchLog(project, logstore, 2, 1000, beginCursorResp.result, endCursorResp.result);
+        getLogResp = clientPtr->GetBatchLog(project, logstore, 2, 1000, beginCursorResp.result, endCursorResp.result);
         cout << getLogResp.result.logGroups.size() << "\t" << getLogResp.result.logGroupCount << endl;
 
-        ListConsumerGroupResponse lrs = ptr -> ListConsumerGroup(project, logstore);
-        for(int i = 0; i < lrs.consumerGroups.size(); ++i)
-            cout<<lrs.consumerGroups[i].GetConsumerGroupName()<<", " <<lrs.consumerGroups[i].GetTimeoutInSec()<<", " <<lrs.consumerGroups[i].GetInOrder()<<endl;
-        ptr->UpdateCheckpoint(project, logstore, "hahhah", 0, "V0hBVFRIRlVDSw==");
-        ListCheckpointResponse lcps = ptr -> ListCheckpoint(project, logstore, "hahhah");
-        for(int i =0; i < lcps.consumerGroupCheckpoints.size(); ++i)
+        ListConsumerGroupResponse lrs = clientPtr->ListConsumerGroup(project, logstore);
+        for (int i = 0; i < lrs.consumerGroups.size(); ++i)
+            cout << lrs.consumerGroups[i].GetConsumerGroupName() << ", " << lrs.consumerGroups[i].GetTimeoutInSec() << ", " << lrs.consumerGroups[i].GetInOrder() << endl;
+        clientPtr->UpdateCheckpoint(project, logstore, "hahhah", 0, "V0hBVFRIRlVDSw==");
+        ListCheckpointResponse lcps = clientPtr->ListCheckpoint(project, logstore, "hahhah");
+        for (int i = 0; i < lcps.consumerGroupCheckpoints.size(); ++i)
         {
-            cout<<lcps.consumerGroupCheckpoints[i].GetShard() <<", " << lcps.consumerGroupCheckpoints[i].GetCheckpoint()<<", "<<lcps.consumerGroupCheckpoints[i].GetUpdateTime()<<endl;
+            cout << lcps.consumerGroupCheckpoints[i].GetShard() << ", " << lcps.consumerGroupCheckpoints[i].GetCheckpoint() << ", " << lcps.consumerGroupCheckpoints[i].GetUpdateTime() << endl;
         }
-        while(true){
-            HeartbeatResponse resp = ptr->ConsumerGroupHeartbeat(project, logstore, "hahhah", "cc1", std::vector<uint32_t>());
-            cout<<"cc1, heartbeat: ";
-            for(std::vector<uint32_t>::const_iterator it = resp.shards.begin(); it != resp.shards.end(); ++it)
-                cout<<*it<<", ";
-            cout<<endl;
-            resp = ptr->ConsumerGroupHeartbeat(project, logstore, "hahhah", "cc2", std::vector<uint32_t>());
-            cout<<"cc2, heartbeat: ";
-            for(std::vector<uint32_t>::const_iterator it = resp.shards.begin(); it != resp.shards.end(); ++it)
-                cout<<*it<<", ";
-            cout<<endl;
-            usleep(2 * 1000 * 1000);
+        while (true)
+        {
+            HeartbeatResponse resp = clientPtr->ConsumerGroupHeartbeat(project, logstore, "hahhah", "cc1", std::vector<uint32_t>());
+            cout << "cc1, heartbeat: ";
+            for (std::vector<uint32_t>::const_iterator it = resp.shards.begin(); it != resp.shards.end(); ++it)
+                cout << *it << ", ";
+            cout << endl;
+            resp = clientPtr->ConsumerGroupHeartbeat(project, logstore, "hahhah", "cc2", std::vector<uint32_t>());
+            cout << "cc2, heartbeat: ";
+            for (std::vector<uint32_t>::const_iterator it = resp.shards.begin(); it != resp.shards.end(); ++it)
+                cout << *it << ", ";
+            cout << endl;
+            this_thread::sleep_for(chrono::seconds(2));
         }
     }
-    catch(LOGException & e)
+    catch (LOGException &e)
     {
-        cout<<e.GetErrorCode()<<":"<<e.GetMessage()<<endl;
+        cout << e.GetErrorCode() << ":" << e.GetMessage() << endl;
     }
-    delete ptr;
 }
