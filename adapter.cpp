@@ -488,7 +488,7 @@ bool DnsCache::ParseHost(const char* host, std::string& ip)
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
     if (getaddrinfo(host, NULL, &hints, &result) != 0)
-    {
+    {  
         SLS_MSVC_CLEANUP;
         return false;
     }
@@ -496,9 +496,11 @@ bool DnsCache::ParseHost(const char* host, std::string& ip)
     {
         struct sockaddr_in *addr2 = (struct sockaddr_in *)rp->ai_addr;
         ip = inet_ntoa(addr2->sin_addr);
+        freeaddrinfo(result);
         SLS_MSVC_CLEANUP;
         return true;
     }
+    freeaddrinfo(result);
     SLS_MSVC_CLEANUP;
     return false;
 }

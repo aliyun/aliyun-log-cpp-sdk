@@ -18,7 +18,7 @@ include_directories(slssdk ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(slssdk PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(slssdk PUBLIC ${PROTOBUF_INCLUDE_DIRS})
 # curl
-find_package(CURL REQUIRED)
+find_package(CURL CONFIG REQUIRED)
 target_include_directories(slssdk PUBLIC ${CURL_INCLUDE_DIR})
 
 add_executable(sample sample.cpp)
