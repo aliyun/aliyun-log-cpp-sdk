@@ -1,6 +1,6 @@
 # Desciption
 
-English | [中文文档](README_ZH.md)  
+English | [中文文档](README_zh.md)  
    
 This is the C++ SDK version 0.6.0 for SLS 
 
