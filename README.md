@@ -1,7 +1,9 @@
 # Desciption
 
 English | [中文文档](README_zh.md)  
-   
+
+![Ubuntu Build](https://github.com/crimson-gao/aliyun-log-cpp-sdk/actions/workflows/ubuntu-build.yml/badge.svg) | ![Windows Build](https://github.com/crimson-gao/aliyun-log-cpp-sdk/actions/workflows/windows-build.yml/badge.svg)  
+
 This is the C++ SDK version 0.6.0 for SLS 
 
 # Supported Platforms
@@ -13,8 +15,10 @@ This is the C++ SDK version 0.6.0 for SLS
 
 - protobuf: require version 2.4.1.
 
-install `protoc` on your machine or use `lib/libprotobuf_static.a`. You can download pre-compiled binary from [protobuf release page](https://github.com/protocolbuffers/protobuf/releases).  
-The version of protobuf and protoc should be matched.   
+- protoc  
+  `protoc` is a command-line tool.   
+  You can download pre-compiled binary from [protobuf release page](https://github.com/protocolbuffers/protobuf/releases), or install `protobuf-compiler` by package management tools.  
+    > The version of protobuf and protoc should be matched.   
 
 - curl
 
@@ -30,13 +34,13 @@ If any package not found, you can search and download it from official website o
 Ubuntu      
 
 ```bash
-sudo apt install libprotobuf-dev protobuf-compiler liblz4-dev libcurl4-openssl-dev 
+sudo apt install libprotobuf-dev protobuf-compiler liblz4-dev libcurl4-openssl-dev cmake
 ```
 
 CentOS  
 
 ```bash  
-sudo yum install protobuf-devel protobuf-compiler lz4-devel libcurl-devel
+sudo yum install protobuf-devel protobuf-compiler lz4-devel libcurl-devel cmake
 ```
 
 
@@ -54,9 +58,38 @@ vcpkg install protobuf:x64-windows lz4:x64-windows curl:x64-windows
 1. Makefile (gcc only)
 2. CMake (gcc and msvc) with generators (Makefiles and MsBuild)
 ## Build Tutorial
-> The command-line tool protoc will be used to read the definition from file [sls_logs.proto](sls_logs.proto), and generate the corresponding header file (sls_logs.pb.h) and source file (sls_logs.pb.cc). These files will be automatically updated everytime the proto file updated, please do not modify them manually.
+> The command-line tool protoc will be used to read the definition from file [sls_logs.proto](sls_logs.proto), and generate the corresponding header file (sls_logs.pb.h) and source file (sls_logs.pb.cc).   
+These files will be automatically updated everytime the proto file updated, please do not modify them manually.
 
-## Using Makefile
+## Using CMake (linux and windows)
+1. Use CMake to configure project, by executing commands below.  
+
+
+```bash  
+mkdir build
+cmake -B build
+```
+
+If there are some header files or libraries can not be found when using
+vcpkg as your package manager, add `-DCMAKE_TOOLCHAIN_FILE=C:/example/vcpkg/scripts/buildsystems/vcpkg.cmake` to the command. Replace `C:/example/vcpkg` with the path of your directory vcpkg installed. 
+
+```bash
+mkdir build
+cmake -B build -DCMAKE_TOOLCHAIN_FILE=C:/example/vcpkg/scripts/buildsystems/vcpkg.cmake
+```
+
+2. Build libraries  
+
+Use the commands below.
+
+```bash  
+cmake --build build
+```
+
+There must be at least one [generator](https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html) installed on your machine, that CMake supports, such as `Unix Makefiles`, `Ninja`, `xcode` or `Visual Studio`.  
+You can specify which generator to use by option `-G <generator>`.  
+
+## Using Makefile (gcc on linux only)
 
 1. Execute command `make -j` from the project root directory to generate the following files.   
 
@@ -75,38 +108,7 @@ Add the directories of header files and libraries of SLS SDK, and execute the co
 ```bash
 g++ -o your_program your_program.o   -O2 -L./lib/  -I./include/ -lslssdk -llz4 -lcurl -lprotobuf 
 ```
-
-## Using CMake
-1. Use CMake to configure project, by executing commands below.
-
-```bash  
-mkdir build
-cd build 
-cmake ../
-```
-
-If there are some header files or libraries can not be found during building when using
-vcpkg as your package manager, add `-DCMAKE_TOOLCHAIN_FILE=C:/example/vcpkg/scripts/buildsystems/vcpkg.cmake` to the command. Replace `C:/example/vcpkg` with the path of your directory where vcpkg installed. 
-
-```bash
-mkdir build
-cd build 
-cmake -DCMAKE_TOOLCHAIN_FILE=C:/example/vcpkg/scripts/buildsystems/vcpkg.cmake ../
-```
-
-2. Build Binary  
-
-If you use `Unix Makefiles` as CMake generator, use the commands below.
-
-```bash  
-make -j
-```
-If you use `MsBuild` as CMake generator, use the commands below.
-
-```bash  
-msbuild sls-sdk-cpp.sln
-```
-
+ 
 ## Using SConscript(not recommended)
 
 + suppose your working directory is $root
@@ -145,6 +147,8 @@ env.aProgram(target= 'sample1' ,source=['sample.cpp'], LIBS=['slssdk','sls_logs_
 ```
 
 # Sample Code
+See [sample.cpp](example/sample.cpp) for more details.  
+
 1. To put logs to sls, we need to initialize a client object. The input parameters include your AccessKeyID, AccessKeySecret, and the endpoint address of SLS service which depends on the region you access to.
 > AccessKeyID, AccessKeySecret are used as your credential to access SLS service. It is highly recommended to use environment variables or command line args to get the arguments. 
 

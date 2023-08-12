@@ -3,6 +3,8 @@
 
 [English](README.md) | 中文文档  
 
+![Ubuntu Build](https://github.com/crimson-gao/aliyun-log-cpp-sdk/actions/workflows/ubuntu-build.yml/badge.svg) | ![Windows Build](https://github.com/crimson-gao/aliyun-log-cpp-sdk/actions/workflows/windows-build.yml/badge.svg)  
+
 此仓库包含阿里云日志服务（SLS）的 c++ SDK，当前版本为 v0.6.0。
 
 # 支持的系统与平台
@@ -14,8 +16,12 @@
 # 依赖的第三方库
 
 - protobuf: 要求版本不低于 2.5.0。  
- 还需要安装 `protoc` 工具，用于从 proto 文件生成 protobuf 头文件与源文件。可以从 [protobuf 发布页面](https://github.com/protocolbuffers/protobuf/releases) 下载已编译好的二进制文件。  
-protoc 与 protobuf 的版本应该相符，避免兼容性问题。  
+
+- protoc  
+  protoc 是二进制命令行工具，用于从 proto 文件生成 protobuf 头文件与源文件。  
+  可以从 [protobuf 发布页面](https://github.com/protocolbuffers/protobuf/releases) 下载已编译好的二进制文件，或者使用包管理工具安装 `protobuf-compiler`。  
+
+  > protoc 与 protobuf 的版本应该相符，避免兼容性问题。  
 - curl
 
 - lz4
@@ -28,13 +34,13 @@ protoc 与 protobuf 的版本应该相符，避免兼容性问题。
 Ubuntu      
 
 ```bash
-sudo apt install libprotobuf-dev protobuf-compiler liblz4-dev libcurl4-openssl-dev 
+sudo apt install libprotobuf-dev protobuf-compiler liblz4-dev libcurl4-openssl-dev cmake
 ```
 
 CentOS  
 
 ```bash  
-sudo yum install protobuf-devel protobuf-compiler lz4-devel libcurl-devel
+sudo yum install protobuf-devel protobuf-compiler lz4-devel libcurl-devel cmake
 ```
 
 Windows系统  
@@ -50,9 +56,36 @@ vcpkg install protobuf:x64-windows lz4:x64-windows curl:x64-windows
 1. Makefile (支持编译器 gcc)
 2. CMake (支持编译器 gcc 和 msvc)
 ## 编译过程
-> 在下面的编译过程中，会利用 protoc 工具从 [sls_logs.proto](sls_logs.proto) 文件中读取定义，并生成相应的头文件(sls_logs.pb.h)与源文件(sls_logs.pb.cc)。这些文件会在 proto 定义更新后被自动更新，请不要手动修改这些生成的文件。  
+> 在下面的编译过程中，会利用 protoc 工具从 [sls_logs.proto](sls_logs.proto) 文件中读取定义，并生成相应的头文件(sls_logs.pb.h)与源文件(sls_logs.pb.cc)。  
+这些文件会在 proto 定义更新后被自动更新，请不要手动修改这些生成的文件。  
 
-## 使用 Makefile 构建
+
+## 使用 CMake 构建（支持linux 与 windows）
+1. 使用 CMake 配置项目，执行以下命令 
+  
+```bash  
+mkdir build
+cmake -B build
+```
+
+若您使用 vcpkg 作为包管理工具，在构建过程中出现找不到第三方库的头文件或库文件，可在cmake配置时添加 `-DCMAKE_TOOLCHAIN_FILE=C:/example/vcpkg/scripts/buildsystems/vcpkg.cmake`，其中 `C:/example/vcpkg` 替换为您的 vcpkg 的实际安装目录路径，如下所示  
+
+```bash
+mkdir build
+cmake -B build -DCMAKE_TOOLCHAIN_FILE=C:/example/vcpkg/scripts/buildsystems/vcpkg.cmake
+```
+
+2. 执行构建  
+
+可使用以下命令执行构建。  
+
+```bash  
+cmake --build build
+```
+
+您的机器上至少需要安装一种 CMake 支持的 [Generator](https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html)，常见的 Generator 包括 `Unix Makefiles` 、`Ninja`、`xcode` 、`Visual Studio` 等，若要指定 Generator 可使用 `-G <generator>` 选项。
+
+## 使用 Makefile 构建（支持linux）
 
 1. 在项目根目录执行命令 `make -j`，自动生成以下文件。
 
@@ -69,36 +102,6 @@ sample
 
 ```bash
 g++ -o your_program your_program.o   -O2 -L./lib/  -I./include/ -lslssdk -llz4 -lcurl -lprotobuf 
-```
-
-## 使用 CMake 构建
-1. 使用 CMake 配置项目，执行以下命令 
-
-```bash  
-mkdir build
-cd build 
-cmake ../
-```
-
-若您使用 vcpkg 作为包管理工具，在构建过程中出现找不到第三方库的头文件或库文件，可在cmake配置时添加 `-DCMAKE_TOOLCHAIN_FILE=C:/example/vcpkg/scripts/buildsystems/vcpkg.cmake`，其中 `C:/example/vcpkg` 替换为您的 vcpkg 的实际安装目录路径，如下所示  
-
-```bash
-mkdir build
-cd build 
-cmake -DCMAKE_TOOLCHAIN_FILE=C:/example/vcpkg/scripts/buildsystems/vcpkg.cmake ../
-```
-
-2. 执行构建  
-
-若您使用 `Unix Makefiles` 作为 CMake 的生成工具，可使用以下命令
-
-```bash  
-make -j
-```
-若您使用 `MSBuild` 作为 CMake 的生成工具，可使用以下命令
-
-```bash  
-msbuild sls-sdk-cpp.sln
 ```
 
 ## 使用 SConscript（不推荐）
@@ -135,6 +138,8 @@ env.aProgram(target= 'sample1' ,source=['sample.cpp'], LIBS=['slssdk','sls_logs_
 ```
 
 # 样例
+参考 [sample.cpp](example/sample.cpp) 文件。
+
 1. 以写入日志为例，首先我们需要初始化一个客户端对象，输入参数包括您的 AccessKeyID、AccessKeySecret，要访问的 SLS 服务所在地域的 endpoint 地址。  
 
 > AccessKeyID、AccessKeySecret

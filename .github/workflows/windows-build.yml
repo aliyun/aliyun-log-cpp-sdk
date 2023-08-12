@@ -1,0 +1,123 @@
+name: Windows
+run-name: ${{ github.actor }} is building by GitHub Actions 🚀
+on: [workflow_dispatch, push]
+
+jobs:
+  job:
+    env:
+      VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
+      VCPKG_DIR: ${{github.workspace}}/vcpkg
+      VCPKG_COMMIT: 0fa8459cf3a7caca7adc58f992bc32ff13630684
+      # Configuration type to build.
+      # You can convert this to a build matrix if you need coverage of multiple configuration types.
+      # https://docs.github.com/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+      BUILD_TYPE: Release
+    
+
+    name: ${{ matrix.os }}-${{ github.workflow }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest]
+        # os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: windows-latest
+            triplet: x64-windows
+          # - os: ubuntu-latest
+          #   triplet: x64-linux
+          # - os: macos-latest
+          #   triplet: x64-osx
+
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v1.3.1
+      
+
+      - uses: lukka/get-cmake@latest
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@main
+        id: runvcpkg
+        with:
+          vcpkgDirectory: ${{ env.VCPKG_DIR }}
+          vcpkgGitCommitId: ${{ env.VCPKG_COMMIT }}
+          # vcpkgJsonGlob: 'vcpkg.json'
+      
+      - name: Install deps
+        run: |
+          vcpkg install --triplet ${{matrix.triplet}} protobuf lz4 curl
+          vcpkg integrate install
+
+      - name: List $RUNNER_WORKSPACE before build
+        run: find $RUNNER_WORKSPACE | grep -v '\.git' | grep -v vcpkg
+        shell: bash
+
+      - name: Prints output of run-vcpkg's action.
+        run: echo "root='${{ steps.runvcpkg.outputs.RUNVCPKG_VCPKG_ROOT_OUT }}', triplet='${{ steps.runvcpkg.outputs.RUNVCPKG_VCPKG_DEFAULT_TRIPLET_OUT }}' "
+
+      - name: set env
+        id: setenv
+        run: |
+          echo "TOOLCHAIN_FILE=${{ env.VCPKG_DIR }}/scripts/buildsystems/vcpkg.cmake" >> $env:GITHUB_ENV
+
+      - name: cmake configure
+        run: |
+          echo "TOOLCHAIN_FILE: $env:TOOLCHAIN_FILE"
+          echo $env:TOOLCHAIN_FILE
+          echo ${{env.TOOLCHAIN_FILE}}
+          cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBUILD_SAMPLE=ON -DBUILD_TESTS=ON `
+                -DVERBOSE=ON -DBUILD_SHARE_LIBS=ON  `
+                -DCMAKE_TOOLCHAIN_FILE=${{env.TOOLCHAIN_FILE}} -DPUBLISH=ON 
+
+      - name: build
+        run: |
+          cmake --build build --config ${{env.BUILD_TYPE}}
+
+      - name: install
+        run: |
+          cmake --install build --prefix ${{github.workspace}}/aliyun-log-cpp-sdk/build
+      
+
+      - name: List $RUNNER_WORKSPACE after build
+        run: find $RUNNER_WORKSPACE | grep -v '\.git' | grep -v vcpkg
+        shell: bash
+
+      - name: copy files
+        run: cp -rf *.h *.cpp *.proto CMakeLists.txt Findlz4.cmake Makefile *.md aliyun-log-cpp-sdk/
+        shell: bash
+
+      - run: mkdir -p release 
+        name: mkdir
+        shell: pwsh
+
+      # - name: Set env
+      #   run: echo "GITHUB_SHA_SHAORT=$(echo $GITHUB_SHA | cut -c 1-6)" >> $GITHUB_ENV
+
+      # - name: Set env
+      #   run: echo "TARGET_FILE=release/windows-x64-${GITHUB_SHA_SHAORT}.7z" >> $GITHUB_ENV  
+
+      - name: Set env
+        run: echo "TARGET_FILE=release/windows-x64-latest.tar.gz" >> $env:GITHUB_ENV
+        shell: pwsh
+      
+      - name: Compress action step
+        uses: a7ul/tar-action@v1.1.0
+        id: compress
+        with:
+          command: c
+          cwd: ./
+          files: |
+            ./aliyun-log-cpp-sdk
+          outPath: ${{env.TARGET_FILE}}
+
+
+      - name: save as aritifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: windows-x64-latest-artifact
+          path: ${{env.TARGET_FILE}}
+          retention-days: 7

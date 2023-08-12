@@ -1,0 +1,79 @@
+name: Ubuntu
+run-name: ${{ github.actor }} is building on ubuntu by GitHub Actions 🚀
+on: [workflow_dispatch, push]
+
+jobs:
+  Build:
+    env:
+      BUILD_TYPE: Release
+      SYSTEM_LIB_DIR: /usr/lib/x86_64-linux-gnu
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: install deps
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libprotobuf-dev protobuf-compiler liblz4-dev libcurl4-openssl-dev
+          version: 1.0
+          execute_install_scripts: true
+
+      - name: Check out
+        uses: actions/checkout@v3
+
+      - name: clean
+        run: |
+            rm -rf ./build
+            rm -rf ./aliyun-log-cpp-sdk
+            mkdir -p build
+
+      - name: cmake configure
+        run: |
+          cmake -B build -DBUILD_SHARE_LIBS=ON -DVERBOSE=ON -DBUILD_SAMPLE=ON \
+              -DBUILD_TESTS=ON  -DPUBLISH=ON \
+              -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+      - name: build
+        run: |
+          cmake --build build --config ${{env.BUILD_TYPE}}
+  
+      - name: install
+        run: |
+          cmake --install build --prefix ${{github.workspace}}/aliyun-log-cpp-sdk/build
+        
+      - name: copy files
+        run: cp -rf *.h *.cpp *.proto CMakeLists.txt Findlz4.cmake Makefile *.md aliyun-log-cpp-sdk/
+      
+      - name: copy libs from system and repo
+        run: |
+              cp lib/liblz4.* ./aliyun-log-cpp-sdk/build/lib/
+                cp $SYSTEM_LIB_DIR/libprotobuf.* ./aliyun-log-cpp-sdk/build/lib/
+                cp $SYSTEM_LIB_DIR/libcurl* ./aliyun-log-cpp-sdk/build/lib/
+
+      - run: mkdir -p release 
+        name: mkdir
+
+      # - name: Set env
+      #   run: echo "GITHUB_SHA_SHAORT=$(echo $GITHUB_SHA | cut -c 1-6)" >> $GITHUB_ENV
+
+      # - name: Set env
+      #   run: echo "TARGET_FILE=release/ubuntu-x64-${GITHUB_SHA_SHAORT}.tar.gz" >> $GITHUB_ENV  
+
+      - name: Set env
+        run: echo "TARGET_FILE=release/ubuntu-x64-latest.tar.gz" >> "$GITHUB_ENV"
+      
+      - name: Compress action step
+        uses: a7ul/tar-action@v1.1.0
+        id: compress
+        with:
+          command: c
+          cwd: ./
+          files: |
+            ./aliyun-log-cpp-sdk
+          outPath: ${{env.TARGET_FILE}}
+
+      - name: save as aritifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: ubuntu-x64-latest-artifact
+          path: ${{env.TARGET_FILE}}
+          retention-days: 7
