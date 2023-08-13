@@ -34,7 +34,7 @@ jobs:
 
       - name: build
         run: |
-          cmake --build build --config ${{env.BUILD_TYPE}}
+          cmake --build build --clean-first --config ${{env.BUILD_TYPE}}
   
       - name: install
         run: |
@@ -70,6 +70,10 @@ jobs:
           files: |
             ./aliyun-log-cpp-sdk
           outPath: ${{env.TARGET_FILE}}
+
+      - name: cat tar file info
+        run: |
+          ls -l ${{env.TARGET_FILE}}
 
       - name: save as aritifact
         uses: actions/upload-artifact@v2

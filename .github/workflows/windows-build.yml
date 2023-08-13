@@ -8,10 +8,8 @@ jobs:
       VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
       VCPKG_DIR: ${{github.workspace}}/vcpkg
       VCPKG_COMMIT: 0fa8459cf3a7caca7adc58f992bc32ff13630684
-      # Configuration type to build.
-      # You can convert this to a build matrix if you need coverage of multiple configuration types.
-      # https://docs.github.com/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
       BUILD_TYPE: Release
+      # Generator: Ninja
     
 
     name: ${{ matrix.os }}-${{ github.workflow }}
@@ -32,11 +30,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-
-      - name: Add MSBuild to PATH
-        uses: microsoft/setup-msbuild@v1.3.1
-      
-
       - uses: lukka/get-cmake@latest
 
       - name: Setup vcpkg
@@ -53,42 +46,43 @@ jobs:
           vcpkg integrate install
 
       - name: List $RUNNER_WORKSPACE before build
-        run: find $RUNNER_WORKSPACE | grep -v '\.git' | grep -v vcpkg
+        run: find . | grep -v '\.git' | grep -v vcpkg | grep -v include
         shell: bash
 
-      - name: Prints output of run-vcpkg's action.
-        run: echo "root='${{ steps.runvcpkg.outputs.RUNVCPKG_VCPKG_ROOT_OUT }}', triplet='${{ steps.runvcpkg.outputs.RUNVCPKG_VCPKG_DEFAULT_TRIPLET_OUT }}' "
-
-      - name: set env
-        id: setenv
-        run: |
-          echo "TOOLCHAIN_FILE=${{ env.VCPKG_DIR }}/scripts/buildsystems/vcpkg.cmake" >> $env:GITHUB_ENV
-
+      # if path has \ in it, use powershell
       - name: cmake configure
+        env:
+          TOOL_CHAIN_FILE: ${{ env.VCPKG_DIR }}/scripts/buildsystems/vcpkg.cmake
+        shell: pwsh
         run: |
-          echo "TOOLCHAIN_FILE: $env:TOOLCHAIN_FILE"
-          echo $env:TOOLCHAIN_FILE
-          echo ${{env.TOOLCHAIN_FILE}}
-          cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBUILD_SAMPLE=ON -DBUILD_TESTS=ON `
-                -DVERBOSE=ON -DBUILD_SHARE_LIBS=ON  `
-                -DCMAKE_TOOLCHAIN_FILE=${{env.TOOLCHAIN_FILE}} -DPUBLISH=ON 
+          echo ${{env.TOOL_CHAIN_FILE}}
+          cmake -DCMAKE_TOOLCHAIN_FILE=${{env.TOOL_CHAIN_FILE}} `
+                -DVCPKG_TARGET_TRIPLET=${{matrix.triplet}} `
+                -DVCPKG_MANIFEST_MODE=OFF `
+                -B build -DPUBLISH=ON `
+                -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} `
+                -DBUILD_SAMPLE=ON -DBUILD_TESTS=ON `
+                -DVERBOSE=ON -DBUILD_SHARE_LIBS=ON  
+        
 
       - name: build
         run: |
-          cmake --build build --config ${{env.BUILD_TYPE}}
+          cmake --build build --clean-first --config ${{env.BUILD_TYPE}}
 
       - name: install
+        env:
+          INSTALL_PREFIX: ${{github.workspace}}/aliyun-log-cpp-sdk/build
         run: |
-          cmake --install build --prefix ${{github.workspace}}/aliyun-log-cpp-sdk/build
-      
-
-      - name: List $RUNNER_WORKSPACE after build
-        run: find $RUNNER_WORKSPACE | grep -v '\.git' | grep -v vcpkg
-        shell: bash
+          cmake --install build --prefix ${{env.INSTALL_PREFIX}}
 
       - name: copy files
         run: cp -rf *.h *.cpp *.proto CMakeLists.txt Findlz4.cmake Makefile *.md aliyun-log-cpp-sdk/
         shell: bash
+
+      - name: List release dir
+        run: find .
+        shell: bash
+        working-directory: ${{github.workspace}}/aliyun-log-cpp-sdk
 
       - run: mkdir -p release 
         name: mkdir
@@ -96,9 +90,6 @@ jobs:
 
       # - name: Set env
       #   run: echo "GITHUB_SHA_SHAORT=$(echo $GITHUB_SHA | cut -c 1-6)" >> $GITHUB_ENV
-
-      # - name: Set env
-      #   run: echo "TARGET_FILE=release/windows-x64-${GITHUB_SHA_SHAORT}.7z" >> $GITHUB_ENV  
 
       - name: Set env
         run: echo "TARGET_FILE=release/windows-x64-latest.tar.gz" >> $env:GITHUB_ENV
@@ -114,7 +105,10 @@ jobs:
             ./aliyun-log-cpp-sdk
           outPath: ${{env.TARGET_FILE}}
 
-
+      - name: cat tar file info
+        run: |
+          ls -l ${{env.TARGET_FILE}}
+          
       - name: save as aritifact
         uses: actions/upload-artifact@v2
         with:
