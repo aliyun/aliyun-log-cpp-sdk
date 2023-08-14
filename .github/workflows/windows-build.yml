@@ -83,8 +83,8 @@ jobs:
               cmake -B build -DCMAKE_BUILD_TYPE=Release
               cmake --build build --clean-first --config Release
               rm -rf build
-        
-        working_directory: ${{github.workspace}}/aliyun-log-cpp-sdk/build
+        shell: bash
+        working-directory: ${{github.workspace}}/aliyun-log-cpp-sdk/build
 
 
       - name: copy files
