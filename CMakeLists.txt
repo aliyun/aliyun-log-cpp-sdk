@@ -84,7 +84,6 @@ target_include_directories(${STATIC_LIB}
         PUBLIC ${PROTO_BINARY_DIR})
         
 target_link_libraries(${STATIC_LIB} 
-                PUBLIC -static
                 PRIVATE CURL::libcurl
                 PRIVATE lz4::lz4
                 PRIVATE protobuf::libprotobuf)
@@ -135,19 +134,23 @@ if (PUBLISH)
         ${CURL_INCLUDE_DIRS}/curl
         ${PROTOBUF_INCLUDE_DIRS}/google
         DESTINATION include)
+    install(FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/example/sample.cpp DESTINATION .)
+
+    # install(FILES
+    #     $<TARGET_LINKER_FILE:CURL::libcurl>
+    #     $<TARGET_LINKER_FILE:protobuf::libprotobuf>
+    #     $<TARGET_LINKER_FILE:lz4::lz4>
+    #     DESTINATION lib)
+
     # libs when win32
     if (WIN32)
         install(FILES
-            $<TARGET_LINKER_FILE:CURL::libcurl>
-            $<TARGET_LINKER_FILE:protobuf::libprotobuf>
-            $<TARGET_LINKER_FILE:lz4::lz4>
-            DESTINATION lib)
-
-        install(FILES
-            ${CMAKE_CURRENT_SOURCE_DIR}/example/sample.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/example/windows-standalone/CMakeLists.txt
-            DESTINATION .
-        )
+            DESTINATION .)
+    else()
+        install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/example/ubuntu-standalone/CMakeLists.txt
+                DESTINATION .)
 
     endif()
 endif()
@@ -159,12 +162,12 @@ if (BUILD_SHARED_LIBS)
             LIBRARY DESTINATION lib
             ARCHIVE DESTINATION lib)
 
-    if (WIN32 AND PUBLISH)
-        # shared dlls
-        install(FILES
-                $<TARGET_RUNTIME_DLLS:${SHARED_LIB}>
-                DESTINATION lib)
-    endif()
+    # if (WIN32 AND PUBLISH)
+    #     # shared dlls
+    #     install(FILES
+    #             $<TARGET_RUNTIME_DLLS:${SHARED_LIB}>
+    #             DESTINATION lib)
+    # endif()
 endif()
 
 # sample

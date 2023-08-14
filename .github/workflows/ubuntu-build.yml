@@ -39,15 +39,27 @@ jobs:
       - name: install
         run: |
           cmake --install build --prefix ${{github.workspace}}/aliyun-log-cpp-sdk/build
-        
+      
+      - name: test build standalone sample
+        run:
+          | 
+            cmake -B build -DCMAKE_BUILD_TYPE=Release
+            cmake --build build --clean-first --config Release
+            rm -rf build
+        shell: bash
+        working-directory: ${{github.workspace}}/aliyun-log-cpp-sdk/build  
+
       - name: copy files
         run: cp -rf *.h *.cpp *.proto CMakeLists.txt Findlz4.cmake Makefile *.md aliyun-log-cpp-sdk/
       
       - name: copy libs from system and repo
         run: |
-              cp lib/liblz4.* ./aliyun-log-cpp-sdk/build/lib/
-                cp $SYSTEM_LIB_DIR/libprotobuf.* ./aliyun-log-cpp-sdk/build/lib/
-                cp $SYSTEM_LIB_DIR/libcurl* ./aliyun-log-cpp-sdk/build/lib/
+              mkdir -p third-party
+                cp $SYSTEM_LIB_DIR/liblz4.* ./third-party/
+                cp $SYSTEM_LIB_DIR/libprotobuf.* ./third-party/
+                cp $SYSTEM_LIB_DIR/libcurl* ./third-party/
+
+        working-directory:  ${{github.workspace}}/aliyun-log-cpp-sdk/build/lib
 
       - run: mkdir -p release 
         name: mkdir

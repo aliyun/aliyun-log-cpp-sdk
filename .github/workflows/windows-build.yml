@@ -91,6 +91,21 @@ jobs:
         run: cp -rf *.h *.cpp *.proto CMakeLists.txt Findlz4.cmake Makefile *.md aliyun-log-cpp-sdk/
         shell: bash
 
+      - name: show vcpkg struct
+        run: |
+          find .
+        working-directory: ${{ env.VCPKG_DIR }}/installed/${{ matrix.triplet }}
+        shell: bash
+          
+      # - name: copy libs from system and repo
+      #   run: |
+      #         mkdir -p third-party
+      #           cp $SYSTEM_LIB_DIR/liblz4.* ./third-party/
+      #           cp $SYSTEM_LIB_DIR/libprotobuf.* ./third-party/
+      #           cp $SYSTEM_LIB_DIR/libcurl* ./third-party/
+      #   working-directory:  ${{github.workspace}}/aliyun-log-cpp-sdk/build/lib
+
+
       - name: List release dir
         run: find .
         shell: bash
