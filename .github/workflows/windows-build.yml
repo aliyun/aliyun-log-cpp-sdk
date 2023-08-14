@@ -76,6 +76,16 @@ jobs:
           INSTALL_PREFIX: ${{github.workspace}}/aliyun-log-cpp-sdk/build
         run: |
           cmake --install build --prefix ${{env.INSTALL_PREFIX}}
+      
+      - name: test build standalone sample
+        run:
+          | 
+              cmake -B build -DCMAKE_BUILD_TYPE=Release
+              cmake --build build --clean-first --config Release
+              rm -rf build
+        
+        working_directory: ${{github.workspace}}/aliyun-log-cpp-sdk/build
+
 
       - name: copy files
         run: cp -rf *.h *.cpp *.proto CMakeLists.txt Findlz4.cmake Makefile *.md aliyun-log-cpp-sdk/

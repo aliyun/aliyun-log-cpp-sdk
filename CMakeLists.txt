@@ -84,6 +84,7 @@ target_include_directories(${STATIC_LIB}
         PUBLIC ${PROTO_BINARY_DIR})
         
 target_link_libraries(${STATIC_LIB} 
+                PUBLIC -static
                 PRIVATE CURL::libcurl
                 PRIVATE lz4::lz4
                 PRIVATE protobuf::libprotobuf)
@@ -141,6 +142,13 @@ if (PUBLISH)
             $<TARGET_LINKER_FILE:protobuf::libprotobuf>
             $<TARGET_LINKER_FILE:lz4::lz4>
             DESTINATION lib)
+
+        install(FILES
+            ${CMAKE_CURRENT_SOURCE_DIR}/example/sample.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/example/windows-standalone/CMakeLists.txt
+            DESTINATION .
+        )
+
     endif()
 endif()
 
