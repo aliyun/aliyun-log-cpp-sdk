@@ -1,4 +1,4 @@
-# Desciption
+# Description
 
 English | [中文文档](README_zh.md)  
 
@@ -14,7 +14,7 @@ This is the C++ SDK version 0.6.0 for SLS
 
 
 
-# Dependency
+# Dependencies
 
 - protobuf: require version 2.4.1.
 
@@ -60,7 +60,7 @@ vcpkg install --triplet x64-windows protobuf lz4 curl
 ## Support Build Tools
 1. Makefile (gcc only)
 2. CMake (gcc and msvc) with generators (Makefiles and MsBuild)
-## Build Tutorial
+## Notice
 > The command-line tool protoc will be used to read the definition from file [sls_logs.proto](sls_logs.proto), and generate the corresponding header file (sls_logs.pb.h) and source file (sls_logs.pb.cc).   
 These files will be automatically updated everytime the proto file updated, please do not modify them manually.
 
@@ -118,7 +118,7 @@ Add the directories of header files and libraries of SLS SDK, and execute the co
 g++ -o your_program your_program.o   -O2 -L./lib/  -I./include/ -lslssdk -llz4 -lcurl -lprotobuf 
 ```
  
-## Using SConscript(not recommended)
+## Using SConscript(deprecated)
 
 + suppose your working directory is $root
 

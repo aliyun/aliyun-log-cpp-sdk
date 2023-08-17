@@ -113,7 +113,7 @@ sample
 g++ -o your_program your_program.o   -O2 -L./lib/  -I./include/ -lslssdk -llz4 -lcurl -lprotobuf 
 ```
 
-## 使用 SConscript（不推荐）
+## 使用 SConscript（废弃）
 
 + 项目根目录记作 $root，首先创建目录 `mkdir $root/slssdk`
 
