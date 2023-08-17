@@ -77,7 +77,7 @@ cmake -B build
 mkdir build
 cmake -B build -DCMAKE_TOOLCHAIN_FILE=C:/example/vcpkg/scripts/buildsystems/vcpkg.cmake
 ```
-编译 windows 32位系统可使用如下命令  
+编译 windows 32位系统软件可使用如下命令  
 
 ```bash
 mkdir build

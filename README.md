@@ -2,15 +2,18 @@
 
 English | [中文文档](README_zh.md)  
 
-![Ubuntu Build](https://github.com/crimson-gao/aliyun-log-cpp-sdk/actions/workflows/ubuntu-build.yml/badge.svg) | ![Windows Build](https://github.com/crimson-gao/aliyun-log-cpp-sdk/actions/workflows/windows-build.yml/badge.svg)  
-
-This is the C++ SDK version 0.6.0 for SLS 
+This is the C++ SDK version 0.6.0 for SLS  
 
 # Supported Platforms
+| CPU  | OS    | Compiler | Status|
+|--------|---------|-------|-----|
+| x64 | linux   | gcc |![Ubuntu Build](https://github.com/crimson-gao/aliyun-log-cpp-sdk/actions/workflows/ubuntu-build.yml/badge.svg) |   |
+| x64 | windows | msvc | ![Windows Build](https://github.com/crimson-gao/aliyun-log-cpp-sdk/actions/workflows/windows-build.yml/badge.svg)|
+| x86    | linux   | gcc | Not Supported |
+| x86    | windows | msvc | ![Windows Build](https://github.com/crimson-gao/aliyun-log-cpp-sdk/actions/workflows/windows-build.yml/badge.svg) |  
 
-- gcc (version >= 4.9) on linux  
 
-- msvc on windows  
+
 # Dependency
 
 - protobuf: require version 2.4.1.
@@ -46,9 +49,9 @@ sudo yum install protobuf-devel protobuf-compiler lz4-devel libcurl-devel cmake
 
 Windows   
 
->The version of the library to be installed can be specified by suffix. For example, using protobuf:x86-windows to install the 32-bit version of protobuf, and install 64-bit version by protobuf:x64-windows.  
+>The version of the library to be installed can be specified by suffix. Using `--triplet x86-windows` for the 32-bit version, and `--triplet x64-windows` for the 64-bit version.  
 ```bash
-vcpkg install protobuf:x64-windows lz4:x64-windows curl:x64-windows
+vcpkg install --triplet x64-windows protobuf lz4 curl
 ```
 
 
@@ -76,6 +79,12 @@ vcpkg as your package manager, add `-DCMAKE_TOOLCHAIN_FILE=C:/example/vcpkg/scri
 ```bash
 mkdir build
 cmake -B build -DCMAKE_TOOLCHAIN_FILE=C:/example/vcpkg/scripts/buildsystems/vcpkg.cmake
+```
+
+For 32-bit target and compiler msvc on windows    
+```
+mkdir build
+cmake -B build -A Win32 -DCMAKE_GENERATOR_PLATFORM=Win32 -DCMAKE_TOOLCHAIN_FILE=C:/example/vcpkg/scripts/buildsystems/vcpkg.cmake
 ```
 
 2. Build libraries  
