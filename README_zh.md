@@ -3,15 +3,17 @@
 
 [English](README.md) | 中文文档  
 
-![Ubuntu Build](https://github.com/crimson-gao/aliyun-log-cpp-sdk/actions/workflows/ubuntu-build.yml/badge.svg) | ![Windows Build](https://github.com/crimson-gao/aliyun-log-cpp-sdk/actions/workflows/windows-build.yml/badge.svg)  
-
 此仓库包含阿里云日志服务（SLS）的 c++ SDK，当前版本为 v0.6.0。
 
-# 支持的系统与平台
+# 支持的平台与系统
 
-- gcc (version >= 4.9) on linux  
- 
-- msvc on windows  
+| CPU  | 系统    | 编译器 | 编译状态|
+|--------|---------|-------|-----|
+| x64 | linux   | gcc |![Ubuntu Build](https://github.com/crimson-gao/aliyun-log-cpp-sdk/actions/workflows/ubuntu-build.yml/badge.svg) |   |
+| x64 | windows | msvc | ![Windows Build](https://github.com/crimson-gao/aliyun-log-cpp-sdk/actions/workflows/windows-build.yml/badge.svg)|
+| x86    | linux   | gcc | 暂不支持 |
+| x86    | windows | msvc | ![Windows Build](https://github.com/crimson-gao/aliyun-log-cpp-sdk/actions/workflows/windows-build.yml/badge.svg) |  
+
 
 # 依赖的第三方库
 
@@ -45,10 +47,11 @@ sudo yum install protobuf-devel protobuf-compiler lz4-devel libcurl-devel cmake
 
 Windows系统  
 
-> vcpkg 可以指定要安装的库的版本，例如安装 32位 protobuf 库使用 protobuf:x86-windows，64位版本使用 protobuf:x64-windows 安装。
+> vcpkg 可以指定要安装的库的版本，安装32位库使用 `--triplet x86-windows`，64位版本使用 `--triplet x64-windows`。
 ```bash
-vcpkg install protobuf:x64-windows lz4:x64-windows curl:x64-windows
+vcpkg install --triplet x64-windows protobuf lz4 curl
 ```
+
 
 
 # 编译构建
@@ -73,6 +76,12 @@ cmake -B build
 ```bash
 mkdir build
 cmake -B build -DCMAKE_TOOLCHAIN_FILE=C:/example/vcpkg/scripts/buildsystems/vcpkg.cmake
+```
+编译 windows 32位系统可使用如下命令  
+
+```bash
+mkdir build
+cmake -B build -A Win32 -DCMAKE_GENERATOR_PLATFORM=Win32 -DCMAKE_TOOLCHAIN_FILE=C:/example/vcpkg/scripts/buildsystems/vcpkg.cmake
 ```
 
 2. 执行构建  

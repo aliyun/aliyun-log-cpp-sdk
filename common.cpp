@@ -679,7 +679,7 @@ std::string ToString(const uint32_t& n)
     return UnsignedToString(n);
 }
 
-std::string ToString(const size_t&n)
+std::string ToString(const uint64_t& n)
 {
     return UnsignedToString(n);
 }

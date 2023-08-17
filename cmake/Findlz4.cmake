@@ -9,11 +9,11 @@ if (NOT lz4_FOUND)
 
         add_library(lz4::lz4 STATIC IMPORTED)
         set_target_properties(lz4::lz4 PROPERTIES
-            IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/lib/liblz4.so.1.9.4
-            IMPORTED_IMPLIB ${CMAKE_SOURCE_DIR}/lib/liblz4.a 
-            INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_SOURCE_DIR}/include)
+            IMPORTED_LOCATION ${SDK_ROOT}/lib/liblz4.so.1.9.4
+            IMPORTED_IMPLIB ${SDK_ROOT}/lib/liblz4.a 
+            INTERFACE_INCLUDE_DIRECTORIES ${SDK_ROOT}/include)
         set(lz4_FOUND TRUE)
-        set(lz4_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/include)
+        set(lz4_INCLUDE_DIRS ${SDK_ROOT}/include)
         set(lz4_LINK_LIBRARY lz4::lz4)
         set(lz4_LINK_LIBRARIES lz4::lz4 )
     endif()

@@ -1,68 +1,69 @@
-name: Ubuntu
+name: ubuntu
 run-name: ${{ github.actor }} is building on ubuntu by GitHub Actions 🚀
 on: [workflow_dispatch, push]
 
 jobs:
-  Build:
+  job:
     env:
       BUILD_TYPE: Release
       SYSTEM_LIB_DIR: /usr/lib/x86_64-linux-gnu
+      TRIPLET: x64-ubuntu 
 
+    name: x64
     runs-on: ubuntu-latest
     steps:
-      - name: install deps
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Show workspace files
+        run: find . | grep -v '\.git' | grep -v vcpkg | grep -v include
+        shell: bash
+
+      - name: Install deps
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
           packages: libprotobuf-dev protobuf-compiler liblz4-dev libcurl4-openssl-dev
           version: 1.0
           execute_install_scripts: true
 
-      - name: Check out
-        uses: actions/checkout@v3
-
-      - name: clean
-        run: |
-            rm -rf ./build
-            rm -rf ./aliyun-log-cpp-sdk
-            mkdir -p build
-
-      - name: cmake configure
+      - name: Cmake configure
         run: |
           cmake -B build -DBUILD_SHARE_LIBS=ON -DVERBOSE=ON -DBUILD_SAMPLE=ON \
-              -DBUILD_TESTS=ON  -DPUBLISH=ON \
+              -DBUILD_TESTS=ON  \
               -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
-      - name: build
+      - name: Build
         run: |
           cmake --build build --clean-first --config ${{env.BUILD_TYPE}}
   
-      - name: install
+      - name: Install
         run: |
-          cmake --install build --prefix ${{github.workspace}}/aliyun-log-cpp-sdk/build
+          cmake --install build --prefix ${{github.workspace}}
       
-      - name: test build standalone sample
-        run:
-          | 
-            cmake -B build -DCMAKE_BUILD_TYPE=Release
-            cmake --build build --clean-first --config Release
-            rm -rf build
-        shell: bash
-        working-directory: ${{github.workspace}}/aliyun-log-cpp-sdk/build  
+      # - name: test build standalone sample
+      #   run:
+      #     | 
+      #       cmake -B build -DCMAKE_BUILD_TYPE=Release
+      #       cmake --build build --clean-first --config Release
+      #       rm -rf build
+      #   shell: bash
+      #   working-directory: ${{github.workspace}}/aliyun-log-cpp-sdk/build  
 
-      - name: copy files
-        run: cp -rf *.h *.cpp *.proto CMakeLists.txt Findlz4.cmake Makefile *.md aliyun-log-cpp-sdk/
       
-      - name: copy libs from system and repo
+      - name: Copy libs
         run: |
-              mkdir -p third-party
-                cp $SYSTEM_LIB_DIR/liblz4.* ./third-party/
-                cp $SYSTEM_LIB_DIR/libprotobuf.* ./third-party/
-                cp $SYSTEM_LIB_DIR/libcurl* ./third-party/
+              mkdir -p ${{env.TRIPLET}}
+                cp $SYSTEM_LIB_DIR/liblz4.* ./${{env.TRIPLET}}/
+                cp $SYSTEM_LIB_DIR/libprotobuf.* ./${{env.TRIPLET}}/
+                cp $SYSTEM_LIB_DIR/libcurl* ./${{env.TRIPLET}}/
 
-        working-directory:  ${{github.workspace}}/aliyun-log-cpp-sdk/build/lib
+        working-directory:  ${{github.workspace}}/lib
 
-      - run: mkdir -p release 
-        name: mkdir
+      - name: Show installed files
+        run: |
+            ls -lshtrR lib
+            ls -lshtrR bin
+            ls -lshtr include
 
       # - name: Set env
       #   run: echo "GITHUB_SHA_SHAORT=$(echo $GITHUB_SHA | cut -c 1-6)" >> $GITHUB_ENV
@@ -70,10 +71,18 @@ jobs:
       # - name: Set env
       #   run: echo "TARGET_FILE=release/ubuntu-x64-${GITHUB_SHA_SHAORT}.tar.gz" >> $GITHUB_ENV  
 
-      - name: Set env
-        run: echo "TARGET_FILE=release/ubuntu-x64-latest.tar.gz" >> "$GITHUB_ENV"
+      - name: Set target file name
+        run: echo "TARGET_FILE=release/${{env.TRIPLET}}-latest.tar.gz" >> "$GITHUB_ENV"
       
-      - name: Compress action step
+      - name: Copy files for release
+        run: |
+            mkdir -p release 
+            mkdir -p aliyun-log-cpp-sdk
+            cp -rf bin lib include cmake example test *.cpp *.h \
+              *.md Makefile *.proto ./aliyun-log-cpp-sdk/
+        shell: bash
+
+      - name: Compress
         uses: a7ul/tar-action@v1.1.0
         id: compress
         with:
@@ -83,13 +92,13 @@ jobs:
             ./aliyun-log-cpp-sdk
           outPath: ${{env.TARGET_FILE}}
 
-      - name: cat tar file info
+      - name: Show release file
         run: |
-          ls -l ${{env.TARGET_FILE}}
+          ls -lshtr ${{env.TARGET_FILE}}
 
-      - name: save as aritifact
+      - name: Save as aritifact
         uses: actions/upload-artifact@v2
         with:
-          name: ubuntu-x64-latest-artifact
+          name: ${{env.TRIPLET}}-latest-artifact
           path: ${{env.TARGET_FILE}}
           retention-days: 7
