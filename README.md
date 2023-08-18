@@ -103,19 +103,20 @@ You can specify which generator to use by option `-G <generator>`.
 1. Execute command `make -j` from the project root directory to generate the following files.   
 
 ```
-lib/libslssdk.a 
+lib/libsls-sdk-cpp-static.a 
+lib/liblz4.a 
 sls_logs.pb.cc
 sls_logs.pb.h
 sample
 ```
-`lib/libslssdk.a` is the SDK library file that can be statically linked into your program.  
+`lib/libsls-sdk-cpp-static.a` is the SDK library file that can be statically linked into your program.  
 `sample` is a demo executable binary file.
 
 2. Build your program.   
 Add the directories of header files and libraries of SLS SDK, and execute the commands below.  
 
 ```bash
-g++ -o your_program your_program.o   -O2 -L./lib/  -I./include/ -lslssdk -llz4 -lcurl -lprotobuf 
+g++ -o your_program your_program.o   -O2 -L./lib/  -I./include/ -lsls-sdk-cpp-static -llz4 -lcurl -lprotobuf 
 ```
  
 ## Using SConscript(deprecated)

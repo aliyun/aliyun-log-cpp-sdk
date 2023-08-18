@@ -1,9 +1,9 @@
 
 # ==== install ====
 # install static lib
-install(TARGETS ${STATIC_LIB}
+install(TARGETS ${STATIC_LIB} ${lz4_lib_name}
         ARCHIVE DESTINATION lib)
-        
+
 install(FILES ${PROTO_HDRS} DESTINATION include)
 install(DIRECTORY 
         ${PROTOBUF_INCLUDE_DIRS}/google

@@ -21,6 +21,7 @@ set(sls_sdk_lz4_dir "include/lz4")
 set(sls_sdk_rapidjson_dir "include/rapidjson")
 file(GLOB sls_sdk_srcs "*.cpp")
 file(GLOB sls_sdk_headers "*.h")
+file(GLOB sls_sdk_lz4_srcs "include/lz4/*.c")
 set(PB_LIB "${PROJECT_NAME}-pb")
 set(STATIC_LIB "${PROJECT_NAME}-static")
 set(SDK_ROOT ${CMAKE_SOURCE_DIR})
@@ -28,15 +29,7 @@ set(SDK_CMAKE_DIR ${CMAKE_SOURCE_DIR}/cmake)
 set(PROTOS sls_logs.proto)
 
 # lib 
-set(proto_lib_name Protobuf)
 set(lz4_lib_name lz4)
-set(curl_lib_name curl)
-
-set(proto_lib protobuf::libprotobuf)
-set(lz4_lib_name lz4::lz4)
-set(curl_lib_name CURL::libcurl)
-
-
 
 include(ExternalProject)
 include(GNUInstallDirs)

@@ -99,18 +99,19 @@ cmake --build build
 1. 在项目根目录执行命令 `make -j`，自动生成以下文件。
 
 ```
-lib/libslssdk.a 
+lib/libsls-sdk-cpp-static.a
+lib/liblz4.a
 sls_logs.pb.cc
 sls_logs.pb.h
 sample
 ```
-其中 `lib/libslssdk.a` 是构建好的 SDK 库文件，可以被静态连接到你的程序中， sample 是一个示例可执行二进制文件。
+其中 `lib/libsls-sdk-cpp-static.a` 是构建好的 SDK 库文件，可以被静态连接到你的程序中， sample 是一个示例可执行二进制文件。
 
 2. 构建你的程序。  
 在你的程序的构建指令中添加 SLS SDK 的头文件与库，并执行构建指令，如下所示。
 
 ```bash
-g++ -o your_program your_program.o   -O2 -L./lib/  -I./include/ -lslssdk -llz4 -lcurl -lprotobuf 
+g++ -o your_program your_program.o   -O2 -L./lib/  -I./include/ -lsls-sdk-cpp-static -llz4 -lcurl -lprotobuf 
 ```
 
 ## 使用 SConscript（废弃）

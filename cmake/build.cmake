@@ -4,7 +4,7 @@
 # find package ptotobuf / curl 
 find_package(Protobuf REQUIRED)
 find_package(CURL REQUIRED)
-include(${SDK_CMAKE_DIR}/Findlz4.cmake)
+include(${SDK_CMAKE_DIR}/lz4.cmake)
 if (NOT lz4_FOUND)
     message(FATAL_ERROR "library lz4 not found}")
 endif()
@@ -35,7 +35,7 @@ target_include_directories(${STATIC_LIB}
         
 target_link_libraries(${STATIC_LIB} 
                 PRIVATE CURL::libcurl
-                PRIVATE lz4::lz4
+                PRIVATE ${lz4_lib_name}
                 PRIVATE protobuf::libprotobuf)
 
 target_compile_options(${STATIC_LIB} 

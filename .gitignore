@@ -17,11 +17,12 @@ bin/sample*
 bin/slssdk-test*
 
 lib/libsls-sdk-cpp*
+lib/liblz4.*
 lib/x64-windows/
 lib/x86-windows/
 lib/x64-ubuntu/
 lib/x86-ubuntu/
 
-
+sample
 
 
