@@ -67,20 +67,17 @@ vcpkg install --triplet x64-windows protobuf lz4 curl
 1. 使用 CMake 配置项目，执行以下命令 
   
 ```bash  
-mkdir build
 cmake -B build
 ```
 
 若您使用 vcpkg 作为包管理工具，在构建过程中出现找不到第三方库的头文件或库文件，可在cmake配置时添加 `-DCMAKE_TOOLCHAIN_FILE=C:/example/vcpkg/scripts/buildsystems/vcpkg.cmake`，其中 `C:/example/vcpkg` 替换为您的 vcpkg 的实际安装目录路径，如下所示  
 
 ```bash
-mkdir build
 cmake -B build -DCMAKE_TOOLCHAIN_FILE=C:/example/vcpkg/scripts/buildsystems/vcpkg.cmake
 ```
 编译 windows 32位系统软件可使用如下命令  
 
 ```bash
-mkdir build
 cmake -B build -A Win32 -DCMAKE_GENERATOR_PLATFORM=Win32 -DCMAKE_TOOLCHAIN_FILE=C:/example/vcpkg/scripts/buildsystems/vcpkg.cmake
 ```
 

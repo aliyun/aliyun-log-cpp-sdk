@@ -69,7 +69,6 @@ These files will be automatically updated everytime the proto file updated, plea
 
 
 ```bash  
-mkdir build
 cmake -B build
 ```
 
@@ -77,13 +76,12 @@ If there are some header files or libraries can not be found when using
 vcpkg as your package manager, add `-DCMAKE_TOOLCHAIN_FILE=C:/example/vcpkg/scripts/buildsystems/vcpkg.cmake` to the command. Replace `C:/example/vcpkg` with the path of your directory vcpkg installed. 
 
 ```bash
-mkdir build
 cmake -B build -DCMAKE_TOOLCHAIN_FILE=C:/example/vcpkg/scripts/buildsystems/vcpkg.cmake
 ```
 
-For 32-bit target and compiler msvc on windows    
+For 32-bit target and compiler msvc on windows   
+ 
 ```
-mkdir build
 cmake -B build -A Win32 -DCMAKE_GENERATOR_PLATFORM=Win32 -DCMAKE_TOOLCHAIN_FILE=C:/example/vcpkg/scripts/buildsystems/vcpkg.cmake
 ```
 
