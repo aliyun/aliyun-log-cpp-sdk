@@ -1,7 +1,7 @@
 /*
    LZ4 auto-framing library
    Header File for static linking only
-   Copyright (C) 2011-2015, Yann Collet.
+   Copyright (C) 2011-2020, Yann Collet.
 
    BSD 2-Clause License (http://www.opensource.org/licenses/bsd-license.php)
 
@@ -29,46 +29,19 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
    You can contact the author at :
-   - LZ4 source repository : https://github.com/Cyan4973/lz4
+   - LZ4 source repository : https://github.com/lz4/lz4
    - LZ4 public forum : https://groups.google.com/forum/#!forum/lz4c
 */
 
-#pragma once
+#ifndef LZ4FRAME_STATIC_H_0398209384
+#define LZ4FRAME_STATIC_H_0398209384
 
-#if defined (__cplusplus)
-extern "C" {
-#endif
+/* The declarations that formerly were made here have been merged into
+ * lz4frame.h, protected by the LZ4F_STATIC_LINKING_ONLY macro. Going forward,
+ * it is recommended to simply include that header directly.
+ */
 
-/* lz4frame_static.h should be used solely in the context of static linking.
- * */
-
-
-/**************************************
- * Error management
- * ************************************/
-#define LZ4F_LIST_ERRORS(ITEM) \
-        ITEM(OK_NoError) ITEM(ERROR_GENERIC) \
-        ITEM(ERROR_maxBlockSize_invalid) ITEM(ERROR_blockMode_invalid) ITEM(ERROR_contentChecksumFlag_invalid) \
-        ITEM(ERROR_compressionLevel_invalid) \
-        ITEM(ERROR_allocation_failed) \
-        ITEM(ERROR_srcSize_tooLarge) ITEM(ERROR_dstMaxSize_tooSmall) \
-        ITEM(ERROR_frameSize_wrong) \
-        ITEM(ERROR_frameType_unknown) \
-        ITEM(ERROR_wrongSrcPtr) \
-        ITEM(ERROR_decompressionFailed) \
-        ITEM(ERROR_checksum_invalid) \
-        ITEM(ERROR_maxCode)
-
-#define LZ4F_GENERATE_ENUM(ENUM) ENUM,
-typedef enum { LZ4F_LIST_ERRORS(LZ4F_GENERATE_ENUM) } LZ4F_errorCodes;  /* enum is exposed, to handle specific errors; compare function result to -enum value */
-
-
-/**************************************
-   Includes
-**************************************/
+#define LZ4F_STATIC_LINKING_ONLY
 #include "lz4frame.h"
 
-
-#if defined (__cplusplus)
-}
-#endif
+#endif /* LZ4FRAME_STATIC_H_0398209384 */

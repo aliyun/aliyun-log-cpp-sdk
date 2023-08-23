@@ -1,3 +1,4 @@
+syntax = "proto2";
 package sls_logs;
 
 message Log

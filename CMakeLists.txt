@@ -1,25 +1,58 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.3)
+
 project(sls-sdk-cpp)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-find_package(Protobuf REQUIRED)
+# Options
+option(BUILD_SHARED_LIBS  "Enable shared library" OFF)
+option(BUILD_SAMPLE "Build sample" OFF)
+option(BUILD_TESTS "Build unit and perfermence tests" OFF)
+option(VERBOSE "Verbose output" OFF)
+option(GCC_BUILD_32 "" OFF)
 
-include_directories(${PROTOBUF_INCLUDE_DIRS})
-protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS sls_logs.proto)
+set(VERBOSE ON)
+set(BUILD_TESTS ON)
+set(BUILD_SAMPLE ON)
 
-include_directories(${CURL_INCLUDE_DIR})
 
-add_library(slssdk
-    client.cpp
-    resource.cpp
-    adapter.cpp
-    common.cpp
-    ${PROTO_SRCS})
+# Variables
+set(sls_sdk_lz4_dir "include/lz4")
+set(sls_sdk_rapidjson_dir "include/rapidjson")
+file(GLOB sls_sdk_srcs "*.cpp")
+file(GLOB sls_sdk_headers "*.h")
+file(GLOB sls_sdk_lz4_srcs "include/lz4/*.c")
+set(PB_LIB "${PROJECT_NAME}-pb")
+set(STATIC_LIB "${PROJECT_NAME}-static")
+set(SDK_ROOT ${CMAKE_SOURCE_DIR})
+set(SDK_CMAKE_DIR ${CMAKE_SOURCE_DIR}/cmake)
+set(PROTOS sls_logs.proto)
 
-install(TARGETS slssdk
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib)
+# lib 
+set(lz4_lib_name lz4)
 
-install(FILES client.h RestfulApiCommon.h resource.h ${PROTO_HDRS}
-    DESTINATION include)
-install(DIRECTORY rapidjson
-    DESTINATION include)
+include(ExternalProject)
+include(GNUInstallDirs)
+include(cmake/platform.cmake)
+include(cmake/build.cmake)
+include(cmake/install.cmake)
+
+# print debug info
+if(VERBOSE)
+    # platform
+    message("TARGET_OS: ${TARGET_OS}")
+    # option
+    message("BUILD_SHARED_LIBS: ${BUILD_SHARED_LIBS}")
+    message("BUILD_SAMPLE: ${BUILD_SAMPLE}")
+    message("BUILD_TESTS: ${BUILD_TESTS}")
+    # proto
+    message("PROTOS: ${PROTOS}")
+    # target name
+    message("STATIC_LIB: ${STATIC_LIB}")
+    message("SHARED_LIB: ${SHARED_LIB}")
+    message("PB_LIB: ${PB_LIB}")
+    # srcs
+    message("sls_sdk_srcs: ${sls_sdk_srcs}")
+    # compiler flags
+    message("SDK_COMPILER_FLAGS: ${SDK_COMPILER_FLAGS}")
+endif()
