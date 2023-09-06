@@ -12,6 +12,7 @@
 #include "client.h"
 #include "RestfulApiCommon.h"
 #include <curl/curl.h>
+#include <ctime>
 namespace aliyun_log_sdk_v6
 {
 typedef enum{BASE64_SHA1_MD5} LOGSigType;
@@ -32,8 +33,9 @@ public:
     
     static bool StartWith(const std::string& input, const std::string& pattern);
     static std::string UrlEncode(const std::string& url);
+private:
+    static std::string ToGmtTime(std::time_t &t, const std::string& format);
 };
-
 
 class LOGAdapter
 {
