@@ -1,6 +1,7 @@
 #include "adapter.h"
 #include <sys/time.h>
 #include <iostream>
+#include <iomanip>
 
 using namespace std;
 
@@ -147,15 +148,41 @@ std::string CodecTool::Base64Enconde(const std::string& message)
     return oss.str();
 }
 
+std::string CodecTool::ToGmtTime(std::time_t &t, const std::string& format)
+{
+    std::stringstream date;
+    std::tm tm;
+#ifdef _WIN32
+    ::gmtime_s(&tm, &t);
+#else
+    ::gmtime_r(&t, &tm);
+#endif
+
+#if defined(__GNUG__) && __GNUC__ < 5
+    static const char wday_name[][4] = {
+      "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
+    };
+    static const char mon_name[][4] = {
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    };
+    char tmbuff[26];
+    snprintf(tmbuff, sizeof(tmbuff), "%.3s, %.2d %.3s %d %.2d:%.2d:%.2d",
+        wday_name[tm.tm_wday], tm.tm_mday, mon_name[tm.tm_mon],
+        1900 + tm.tm_year,
+        tm.tm_hour, tm.tm_min, tm.tm_sec);
+    date << tmbuff << " GMT";
+#else
+    date.imbue(std::locale::classic());
+    date << std::put_time(&tm, format.c_str());
+#endif
+    return date.str();    
+}
+
+
 std::string CodecTool::GetDateString(const std::string& dateFormat)
 {
-    time_t now_time;
-    time(&now_time);
-    char buffer[128]={'\0'};
-    tm timeInfo;
-    gmtime_r(&now_time, &timeInfo);
-    strftime(buffer, 128, dateFormat.c_str(), &timeInfo);
-    return string(buffer);
+    std::time_t t = std::time(nullptr);
+    return ToGmtTime(t, dateFormat);
 }
 std::string CodecTool::GetDateString()
 {
