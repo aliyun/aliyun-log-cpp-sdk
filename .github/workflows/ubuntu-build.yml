@@ -1,6 +1,14 @@
 name: ubuntu
 run-name: ${{ github.actor }} is building on ubuntu by GitHub Actions 🚀
-on: [workflow_dispatch, push]
+on:   
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        type: boolean
+        description: 'Run the build with tmate debugging enabled'
+        required: false
+        default: false
+  push:
 
 jobs:
   job:
