@@ -1,6 +1,14 @@
 name: win
 run-name: ${{ github.actor }}  is building by GitHub Actions 🚀
-on: [workflow_dispatch, push]
+on:
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        type: boolean
+        description: 'Run the build with tmate debugging enabled'
+        required: false
+        default: false
+  push:
 
 jobs:
   job:
@@ -19,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest]
+        os: [windows-2022]
         triplet: [x64-windows, x86-windows]
         # os: [ubuntu-latest, macos-latest, windows-latest]
         include:
@@ -100,7 +108,9 @@ jobs:
       #         rm -rf build
       #   shell: bash
       #   working-directory: ${{github.workspace}}/aliyun-log-cpp-sdk/build
-
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
       - name: Copy libs
         run: |
               mkdir -p ${{matrix.triplet}} 

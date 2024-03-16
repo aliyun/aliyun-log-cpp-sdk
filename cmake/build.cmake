@@ -6,7 +6,7 @@ find_package(Protobuf REQUIRED)
 find_package(CURL REQUIRED)
 include(${SDK_CMAKE_DIR}/lz4.cmake)
 if (NOT lz4_FOUND)
-    message(FATAL_ERROR "library lz4 not found}")
+    message(FATAL_ERROR "library lz4 not found")
 endif()
 
 # protobuf generate
