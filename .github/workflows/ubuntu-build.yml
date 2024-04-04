@@ -30,7 +30,7 @@ jobs:
       - name: Install deps
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libprotobuf-dev protobuf-compiler liblz4-dev libcurl4-openssl-dev
+          packages: libprotobuf-dev protobuf-compiler libcurl4-openssl-dev
           version: 1.0
           execute_install_scripts: true
 
@@ -63,12 +63,11 @@ jobs:
       
       - name: Copy libs
         run: |
-              mkdir -p ${{env.TRIPLET}}
-                cp $SYSTEM_LIB_DIR/liblz4.* ./${{env.TRIPLET}}/
-                cp $SYSTEM_LIB_DIR/libprotobuf.* ./${{env.TRIPLET}}/
-                cp $SYSTEM_LIB_DIR/libcurl* ./${{env.TRIPLET}}/
+              mkdir -p out && mkdir -p out/lib && mkdir -p out/include &&
+                cp $SYSTEM_LIB_DIR/libprotobuf* ./out/lib/
+                cp $SYSTEM_LIB_DIR/libcurl* ./out/lib/
 
-        working-directory:  ${{github.workspace}}/lib
+        working-directory:  ${{github.workspace}}
 
       - name: Show installed files
         run: |
@@ -113,3 +112,12 @@ jobs:
           name: ${{env.TRIPLET}}-latest-artifact
           path: ${{env.TARGET_FILE}}
           retention-days: 7
+
+
+          # /usr/include/google 
+          # /usr/lib/x86_64-linux-gnu/libprotobuf-lite.a /usr/lib/x86_64-linux-gnu/libprotobuf.a
+          # /usr/lib/x86_64-linux-gnu/libprotobuf-lite.so /usr/lib/x86_64-linux-gnu/libprotobuf.so
+          # /usr/include/x86_64-linux-gnu/curl
+          # /usr/lib/x86_64-linux-gnu/libcurl.a
+          # /usr/lib/x86_64-linux-gnu/libcurl.la
+          # /usr/lib/x86_64-linux-gnu/libcurl.so

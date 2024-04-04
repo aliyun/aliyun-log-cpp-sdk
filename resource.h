@@ -48,8 +48,8 @@ public:
     {}
 public:
     const std::string& GetConsumerGroupName() const { return mConsumerGroupName; }
-    const uint32_t GetTimeoutInSec() const { return mTimeoutInSec; }
-    const bool GetInOrder() const { return mInOrder; }
+    uint32_t GetTimeoutInSec() const { return mTimeoutInSec; }
+    bool GetInOrder() const { return mInOrder; }
     virtual void SetRequestValues(rapidjson::Writer<rapidjson::StringBuffer>& writer) const;
     virtual void SetFullValues(rapidjson::Writer<rapidjson::StringBuffer>& writer) const;
     virtual void FromJson(const rapidjson::Value& value);
@@ -68,9 +68,9 @@ public:
     ConsumerGroupCheckpoint(const int shard, const std::string& checkpoint, const uint64_t updateTime):
         mShard(shard), mCheckpoint(checkpoint), mUpdateTime(updateTime)
     {}
-    const int GetShard() const{ return mShard; }
+    int GetShard() const{ return mShard; }
     const std::string& GetCheckpoint() const { return mCheckpoint; }
-    const uint64_t GetUpdateTime() const { return mUpdateTime; }
+    uint64_t GetUpdateTime() const { return mUpdateTime; }
     virtual void SetRequestValues(rapidjson::Writer<rapidjson::StringBuffer>& writer) const;
     virtual void SetFullValues(rapidjson::Writer<rapidjson::StringBuffer>& writer) const;
     virtual void FromJson(const rapidjson::Value& value);

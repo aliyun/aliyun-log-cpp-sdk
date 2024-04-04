@@ -29,17 +29,6 @@ message LogGroup
     repeated LogTag LogTags = 6;
 }
 
-message SlsLogPackage
-{
-    required bytes data = 1;  // the serialized data of LogGroup , may be compressed
-    optional int32 uncompress_size = 2;
-}
-
-message SlsLogPackageList
-{
-    repeated SlsLogPackage packages = 1;
-}
-
 message LogGroupList
 {
     repeated LogGroup logGroupList = 1;

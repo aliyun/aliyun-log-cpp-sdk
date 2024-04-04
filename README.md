@@ -51,7 +51,7 @@ Windows
 
 >The version of the library to be installed can be specified by suffix. Using `--triplet x86-windows` for the 32-bit version, and `--triplet x64-windows` for the 64-bit version.  
 ```bash
-vcpkg install --triplet x64-windows protobuf lz4 curl
+vcpkg install --triplet x64-windows protobuf curl
 ```
 
 

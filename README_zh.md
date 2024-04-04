@@ -26,8 +26,6 @@
   > protoc 与 protobuf 的版本应该相符，避免兼容性问题。  
 - curl
 
-- lz4
-
 ## 第三方库安装方式
 第三方库可以通过源码编译安装，或者使用包管理工具安装。ubuntu 下推荐使用 apt、centos 推荐使用 yum、windows 推荐使用 [vcpkg](https://github.com/microsoft/vcpkg) 进行安装。  
 
@@ -36,20 +34,20 @@
 Ubuntu      
 
 ```bash
-sudo apt install libprotobuf-dev protobuf-compiler liblz4-dev libcurl4-openssl-dev cmake
+sudo apt install libprotobuf-dev protobuf-compiler libcurl4-openssl-dev cmake
 ```
 
 CentOS  
 
 ```bash  
-sudo yum install protobuf-devel protobuf-compiler lz4-devel libcurl-devel cmake
+sudo yum install protobuf-devel protobuf-compiler libcurl-devel cmake
 ```
 
 Windows系统  
 
 > vcpkg 可以指定要安装的库的版本，安装32位库使用 `--triplet x86-windows`，64位版本使用 `--triplet x64-windows`。
 ```bash
-vcpkg install --triplet x64-windows protobuf lz4 curl
+vcpkg install --triplet x64-windows protobuf curl
 ```
 
 

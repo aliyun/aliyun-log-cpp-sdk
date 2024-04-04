@@ -61,11 +61,11 @@ int main(int argc, char **argv)
         cout << getLogResp.result.logGroups.size() << "\t" << getLogResp.result.logGroupCount << endl;
 
         ListConsumerGroupResponse lrs = clientPtr->ListConsumerGroup(project, logstore);
-        for (int i = 0; i < lrs.consumerGroups.size(); ++i)
+        for (size_t i = 0; i < lrs.consumerGroups.size(); ++i)
             cout << lrs.consumerGroups[i].GetConsumerGroupName() << ", " << lrs.consumerGroups[i].GetTimeoutInSec() << ", " << lrs.consumerGroups[i].GetInOrder() << endl;
         clientPtr->UpdateCheckpoint(project, logstore, "hahhah", 0, "V0hBVFRIRlVDSw==");
         ListCheckpointResponse lcps = clientPtr->ListCheckpoint(project, logstore, "hahhah");
-        for (int i = 0; i < lcps.consumerGroupCheckpoints.size(); ++i)
+        for (size_t i = 0; i < lcps.consumerGroupCheckpoints.size(); ++i)
         {
             cout << lcps.consumerGroupCheckpoints[i].GetShard() << ", " << lcps.consumerGroupCheckpoints[i].GetCheckpoint() << ", " << lcps.consumerGroupCheckpoints[i].GetUpdateTime() << endl;
         }
