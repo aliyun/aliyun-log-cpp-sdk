@@ -50,5 +50,6 @@ Copy-Item -Recurse "${VCPKG_TRIPLET_DIR}/include/google" "${OUT_DIR}/include/goo
 Copy-Item "package/windows/*" "${OUT_DIR}/"
 Copy-Item "example/example.cpp" "${OUT_DIR}/"
 Remove-Item "${OUT_DIR}/lib" -Force -Recurse
+Remove-Item "${OUT_DIR}/build" -Force -Recurse
 
 # todo: add vs project file

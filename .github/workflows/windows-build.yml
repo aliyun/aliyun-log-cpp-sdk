@@ -28,21 +28,16 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-2022]
-        triplet: [x64-windows, x86-windows]
-        # os: [ubuntu-latest, macos-latest, windows-latest]
+        triplet: [x64-windows]
         include:
           - os: windows-latest
-            triplet: x64-windows
+            triplet: x64-windows-static-md
             name: x64
             arch: x64
-          - os: windows-latest
-            triplet: x86-windows
-            name: x86
-            arch: Win32
-          # - os: ubuntu-latest
-          #   triplet: x64-linux
-          # - os: macos-latest
-          #   triplet: x64-osx
+          # - os: windows-latest
+          #   triplet: x86-windows
+          #   name: x86
+          #   arch: Win32
 
 
     steps:
@@ -68,78 +63,23 @@ jobs:
         with:
           vcpkgDirectory: ${{ env.VCPKG_DIR }}
           vcpkgGitCommitId: ${{ env.VCPKG_COMMIT }}
-          # vcpkgJsonGlob: 'vcpkg.json'
+
       - name: Install deps
         run: |
-          vcpkg install --triplet ${{matrix.triplet}} protobuf lz4 curl
+          vcpkg install --triplet ${{matrix.triplet}} protobuf curl
           vcpkg integrate install
 
       # if path has \ in it, use powershell
-      - name: Cmake configure
+      - name: Run build
         env:
-          TOOL_CHAIN_FILE: ${{ env.VCPKG_DIR }}/scripts/buildsystems/vcpkg.cmake
+          VCPKG_ROOT: ${{ env.VCPKG_DIR }}
         shell: pwsh
         run: |
-          echo ${{env.TOOL_CHAIN_FILE}}
-          cmake -A ${{ matrix.arch }} `
-                -DCMAKE_GENERATOR_PLATFORM=${{ matrix.arch }} `
-                -DCMAKE_TOOLCHAIN_FILE=${{env.TOOL_CHAIN_FILE}} `
-                -DVCPKG_TARGET_TRIPLET=${{matrix.triplet}} `
-                -DVCPKG_MANIFEST_MODE=OFF `
-                -B build -DINSTALL_SAMPLE=ON `
-                -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} `
-                -DBUILD_SAMPLE=ON -DBUILD_TESTS=ON `
-                -DVERBOSE=ON -DBUILD_SHARE_LIBS=ON  
-        
-
-      - name: Build
-        run: |
-          cmake --build build --clean-first --config ${{env.BUILD_TYPE}}
-
-      - name: Install
-        run: |
-          cmake --install build --prefix ${{github.workspace}}
-      
-      # - name: test build standalone sample
-      #   run:
-      #     | 
-      #         cmake -B build -DCMAKE_BUILD_TYPE=Release
-      #         cmake --build build --clean-first --config Release
-      #         rm -rf build
-      #   shell: bash
-      #   working-directory: ${{github.workspace}}/aliyun-log-cpp-sdk/build
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
-      - name: Copy libs
-        run: |
-              mkdir -p ${{matrix.triplet}} 
-                mkdir -p ${{matrix.triplet}}/bin 
-                mkdir -p ${{matrix.triplet}}/lib
-                cp ${{env.SYSTEM_LIB_DIR}}/bin/*.dll ./${{matrix.triplet}}/bin/
-                cp ${{env.SYSTEM_LIB_DIR}}/lib/*.lib ./${{matrix.triplet}}/lib/
-        working-directory:  ${{github.workspace}}/lib
-
-      - name: Show installed files
-        run: |
-            ls -lshtrR lib
-            ls -lshtrR bin
-            ls -lshtr include
-        shell: bash
-
-      # - name: Set env
-      #   run: echo "GITHUB_SHA_SHAORT=$(echo $GITHUB_SHA | cut -c 1-6)" >> $GITHUB_ENV
+          echo ${{env.VCPKG_ROOT}}
+          ./package/windows/pkg.ps1
 
       - name: Set target file name
         run: echo "TARGET_FILE=release/${{matrix.triplet}}-latest.tar.gz" >> $GITHUB_ENV
-        shell: bash
-
-      - name: Copy files for release
-        run: |
-            mkdir -p release
-            mkdir -p aliyun-log-cpp-sdk
-            cp -rf bin lib include cmake example test *.cpp *.h \
-              *.md Makefile *.proto ./aliyun-log-cpp-sdk/
         shell: bash
 
       - name: Compress
@@ -150,12 +90,28 @@ jobs:
           cwd: ./
           outPath: ${{env.TARGET_FILE}}
           files: |
-            ./aliyun-log-cpp-sdk
+            ./out
 
       - name: Show release file
         run: |
           ls -lshtr ${{env.TARGET_FILE}}
         shell: bash
+
+      - name: Test build example release
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release
+          rm -rf build
+        shell: bash
+        working-directory: out
+
+      - name: Test build example release
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Debug
+          cmake --build build --config Debug
+          rm -rf build
+        shell: bash
+        working-directory: out
 
       - name: Save as aritifact
         uses: actions/upload-artifact@v2

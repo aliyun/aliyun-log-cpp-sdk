@@ -15,7 +15,9 @@ jobs:
     env:
       BUILD_TYPE: Release
       SYSTEM_LIB_DIR: /usr/lib/x86_64-linux-gnu
-      TRIPLET: x64-ubuntu 
+      VCPKG_DIR: ${{github.workspace}}/vcpkg
+      VCPKG_DEFAULT_TRIPLET: x64-linux
+      VCPKG_COMMIT: 0fa8459cf3a7caca7adc58f992bc32ff13630684
 
     name: x64
     runs-on: ubuntu-20.04
@@ -27,70 +29,32 @@ jobs:
         run: find . | grep -v '\.git' | grep -v vcpkg | grep -v include
         shell: bash
 
-      - name: Install deps
-        uses: awalsh128/cache-apt-pkgs-action@latest
+      # - name: Install deps
+      #   uses: awalsh128/cache-apt-pkgs-action@latest
+      #   with:
+      #     packages: libprotobuf-dev protobuf-compiler libcurl4-openssl-dev
+      #     version: 1.0
+      #     execute_install_scripts: true
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@main
+        id: runvcpkg
         with:
-          packages: libprotobuf-dev protobuf-compiler libcurl4-openssl-dev
-          version: 1.0
-          execute_install_scripts: true
-
-      - name: Cmake configure
+          vcpkgDirectory: ${{ env.VCPKG_DIR }}
+          vcpkgGitCommitId: ${{ env.VCPKG_COMMIT }}
+      - name: Install deps
         run: |
-          cmake -B build -DBUILD_SHARE_LIBS=ON -DVERBOSE=ON -DBUILD_SAMPLE=ON \
-              -DBUILD_TESTS=ON  \
-              -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+          vcpkg install --triplet ${{env.VCPKG_DEFAULT_TRIPLET}} protobuf curl
+          vcpkg integrate install
 
-      - name: Build
+      - name: Run vuild
+        env:
+          VCPKG_ROOT: ${{ env.VCPKG_DIR }}
         run: |
-          cmake --build build --clean-first --config ${{env.BUILD_TYPE}}
-  
-      - name: Install
-        run: |
-          cmake --install build --prefix ${{github.workspace}}
-
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
-      # - name: test build standalone sample
-      #   run:
-      #     | 
-      #       cmake -B build -DCMAKE_BUILD_TYPE=Release
-      #       cmake --build build --clean-first --config Release
-      #       rm -rf build
-      #   shell: bash
-      #   working-directory: ${{github.workspace}}/aliyun-log-cpp-sdk/build  
-
-      
-      - name: Copy libs
-        run: |
-              mkdir -p out && mkdir -p out/lib && mkdir -p out/include &&
-                cp $SYSTEM_LIB_DIR/libprotobuf* ./out/lib/
-                cp $SYSTEM_LIB_DIR/libcurl* ./out/lib/
-
-        working-directory:  ${{github.workspace}}
-
-      - name: Show installed files
-        run: |
-            ls -lshtrR lib
-            ls -lshtrR bin
-            ls -lshtr include
-
-      # - name: Set env
-      #   run: echo "GITHUB_SHA_SHAORT=$(echo $GITHUB_SHA | cut -c 1-6)" >> $GITHUB_ENV
-
-      # - name: Set env
-      #   run: echo "TARGET_FILE=release/ubuntu-x64-${GITHUB_SHA_SHAORT}.tar.gz" >> $GITHUB_ENV  
-
+            echo ${{env.VCPKG_ROOT}}
+            ./package/linux/pkg.sh
+        
       - name: Set target file name
-        run: echo "TARGET_FILE=release/${{env.TRIPLET}}-latest.tar.gz" >> "$GITHUB_ENV"
-      
-      - name: Copy files for release
-        run: |
-            mkdir -p release 
-            mkdir -p aliyun-log-cpp-sdk
-            cp -rf bin lib include cmake example test *.cpp *.h \
-              *.md Makefile *.proto ./aliyun-log-cpp-sdk/
-        shell: bash
+        run: echo "TARGET_FILE=release/${{env.VCPKG_DEFAULT_TRIPLET}}-latest.tar.gz" >> "$GITHUB_ENV"
 
       - name: Compress
         uses: a7ul/tar-action@v1.1.0
@@ -99,8 +63,24 @@ jobs:
           command: c
           cwd: ./
           files: |
-            ./aliyun-log-cpp-sdk
+            ./out
           outPath: ${{env.TARGET_FILE}}
+
+      - name: Test build example release
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release
+          rm -rf build
+        shell: bash
+        working-directory: out
+
+      - name: Test build example release
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Debug
+          cmake --build build --config Debug
+          rm -rf build
+        shell: bash
+        working-directory: out
 
       - name: Show release file
         run: |
@@ -109,15 +89,6 @@ jobs:
       - name: Save as aritifact
         uses: actions/upload-artifact@v2
         with:
-          name: ${{env.TRIPLET}}-latest-artifact
+          name: ${{env.VCPKG_DEFAULT_TRIPLET}}-latest-artifact
           path: ${{env.TARGET_FILE}}
           retention-days: 7
-
-
-          # /usr/include/google 
-          # /usr/lib/x86_64-linux-gnu/libprotobuf-lite.a /usr/lib/x86_64-linux-gnu/libprotobuf.a
-          # /usr/lib/x86_64-linux-gnu/libprotobuf-lite.so /usr/lib/x86_64-linux-gnu/libprotobuf.so
-          # /usr/include/x86_64-linux-gnu/curl
-          # /usr/lib/x86_64-linux-gnu/libcurl.a
-          # /usr/lib/x86_64-linux-gnu/libcurl.la
-          # /usr/lib/x86_64-linux-gnu/libcurl.so
