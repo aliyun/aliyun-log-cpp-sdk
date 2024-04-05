@@ -2,7 +2,7 @@
   "version": 3,
   "configurePresets": [
     {
-      "name": "release",
+      "name": "Release",
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
@@ -10,12 +10,27 @@
       }
     },
     {
-      "name": "debug",
+      "name": "Debug",
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
         "CMAKE_BUILD_TYPE": "Debug"
       }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "Release",
+      "configurePreset": "Release",
+      "displayName": "Release",
+      "cleanFirst": true,
+      "configuration": "Release"
+    },
+    {
+      "name": "Debug",
+      "configurePreset": "Debug",
+      "cleanFirst": true,
+      "configuration": "Debug"
     }
   ]
 }

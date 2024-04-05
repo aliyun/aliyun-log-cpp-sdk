@@ -9,10 +9,8 @@ else()
     set(LIB_DIR "${PROJECT_SOURCE_DIR}/Release")
 endif()
 
-get_filename_component(UPPER_DIR "${PROJECT_SOURCE_DIR}/.." ABSOLUTE)
-
-add_executable(example ${UPPER_DIR}/example.cpp)
-target_include_directories(example PUBLIC ${UPPER_DIR}/include)
+add_executable(example example.cpp)
+target_include_directories(example PUBLIC include)
 
 target_link_libraries(example PUBLIC 
                     "${LIB_DIR}/libslssdk.a"
