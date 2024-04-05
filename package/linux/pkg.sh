@@ -50,6 +50,5 @@ cp -rf "${VCPKG_TRIPLET_DIR}/include/openssl" "${OUT_DIR}/include/openssl"
 cp package/linux/* "${OUT_DIR}/"
 cp "example/example.cpp" "${OUT_DIR}/"
 rm -rf ${OUT_DIR}/lib
-rm -rf ${OUT_DIR}/build
 
 tree ${OUT_DIR} -L 3
