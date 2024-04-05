@@ -30,7 +30,7 @@ endif()
 
 if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_definitions(_LARGEFILE64_SOURCE)
-    set(COMMON_FLAG "-Wall -fpic -Werror-Wno-unused-parameter -Wno-pedantic -Wno-deprecated-declarations")
+    set(COMMON_FLAG "-Wall -fpic -Werror -Wno-unused-parameter -Wno-pedantic -Wno-deprecated-declarations")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_FLAG}")
     set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -Wno-class-memaccess ${COMMON_FLAG}")
     message("gcc c compile flags: ${CMAKE_C_FLAGS}")

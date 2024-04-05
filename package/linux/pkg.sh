@@ -1,14 +1,14 @@
 OUT_DIR=$1
-TRIPLET=$($TRIPLET:-x64-linux)
+TRIPLET=${TRIPLET:-x64-linux}
 
 VCPKG_TRIPLET_DIR=${VCPKG_ROOT}/installed/${TRIPLET}
 echo "VCPKG_ROOT=${VCPKG_ROOT}"
 echo "TRIPLET=${TRIPLET}"
 
-if [ -d build ]; then
+if [ -d "build" ]; then
     rm -rf build
 fi
-if [-d "${OUT_DIR}" ]; then
+if [ -d "${OUT_DIR}" ]; then
     rm -rf ${OUT_DIR}
 fi
 mkdir build && mkdir -p ${OUT_DIR}
@@ -21,7 +21,7 @@ cmake --preset Debug -DVCPKG_TARGET_TRIPLET="${TRIPLET}"
 cmake --build --preset Debug 
 cmake --install build --prefix "${OUT_DIR}" --config Debug
 # 拷贝 lib 到对应目录
-Copy-Item "${OUT_DIR}/lib/*.a" "${OUT_DIR}/Debug/"
+cp ${OUT_DIR}/lib/*.a "${OUT_DIR}/Debug/"
 cp ${VCPKG_TRIPLET_DIR}/debug/lib/libcrypto.a ${OUT_DIR}/Debug/libcrypto.a
 cp ${VCPKG_TRIPLET_DIR}/debug/lib/libssl.a ${OUT_DIR}/Debug/libssl.a
 cp ${VCPKG_TRIPLET_DIR}/debug/lib/libcurl-d.a ${OUT_DIR}/Debug/libcurl.a
