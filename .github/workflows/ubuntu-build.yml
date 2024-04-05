@@ -13,8 +13,6 @@ on:
 jobs:
   job:
     env:
-      BUILD_TYPE: Release
-      SYSTEM_LIB_DIR: /usr/lib/x86_64-linux-gnu
       VCPKG_DIR: ${{github.workspace}}/vcpkg
       VCPKG_DEFAULT_TRIPLET: x64-linux
       VCPKG_COMMIT: 0fa8459cf3a7caca7adc58f992bc32ff13630684
@@ -45,16 +43,18 @@ jobs:
         run: |
           vcpkg install --triplet ${{env.VCPKG_DEFAULT_TRIPLET}} protobuf curl
           vcpkg integrate install
-
-      - name: Run vuild
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
+      - name: Run build
         env:
           VCPKG_ROOT: ${{ env.VCPKG_DIR }}
         run: |
             echo ${{env.VCPKG_ROOT}}
-            ./package/linux/pkg.sh
+            ./package/linux/pkg.sh out
         
       - name: Set target file name
-        run: echo "TARGET_FILE=release/${{env.VCPKG_DEFAULT_TRIPLET}}-latest.tar.gz" >> "$GITHUB_ENV"
+        run: echo "TARGET_FILE=${{env.VCPKG_DEFAULT_TRIPLET}}-latest.tar.gz" >> "$GITHUB_ENV"
 
       - name: Compress
         uses: a7ul/tar-action@v1.1.0

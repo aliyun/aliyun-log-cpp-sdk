@@ -14,36 +14,17 @@ jobs:
   job:
     
     env:
-      VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
+      VCPKG_DEFAULT_TRIPLET: x64-windows-static-md
       VCPKG_DIR: ${{github.workspace}}/vcpkg
       VCPKG_COMMIT: 0fa8459cf3a7caca7adc58f992bc32ff13630684
-      BUILD_TYPE: Release
-      SYSTEM_LIB_DIR: ${{github.workspace}}/vcpkg/installed/${{ matrix.triplet }}
-      # Generator: Ninja
     
-
-    name: ${{ matrix.name }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-2022]
-        triplet: [x64-windows]
-        include:
-          - os: windows-latest
-            triplet: x64-windows-static-md
-            name: x64
-            arch: x64
-          # - os: windows-latest
-          #   triplet: x86-windows
-          #   name: x86
-          #   arch: Win32
-
+    name: windows
+    runs-on: windows-2022
 
     steps:
       - name: Show triplet
         run: |
-            echo ${{matrix.triplet}}
+            echo ${{env.VCPKG_DEFAULT_TRIPLET}}
         shell: bash
 
       - uses: actions/checkout@v3
@@ -66,20 +47,21 @@ jobs:
 
       - name: Install deps
         run: |
-          vcpkg install --triplet ${{matrix.triplet}} protobuf curl
+          vcpkg install --triplet ${{env.VCPKG_DEFAULT_TRIPLET}} protobuf curl
           vcpkg integrate install
-
-      # if path has \ in it, use powershell
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
       - name: Run build
         env:
           VCPKG_ROOT: ${{ env.VCPKG_DIR }}
         shell: pwsh
         run: |
           echo ${{env.VCPKG_ROOT}}
-          ./package/windows/pkg.ps1
+          ./package/windows/pkg.ps1 out
 
       - name: Set target file name
-        run: echo "TARGET_FILE=release/${{matrix.triplet}}-latest.tar.gz" >> $GITHUB_ENV
+        run: echo "TARGET_FILE=${{env.VCPKG_DEFAULT_TRIPLET}}-latest.tar.gz" >> $GITHUB_ENV
         shell: bash
 
       - name: Compress
@@ -116,6 +98,6 @@ jobs:
       - name: Save as aritifact
         uses: actions/upload-artifact@v2
         with:
-          name: ${{matrix.triplet}}-latest-artifact
+          name: ${{env.VCPKG_DEFAULT_TRIPLET}}-latest-artifact
           path: ${{env.TARGET_FILE}}
           retention-days: 7
