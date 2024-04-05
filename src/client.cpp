@@ -21,8 +21,6 @@
 #undef GetMessage
 #endif // GetMessage
 #define SLS_MSVC_CLEANUP WSACleanup()
-#define SLS_MSVC_STARTUP WSADATA _wsaData; \
-int iRet = WSAStartup(MAKEWORD(2, 2), &_wsaData);
 #else
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -34,7 +32,6 @@ int iRet = WSAStartup(MAKEWORD(2, 2), &_wsaData);
 #include <sys/socket.h>
 #include <unistd.h>
 #define SLS_MSVC_CLEANUP
-#define SLS_MSVC_STARTUP
 #endif
 
 #define ETH_NAME "eth0"
@@ -45,7 +42,13 @@ using namespace rapidjson;
 extern const char* const aliyun_log_sdk_v6::LOG_SDK_IDENTIFICATION = "sls-cpp-sdk v0.6.1";
 static string GetHostIpByHostName()
 {
-    SLS_MSVC_STARTUP;
+#if defined(_MSC_VER)
+    WSADATA _wsaData;
+    if (WSAStartup(MAKEWORD(2, 2), &_wsaData) != 0) {
+        return string();
+    }
+#endif
+
     char hostname[255];
     gethostname(hostname, 255);
     struct hostent* entry = gethostbyname(hostname);
@@ -293,7 +296,7 @@ static void ErrorCheck(const string& response, const string& requestId, const in
 
         throw LOGException(errorCode, errorMessage, requestId, httpCode);
     }
-    catch (JsonException& e)
+    catch (...)
     {
         if (httpCode == 500)
         {

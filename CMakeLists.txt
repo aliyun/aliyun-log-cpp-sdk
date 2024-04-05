@@ -1,18 +1,25 @@
 cmake_minimum_required(VERSION 3.3)
 
+option(BUILD_EXAMPLE "Build sample" OFF)
+
+set(VCPKG_TARGET_TRIPLET x64-windows-static)
+
+if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+    set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
+endif()
+
 project(slssdk)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# Options
-option(BUILD_SHARED_LIBS  "Enable shared library" OFF)
-option(BUILD_EXAMPLE "Build sample" OFF)
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+
 set(VERBOSE ON)
 set(BUILD_EXAMPLE ON)
 
-# if(CMAKE_HOST_APPLE)
-#     set(PLATFORM_APPLE 1)
-#     set(TARGET_OS "APPLE")
 if(CMAKE_HOST_UNIX)
     set(PLATFORM linux)
 elseif(CMAKE_HOST_WIN32)
@@ -21,28 +28,20 @@ else()
     message(FATAL_ERROR "Unsupported platform")
 endif()
 
-if (NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release)
+if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    add_compile_definitions(_LARGEFILE64_SOURCE)
+    set(COMMON_FLAG "-Wall -fpic -Werror-Wno-unused-parameter -Wno-pedantic -Wno-deprecated-declarations")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_FLAG}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -Wno-class-memaccess ${COMMON_FLAG}")
+    message("gcc c compile flags: ${CMAKE_C_FLAGS}")
+    message("gcc cxx compile flags: ${CMAKE_CXX_FLAGS}")
+elseif(MSVC)
+    set(COMMON_FLAG "/W4 /WX /fp:precise /wd4996 /wd4100 /wd4244 /wd4267")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_FLAG}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAG}")
+    message("MSVC c compile flags: ${CMAKE_C_FLAGS}")
+    message("MSVC cxx compile flags: ${CMAKE_CXX_FLAGS}")
 endif()
-
-set(COMMON_FLAG "-Wall -Werror -fpic -fPIC -Wno-unused-parameter -D_LARGEFILE64_SOURCE")
-set(CMAKE_C_FLAGS " -g -ggdb -O0 ${COMMON_FLAG}")
-set(CMAKE_CXX_FLAGS " -g -ggdb -O0 ${COMMON_FLAG}")
-
-set(CMAKE_C_FLAGS_DEBUG " -g -ggdb -O0 ${COMMON_FLAG}")
-set(CMAKE_CXX_FLAGS_DEBUG " -g -ggdb -O0 ${COMMON_FLAG}")
-
-set(CMAKE_C_FLAGS_RELEASE " -O3 ${COMMON_FLAG}")
-set(CMAKE_CXX_FLAGS_RELEASE " -O3 ${COMMON_FLAG}")
-
-set(CMAKE_C_FLAGS_MINSIZEREF " -Os ${COMMON_FLAG}")
-set(CMAKE_CXX_FLAGS_MINSIZEREF " -Os ${COMMON_FLAG}")
-
-set(CMAKE_C_FLAGS_RELWITHDEBINFO " -O2 ${COMMON_FLAG}")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO " -O2 ${COMMON_FLAG}")
-
-set(CMAKE_C_FLAGS_COVERAGE " ${CMAKE_C_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage")
-set(CMAKE_CXX_FLAGS_COVERAGE " ${CMAKE_C_FLAGS_DEBUG} -fprofile-arcs -ftest-coverag")
 
 set(CMAKE_C_OUTPUT_EXTENSION_REPLACE 1)
 set(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
@@ -52,11 +51,10 @@ add_subdirectory(src)
 if(VERBOSE)
     # platform
     message("TARGET_OS: ${TARGET_OS}")
+
     # option
     message("BUILD_SHARED_LIBS: ${BUILD_SHARED_LIBS}")
     message("BUILD_EXAMPLE: ${BUILD_EXAMPLE}")
-    # compiler flags
-    message("SDK_COMPILER_FLAGS: ${SDK_COMPILER_FLAGS}")
     message("PLATFORM: ${PLATFORM}")
 endif()
 

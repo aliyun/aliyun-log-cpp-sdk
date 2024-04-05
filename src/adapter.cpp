@@ -258,7 +258,7 @@ void LOGAdapter::GetQueryString(const map<string, string>& parameterList, string
 }
 static size_t data_write_callback(char* buffer, size_t size, size_t nmemb, string* write_buf)
 {
-    unsigned long sizes = size * nmemb;
+    size_t sizes = size * nmemb;
 
     if (buffer == NULL)
     {   
@@ -270,13 +270,13 @@ static size_t data_write_callback(char* buffer, size_t size, size_t nmemb, strin
 
 static size_t header_write_callback(char* buffer, size_t size, size_t nmemb, map<string,string>* write_buf)
 {   
-    unsigned long sizes = size * nmemb;
+    size_t sizes = size * nmemb;
 
     if (buffer == NULL)
     {   
         return 0;
     }
-    unsigned long colonIndex;
+    size_t colonIndex;
     for(colonIndex=1; colonIndex<sizes-2; colonIndex++)
     {   
         if(buffer[colonIndex] == ':')break;
@@ -440,11 +440,14 @@ string LOGAdapter::GetUrlSignature(const string& httpMethod, const string& opera
         contentMd5=CodecTool::CalcMD5(content);
     }
     string contentType;
-    map<string, string>::iterator iter = httpHeader.find(CONTENT_TYPE);
-    if (iter != httpHeader.end())
     {
-        contentType = iter->second;
+        auto iter = httpHeader.find(CONTENT_TYPE);
+        if (iter != httpHeader.end())
+        {
+            contentType = iter->second;
+        }
     }
+
     std::map<string,string> endingMap;
     switch(sigType)
     {
