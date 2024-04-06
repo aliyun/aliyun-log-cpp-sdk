@@ -10,14 +10,14 @@ on:
         default: false
       triplet:
         description: vcpkg triplet
-        default: x64-windows-static-md
+        default: x64-windows
   push:
 
 jobs:
   job:
     
     env:
-      VCPKG_DEFAULT_TRIPLET:  ${{ github.event.inputs.triplet || 'x64-windows-static-md'}}
+      VCPKG_DEFAULT_TRIPLET:  ${{ github.event.inputs.triplet || 'x64-windows'}}
       VCPKG_DIR: ${{github.workspace}}/vcpkg
       VCPKG_COMMIT: 0fa8459cf3a7caca7adc58f992bc32ff13630684
     
