@@ -21,31 +21,49 @@ endif()
 file(GLOB SRCS sls/*.cpp)
 file(GLOB LZ4_SRC_FILES sls/lz4/*.c)
 add_library(${PROJECT_NAME} STATIC ${SRCS} ${LZ4_SRC_FILES} ${PROTO_SRCS})
-target_link_libraries(${PROJECT_NAME} ${PROTOBUF_LIBRARIES} ${CURL_LIBRARIES})
-target_include_directories(${PROJECT_NAME} PUBLIC
+target_link_libraries(${PROJECT_NAME}
+                      PUBLIC ${PROTOBUF_LIBRARIES}
+                      PRIVATE ${CURL_LIBRARIES})
+target_include_directories(${PROJECT_NAME}
+                            PUBLIC
                             ${PROTOBUF_INCLUDE_DIRS}
+                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
                             $<BUILD_INTERFACE:${PROTO_INC_DIR}>
                             $<INSTALL_INTERFACE:sls>
+                            PRIVATE
                             ${CURL_INCLUDE_DIRS})
 
 # install
 install(TARGETS ${PROJECT_NAME}
-    EXPORT "${PROJECT_NAME}Config"
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+        EXPORT "${PROJECT_NAME}Config"
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 file(GLOB SLS_HEADERS sls/*.h)
-install(FILES ${PROTO_HDRS} DESTINATION include/sls)
+install(FILES ${PROTO_HDRS} DESTINATION include)
 install(FILES ${SLS_HEADERS} DESTINATION include/sls)
-install(DIRECTORY "${PROJECT_SOURCE_DIR}/src/sls/rapidjson" DESTINATION include/sls)
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/sls/rapidjson" DESTINATION include/sls)
 
-export(TARGETS
-    ${PROJECT_NAME}
-    NAMESPACE ${PROJECT_NAME}::
-    FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+include(CMakePackageConfigHelpers)
+
+# 生成 ConfigVersion.cmake 文件
+write_basic_package_version_file(
+  "${PROJECT_NAME}ConfigVersion.cmake"
+  VERSION ${PROJECT_VERSION}
+  COMPATIBILITY SameMinorVersion
 )
-install(EXPORT
-    "${PROJECT_NAME}Config"
-    DESTINATION "${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}/cmake"
-    NAMESPACE ${PROJECT_NAME}::
+
+# 安装 Config.cmake 和 ConfigVersion.cmake
+install(
+  FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
+  DESTINATION
+    lib/sls/cmake
+  )
+
+install(EXPORT "${PROJECT_NAME}Config"
+  FILE "${PROJECT_NAME}Config.cmake"
+  DESTINATION lib/sls/cmake
+  NAMESPACE ${PROJECT_NAME}::
 )
+
