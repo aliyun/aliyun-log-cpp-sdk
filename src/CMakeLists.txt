@@ -29,7 +29,8 @@ target_include_directories(${PROJECT_NAME}
                             ${PROTOBUF_INCLUDE_DIRS}
                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
                             $<BUILD_INTERFACE:${PROTO_INC_DIR}>
-                            $<INSTALL_INTERFACE:sls>
+                            $<INSTALL_INTERFACE:include/sls>
+                            $<INSTALL_INTERFACE:include>
                             PRIVATE
                             ${CURL_INCLUDE_DIRS})
 
@@ -53,10 +54,18 @@ write_basic_package_version_file(
   COMPATIBILITY SameMinorVersion
 )
 
+configure_package_config_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+  INSTALL_DESTINATION
+    share/${PROJECT_NAME}
+  )
+
 # 安装 Config.cmake 和 ConfigVersion.cmake
 install(
   FILES
     ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
   DESTINATION
     share/${PROJECT_NAME}
   )
@@ -66,7 +75,7 @@ install(EXPORT "${PROJECT_NAME}Config"
   DESTINATION share/${PROJECT_NAME}
   NAMESPACE ${PROJECT_NAME}::
 )
-export(TARGETS ${PROJECT_NAME}
-    FILE "share/${PROJECT_NAME}Targets.cmake"
-    NAMESPACE ${PROJECT_NAME}::)
+# export(TARGETS ${PROJECT_NAME}
+#     FILE "share/${PROJECT_NAME}Targets.cmake"
+#     NAMESPACE ${PROJECT_NAME}::)
 
