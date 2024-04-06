@@ -92,11 +92,11 @@ jobs:
         shell: bash
         working-directory: out
 
-      - name: Test build example release
+      - name: Test build example Debug
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Debug
           cmake --build build --config Debug
-          cp build/Debug/example.exe Release/ && ./Debug/example.exe --dummy
+          cp build/Debug/example.exe Debug/ && ./Debug/example.exe --dummy
           rm -f Debug/example.exe
           rm -rf build
         shell: bash
