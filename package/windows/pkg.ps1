@@ -30,10 +30,10 @@ if ($target -eq "All" -or $target -eq "Debug") {
   Write-Host "build on windows Debug"
   rmdir-if build
   New-Item -ItemType Directory -Force -Path "${OUT_DIR}/Debug"
-  cmake --preset Debug -DVCPKG_TARGET_TRIPLET="${TRIPLET}"
-  cmake --build --preset Debug 
-  cmake --install build --prefix "${OUT_DIR}" --config Debug
-  # 拷贝 lib 到对应目录
+  cmake --preset Debug -DVCPKG_TARGET_TRIPLET="${TRIPLET}" || exit -1
+  cmake --build --preset Debug  || exit -2
+  cmake --install build --prefix "${OUT_DIR}" --config Debug || exit -3
+  # 拷贝 lib 到对应目录 
   Copy-Item "${OUT_DIR}/lib/*.lib" "${OUT_DIR}/Debug/"
   Copy-Item "${VCPKG_TRIPLET_DIR}/debug/lib/zlibd.lib" "${OUT_DIR}/Debug/zlib.lib"
   Copy-Item "${VCPKG_TRIPLET_DIR}/debug/lib/libcurl-d.lib" "${OUT_DIR}/Debug/libcurl.lib"
@@ -55,9 +55,9 @@ if ($target -eq "All" -or $target -eq "Release") {
   Write-Host "build on windows Release"
   # rmdir-if build
   New-Item -ItemType Directory -Force -Path "${OUT_DIR}/Release"
-  cmake --preset Release -DVCPKG_TARGET_TRIPLET="${TRIPLET}"
-  cmake --build --preset Release 
-  cmake --install build --prefix "${OUT_DIR}" --config Release
+  cmake --preset Release -DVCPKG_TARGET_TRIPLET="${TRIPLET}" || exit -1
+  cmake --build --preset Release || exit -2
+  cmake --install build --prefix "${OUT_DIR}" --config Release || exit -3
   # 拷贝 lib 到对应目录
   Copy-Item "${OUT_DIR}/lib/*.lib" "${OUT_DIR}/Release/"
   $RELEASE_LIB_FILES = "zlib.lib", "libcurl.lib", "libprotobuf.lib"

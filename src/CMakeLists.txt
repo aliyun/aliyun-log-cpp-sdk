@@ -1,7 +1,7 @@
 
-find_package(Protobuf)
+find_package(protobuf CONFIG)
 
-if(Protobuf_FOUND)
+if(protobuf_FOUND)
     set(PROTOBUF_LIBRARIES "protobuf::libprotobuf")
 elseif((NOT PROTOBUF_LIBRARIES) OR(NOT PROTOBUF_INCLUDE_DIRS))
     message(FATAL_ERROR "Protobuf not found, PROTOBUF_LIBRARIES and PROTOBUF_INCLUDE_DIRS not set")
@@ -10,7 +10,7 @@ endif()
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS sls/sls_logs.proto)
 get_filename_component(PROTO_INC_DIR "${PROTO_HDRS}" PATH)
 
-find_package(CURL)
+find_package(CURL CONFIG)
 
 if(CURL_FOUND)
     set(CURL_LIBRARIES "CURL::libcurl")
@@ -56,7 +56,7 @@ file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
 "include(CMakeFindDependencyMacro)\n"
 "find_dependency(Protobuf REQUIRED)\n"
 "find_dependency(CURL REQUIRED)\n"
-"include(\"\${CMAKE_CURRENT_LIST_DIR}${PROJECT_NAME}-targets.cmake\")\n"
+"include(\"\${CMAKE_CURRENT_LIST_DIR}/${PROJECT_NAME}-targets.cmake\")\n"
 )
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
         DESTINATION share/${PROJECT_NAME})
