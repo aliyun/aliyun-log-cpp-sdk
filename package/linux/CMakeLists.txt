@@ -10,7 +10,7 @@ else()
 endif()
 
 add_executable(example example.cpp)
-target_include_directories(example PUBLIC include)
+target_include_directories(example PUBLIC include include/sls)
 
 target_link_libraries(example PUBLIC 
                     "${LIB_DIR}/libslssdk.a"

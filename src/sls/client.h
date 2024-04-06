@@ -4,9 +4,9 @@
 #include <vector>
 #include <map>
 #include <utility>
-#include "RestfulApiCommon.h"
-#include "sls_logs.pb.h"
-#include "resource.h"
+#include <sls/RestfulApiCommon.h>
+#include <sls_logs.pb.h>
+#include <sls/resource.h>
 #include <mutex>
 
 namespace ehttp

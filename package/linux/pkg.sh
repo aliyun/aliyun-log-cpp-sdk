@@ -47,7 +47,7 @@ if [ "$target" = "All" -o "$target" = "Release" ]; then
 fi
 
 # 拷贝头文件、exmaple 文件
-mkdir -p out/include
+mkdir -p out/include/sls
 cp -rf "${VCPKG_TRIPLET_DIR}/include/curl" "${OUT_DIR}/include/curl"
 cp -rf "${VCPKG_TRIPLET_DIR}/include/google" "${OUT_DIR}/include/google"
 cp -rf "${VCPKG_TRIPLET_DIR}/include/openssl" "${OUT_DIR}/include/openssl"

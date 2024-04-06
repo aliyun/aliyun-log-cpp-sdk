@@ -35,7 +35,6 @@ if ($target -eq "All" -or $target -eq "Debug") {
   cmake --install build --prefix "${OUT_DIR}" --config Debug
   # 拷贝 lib 到对应目录
   Copy-Item "${OUT_DIR}/lib/*.lib" "${OUT_DIR}/Debug/"
-  Copy-Item "${OUT_DIR}/bin/*.pdb" "${OUT_DIR}/Debug/"
   Copy-Item "${VCPKG_TRIPLET_DIR}/debug/lib/zlibd.lib" "${OUT_DIR}/Debug/zlib.lib"
   Copy-Item "${VCPKG_TRIPLET_DIR}/debug/lib/libcurl-d.lib" "${OUT_DIR}/Debug/libcurl.lib"
   Copy-Item "${VCPKG_TRIPLET_DIR}/debug/lib/libprotobufd.lib" "${OUT_DIR}/Debug/libprotobuf.lib"
@@ -46,7 +45,7 @@ if ($target -eq "All" -or $target -eq "Debug") {
     }
   }
   # patch slssdk.pdb
-  if (-not(Test-path "${OUT_DIR}/Debug/slssdk.pdb" -PathType leaf)) {
+  if (Test-path "build/src/Debug/slssdk.pdb" -PathType leaf) {
     Copy-Item "build/src/Debug/slssdk.pdb" "${OUT_DIR}/Debug/"
   }
 }
@@ -54,7 +53,7 @@ if ($target -eq "All" -or $target -eq "Debug") {
 # ==== 构建 Release 版本 ====
 if ($target -eq "All" -or $target -eq "Release") {
   Write-Host "build on windows Release"
-  rmdir-if build
+  # rmdir-if build
   New-Item -ItemType Directory -Force -Path "${OUT_DIR}/Release"
   cmake --preset Release -DVCPKG_TARGET_TRIPLET="${TRIPLET}"
   cmake --build --preset Release 
@@ -75,6 +74,7 @@ if ($target -eq "All" -or $target -eq "Release") {
 
 # 拷贝头文件、exmaple 文件
 New-Item -ItemType Directory -Force -Path "${OUT_DIR}/include"
+New-Item -ItemType Directory -Force -Path "${OUT_DIR}/include/sls"
 Copy-Item -Recurse "${VCPKG_TRIPLET_DIR}/include/curl" "${OUT_DIR}/include/curl"
 Copy-Item -Recurse "${VCPKG_TRIPLET_DIR}/include/google" "${OUT_DIR}/include/google"
 Copy-Item "package/windows/*" "${OUT_DIR}/"

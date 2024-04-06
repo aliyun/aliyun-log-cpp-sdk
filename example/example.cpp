@@ -8,8 +8,8 @@
  *  year of creation of the work.
  *
  */
-#include "client.h"
-#include "common.h"
+#include <sls/client.h>
+#include <sls/common.h>
 #include <string>
 #include <iostream>
 #include <thread>

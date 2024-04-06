@@ -17,8 +17,8 @@
 #include <map>
 #include <set>
 #include <memory>
-#include "rapidjson/writer.h"
-#include "rapidjson/document.h"
+#include <sls/rapidjson/writer.h>
+#include <sls/rapidjson/document.h>
 
 namespace aliyun_log_sdk_v6
 {

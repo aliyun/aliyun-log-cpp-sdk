@@ -4,9 +4,9 @@
 #include <vector>
 #include <map>
 
-#include "common.h"
-#include "client.h"
-#include "RestfulApiCommon.h"
+#include <sls/common.h>
+#include <sls/client.h>
+#include <sls/RestfulApiCommon.h>
 #include <mutex>
 
 namespace aliyun_log_sdk_v6
