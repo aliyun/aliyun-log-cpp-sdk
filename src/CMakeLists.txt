@@ -36,7 +36,7 @@ target_include_directories(${PROJECT_NAME}
 
 # install
 install(TARGETS ${PROJECT_NAME}
-        EXPORT "${PROJECT_NAME}Config"
+        EXPORT "${PROJECT_NAME}"
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
@@ -46,35 +46,49 @@ install(FILES ${SLS_HEADERS} DESTINATION include/sls)
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/sls/rapidjson" DESTINATION include/sls)
 
 include(CMakePackageConfigHelpers)
-
-# 生成 ConfigVersion.cmake 文件
-write_basic_package_version_file(
-  "${PROJECT_NAME}ConfigVersion.cmake"
-  VERSION ${PROJECT_VERSION}
-  COMPATIBILITY SameMinorVersion
-)
-
-configure_package_config_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in"
-  "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-  INSTALL_DESTINATION
-    share/${PROJECT_NAME}
-  )
-
-# 安装 Config.cmake 和 ConfigVersion.cmake
-install(
-  FILES
-    ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
-    ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
-  DESTINATION
-    share/${PROJECT_NAME}
-  )
-
-install(EXPORT "${PROJECT_NAME}Config"
-  FILE "${PROJECT_NAME}Config.cmake"
+install(EXPORT "${PROJECT_NAME}"
+  FILE "${PROJECT_NAME}-targets.cmake"
   DESTINATION share/${PROJECT_NAME}
   NAMESPACE ${PROJECT_NAME}::
 )
+
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
+"include(CMakeFindDependencyMacro)\n"
+"find_dependency(Protobuf REQUIRED)\n"
+"find_dependency(CURL REQUIRED)\n"
+"include(\"\${CMAKE_CURRENT_LIST_DIR}${PROJECT_NAME}-targets.cmake\")\n"
+)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
+        DESTINATION share/${PROJECT_NAME})
+
+# # 生成 ConfigVersion.cmake 文件
+# write_basic_package_version_file(
+#   "${PROJECT_NAME}ConfigVersion.cmake"
+#   VERSION ${PROJECT_VERSION}
+#   COMPATIBILITY SameMinorVersion
+# )
+
+# configure_package_config_file(
+#   "${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in"
+#   "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+#   INSTALL_DESTINATION
+#     share/${PROJECT_NAME}
+#   )
+
+# # 安装 Config.cmake 和 ConfigVersion.cmake
+# install(
+#   FILES
+#     ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
+#     ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+#   DESTINATION
+#     share/${PROJECT_NAME}
+#   )
+
+# install(EXPORT "${PROJECT_NAME}Config"
+#   FILE "${PROJECT_NAME}Config.cmake"
+#   DESTINATION share/${PROJECT_NAME}
+#   NAMESPACE ${PROJECT_NAME}::
+# )
 # export(TARGETS ${PROJECT_NAME}
 #     FILE "share/${PROJECT_NAME}Targets.cmake"
 #     NAMESPACE ${PROJECT_NAME}::)
