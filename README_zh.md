@@ -15,132 +15,48 @@
 | x86    | windows | msvc | ![Windows Build](https://github.com/crimson-gao/aliyun-log-cpp-sdk/actions/workflows/windows-build.yml/badge.svg) |  
 
 
-# 依赖的第三方库
+# 构建
+## 从预编译库构建（推荐）
+可在 release 页面下载对应压缩包，按照压缩包内 README 说明进行构建  
+- x64-windows 支持 cmake 构建、visual studio 构建
+- x64-linux 支持 cmake 构建、makefile 构建
 
-- protobuf: 要求版本不低于 2.5.0。  
+## 从源码构建
+### vcpkg 构建
+1. 安装 vcpkg，可参考[教程](https://learn.microsoft.com/zh-cn/vcpkg/get_started/get-started?pivots=shell-cmd)  
+- windows下  
+  ```bash
+  git clone https://github.com/microsoft/vcpkg.git
+  cd vcpkg && bootstrap-vcpkg.bat
+  ```
 
-- protoc  
-  protoc 是二进制命令行工具，用于从 proto 文件生成 protobuf 头文件与源文件。  
-  可以从 [protobuf 发布页面](https://github.com/protocolbuffers/protobuf/releases) 下载已编译好的二进制文件，或者使用包管理工具安装 `protobuf-compiler`。  
+- linux 下
+  ```bash
+  git clone https://github.com/microsoft/vcpkg.git
+  cd vcpkg && ./bootstrap-vcpkg.sh
+  ```
 
-  > protoc 与 protobuf 的版本应该相符，避免兼容性问题。  
-- curl
+2. 安装依赖库  
+    ```bash
+    vcpkg install protobuf curl
+    ```
 
-## 第三方库安装方式
-第三方库可以通过源码编译安装，或者使用包管理工具安装。ubuntu 下推荐使用 apt、centos 推荐使用 yum、windows 推荐使用 [vcpkg](https://github.com/microsoft/vcpkg) 进行安装。  
+3. 构建  
+设置环境变量 VCPKG_ROOT ，然后执行构建命令  
 
-如果有些包未找到，可以去发行版系统的官方网站搜索并下载安装，或者从源码构建安装。  
+- linux 下
+  ```bash
+  export VCPKG_ROOT=你的vcpkg安装目录路径
+  cmake --preset Release
+  cmake --build --preset Release --config Release
+  ```
 
-Ubuntu      
-
-```bash
-sudo apt install libprotobuf-dev protobuf-compiler libcurl4-openssl-dev cmake
-```
-
-CentOS  
-
-```bash  
-sudo yum install protobuf-devel protobuf-compiler libcurl-devel cmake
-```
-
-Windows系统  
-
-> vcpkg 可以指定要安装的库的版本，安装32位库使用 `--triplet x86-windows`，64位版本使用 `--triplet x64-windows`。
-```bash
-vcpkg install --triplet x64-windows protobuf curl
-```
-
-
-
-# 编译构建
-## 支持的构建工具
-1. Makefile (支持编译器 gcc)
-2. CMake (支持编译器 gcc 和 msvc)
-## 编译过程
-> 在下面的编译过程中，会利用 protoc 工具从 [sls_logs.proto](sls_logs.proto) 文件中读取定义，并生成相应的头文件(sls_logs.pb.h)与源文件(sls_logs.pb.cc)。  
-这些文件会在 proto 定义更新后被自动更新，请不要手动修改这些生成的文件。  
-
-
-## 使用 CMake 构建（支持linux 与 windows）
-1. 使用 CMake 配置项目，执行以下命令 
-  
-```bash  
-cmake -B build
-```
-
-若您使用 vcpkg 作为包管理工具，在构建过程中出现找不到第三方库的头文件或库文件，可在cmake配置时添加 `-DCMAKE_TOOLCHAIN_FILE=C:/example/vcpkg/scripts/buildsystems/vcpkg.cmake`，其中 `C:/example/vcpkg` 替换为您的 vcpkg 的实际安装目录路径，如下所示  
-
-```bash
-cmake -B build -DCMAKE_TOOLCHAIN_FILE=C:/example/vcpkg/scripts/buildsystems/vcpkg.cmake
-```
-编译 windows 32位系统软件可使用如下命令  
-
-```bash
-cmake -B build -A Win32 -DCMAKE_GENERATOR_PLATFORM=Win32 -DCMAKE_TOOLCHAIN_FILE=C:/example/vcpkg/scripts/buildsystems/vcpkg.cmake
-```
-
-2. 执行构建  
-
-可使用以下命令执行构建。  
-
-```bash  
-cmake --build build
-```
-
-您的机器上至少需要安装一种 CMake 支持的 [Generator](https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html)，常见的 Generator 包括 `Unix Makefiles` 、`Ninja`、`xcode` 、`Visual Studio` 等，若要指定 Generator 可使用 `-G <generator>` 选项。
-
-## 使用 Makefile 构建（支持linux）
-
-1. 在项目根目录执行命令 `make -j`，自动生成以下文件。
-
-```
-lib/libsls-sdk-cpp-static.a
-lib/liblz4.a
-sls_logs.pb.cc
-sls_logs.pb.h
-sample
-```
-其中 `lib/libsls-sdk-cpp-static.a` 是构建好的 SDK 库文件，可以被静态连接到你的程序中， sample 是一个示例可执行二进制文件。
-
-2. 构建你的程序。  
-在你的程序的构建指令中添加 SLS SDK 的头文件与库，并执行构建指令，如下所示。
-
-```bash
-g++ -o your_program your_program.o   -O2 -L./lib/  -I./include/ -lsls-sdk-cpp-static -llz4 -lcurl -lprotobuf 
-```
-
-## 使用 SConscript（废弃）
-
-+ 项目根目录记作 $root，首先创建目录 `mkdir $root/slssdk`
-
-+ 拷贝以下文件到项目根目录
-```
-adapter.cpp  client.cpp  common.cpp  resource.cpp  
-adapter.h  client.h  common.h  resource.h  RestfulApiCommon.h 
-sls_logs.proto  
-include
-```
-
-+ 构建 sls sdk 库文件
-
-```
-env.aProto('sls_logs.proto')
-env.aStaticLibrary(target = 'sls_logs_pb_cpp', source=['sls_logs.pb.cc'])
-
-slssdk_obj = env.Object([Glob('*.cpp')])
-env.aStaticLibrary(target = 'slssdk' ,source = [slssdk_obj])
-```
-
-+ 拷贝以下文件到 $root/slssdk/
-```
-lib/liblz4.a lib/libprotobuf_static.a
-```
-
-+  构建你的程序
-
-```
-env.aProgram(target= 'sample1' ,source=['sample.cpp'], LIBS=['slssdk','sls_logs_pb_cpp','lz4','curl','protobuf_static'])
-```
+- windows 下
+  ```cmd
+  set VCPKG_ROOT="你的vcpkg安装目录路径"
+  cmake --preset Release
+  cmake --build --preset Release --config Release
+  ```
 
 # 样例
 参考 [sample.cpp](example/sample.cpp) 文件。
