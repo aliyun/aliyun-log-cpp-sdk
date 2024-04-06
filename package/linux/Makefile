@@ -10,7 +10,7 @@ else
 	LIB_DIR = Release
 endif
 
-LIBS = $(LIB_DIR)/libslssdk.a \
+LIBS = $(LIB_DIR)/libaliyun_log.a \
        $(LIB_DIR)/libcurl.a \
        $(LIB_DIR)/libssl.a \
        $(LIB_DIR)/libcrypto.a \

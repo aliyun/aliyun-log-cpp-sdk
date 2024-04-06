@@ -44,9 +44,9 @@ if ($target -eq "All" -or $target -eq "Debug") {
       Copy-Item "${VCPKG_TRIPLET_DIR}/debug/bin/${lib}" "${OUT_DIR}/Debug/${lib}"
     }
   }
-  # patch slssdk.pdb
-  if (Test-path "build/src/Debug/slssdk.pdb" -PathType leaf) {
-    Copy-Item "build/src/Debug/slssdk.pdb" "${OUT_DIR}/Debug/"
+  # patch aliyun_log.pdb
+  if (Test-path "build/src/Debug/aliyun_log.pdb" -PathType leaf) {
+    Copy-Item "build/src/Debug/aliyun_log.pdb" "${OUT_DIR}/Debug/"
   }
 }
 

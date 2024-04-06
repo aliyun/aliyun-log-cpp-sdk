@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.3)
 
-project(slssdk-lib-example)
+project(aliyun-log-example)
 set(CMAKE_CXX_STANDARD 11)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -13,7 +13,7 @@ add_executable(example example.cpp)
 target_include_directories(example PUBLIC include include/sls)
 
 target_link_libraries(example PUBLIC 
-                    "${LIB_DIR}/libslssdk.a"
+                    "${LIB_DIR}/libaliyun_log.a"
                     "${LIB_DIR}/libcurl.a"
                     "${LIB_DIR}/libssl.a"
                     "${LIB_DIR}/libcrypto.a"

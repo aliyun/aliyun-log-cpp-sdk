@@ -27,7 +27,7 @@ Copy-Item build/Release/example.exe Release/
 ### Debug 模式
 1. 将 include 文件夹添加到项目属性的`VC++目录-包含目录`中  
 2. 将 Debug 目录添加到项目属性 Debug 配置下的`VC++目录-库目录`  
-3. 将 `slssdk.lib;libcurl.lib;zlib.lib;libprotobuf.lib;Crypt32.lib` 添加到项目属性 Debug 配置下的 `链接器-输入-附加依赖项`  
+3. 将 `aliyun_log.lib;libcurl.lib;zlib.lib;libprotobuf.lib;Crypt32.lib` 添加到项目属性 Debug 配置下的 `链接器-输入-附加依赖项`  
 4. 将 Debug 目录下的 dll 文件拷贝到可执行程序目录下，或者在`项目属性-生成事件-生成后事件-命令行中`添加
 ```powershell
 XCOPY "$(SolutionDir)$(Configuration)"\*.dll "$(TargetDir)" /D /K /Y
@@ -36,7 +36,7 @@ XCOPY "$(SolutionDir)$(Configuration)"\*.dll "$(TargetDir)" /D /K /Y
 ### Release 模式
 1. 将 include 文件夹添加到项目属性的`VC++目录-包含目录`中  
 2. 将 Release 目录添加到项目属性 Release 配置下的`VC++目录-库目录`  
-3. 将 `slssdk.lib;libcurl.lib;zlib.lib;libprotobuf.lib;Crypt32.lib` 添加到项目属性 Release 配置下的 `链接器-输入-附加依赖项`  
+3. 将 `aliyun_log.lib;libcurl.lib;zlib.lib;libprotobuf.lib;Crypt32.lib` 添加到项目属性 Release 配置下的 `链接器-输入-附加依赖项`  
 4. 将 Release 目录下的 dll 文件拷贝到可执行程序目录下，或者在`项目属性-生成事件-生成后事件-命令行中`添加
 ```powershell
 XCOPY "$(SolutionDir)$(Configuration)"\*.dll "$(TargetDir)" /D /K /Y

@@ -58,12 +58,12 @@ install(
   FILES
     ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
   DESTINATION
-    lib/sls/cmake
+    share/${PROJECT_NAME}
   )
 
 install(EXPORT "${PROJECT_NAME}Config"
   FILE "${PROJECT_NAME}Config.cmake"
-  DESTINATION lib/sls/cmake
+  DESTINATION share/${PROJECT_NAME}
   NAMESPACE ${PROJECT_NAME}::
 )
 
