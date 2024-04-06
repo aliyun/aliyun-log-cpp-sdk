@@ -67,6 +67,6 @@ install(EXPORT "${PROJECT_NAME}Config"
   NAMESPACE ${PROJECT_NAME}::
 )
 export(TARGETS ${PROJECT_NAME}
-    FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake"
+    FILE "share/${PROJECT_NAME}Targets.cmake"
     NAMESPACE ${PROJECT_NAME}::)
 
