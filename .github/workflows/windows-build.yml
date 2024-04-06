@@ -8,13 +8,16 @@ on:
         description: 'Run the build with tmate debugging enabled'
         required: false
         default: false
+      triplet:
+        description: vcpkg triplet
+        default: x64-windows-static-md
   push:
 
 jobs:
   job:
     
     env:
-      VCPKG_DEFAULT_TRIPLET: x64-windows-static-md
+      VCPKG_DEFAULT_TRIPLET:  ${{ github.event.inputs.triplet || 'x64-windows-static-md'}}
       VCPKG_DIR: ${{github.workspace}}/vcpkg
       VCPKG_COMMIT: 0fa8459cf3a7caca7adc58f992bc32ff13630684
     
@@ -58,7 +61,7 @@ jobs:
         shell: pwsh
         run: |
           echo ${{env.VCPKG_ROOT}}
-          ./package/windows/pkg.ps1 out
+          ./package/windows/pkg.ps1 All
 
       - name: Set target file name
         run: echo "TARGET_FILE=${{env.VCPKG_DEFAULT_TRIPLET}}-latest.tar.gz" >> $GITHUB_ENV
@@ -83,6 +86,8 @@ jobs:
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build --config Release
+          cp build/Release/example.exe Release/ && ./Release/example.exe --dummy
+          rm -f Release/example.exe
           rm -rf build
         shell: bash
         working-directory: out
@@ -91,6 +96,8 @@ jobs:
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Debug
           cmake --build build --config Debug
+          cp build/Debug/example.exe Release/ && ./Debug/example.exe --dummy
+          rm -f Debug/example.exe
           rm -rf build
         shell: bash
         working-directory: out

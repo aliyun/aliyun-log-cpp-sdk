@@ -8,13 +8,16 @@ on:
         description: 'Run the build with tmate debugging enabled'
         required: false
         default: false
+      triplet:
+        description: vcpkg triplet
+        default: x64-linux
   push:
 
 jobs:
   job:
     env:
       VCPKG_DIR: ${{github.workspace}}/vcpkg
-      VCPKG_DEFAULT_TRIPLET: x64-linux
+      VCPKG_DEFAULT_TRIPLET: ${{ github.event.inputs.triplet || 'x64-linux'}}
       VCPKG_COMMIT: 0fa8459cf3a7caca7adc58f992bc32ff13630684
 
     name: x64
@@ -51,7 +54,7 @@ jobs:
           VCPKG_ROOT: ${{ env.VCPKG_DIR }}
         run: |
             echo ${{env.VCPKG_ROOT}}
-            ./package/linux/pkg.sh out
+            ./package/linux/pkg.sh All
         
       - name: Set target file name
         run: echo "TARGET_FILE=${{env.VCPKG_DEFAULT_TRIPLET}}-latest.tar.gz" >> "$GITHUB_ENV"
@@ -70,6 +73,7 @@ jobs:
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build --config Release
+          ./build/example --dummy
           rm -rf build
         shell: bash
         working-directory: out
@@ -78,6 +82,7 @@ jobs:
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Debug
           cmake --build build --config Debug
+          ./build/example --dummy
           rm -rf build
         shell: bash
         working-directory: out

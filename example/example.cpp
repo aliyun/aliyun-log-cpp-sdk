@@ -15,12 +15,18 @@
 #include <thread>
 #include <chrono>
 #include <memory>
+#include <string>
 
 using namespace aliyun_log_sdk_v6;
 using namespace std;
 int main(int argc, char **argv)
 {
-    std::cout << "Sample started." << std::endl;
+  std::cout << "Sample started." << std::endl;
+    if (argc > 1 && std::string(argv[1]) == "--dummy")
+    {
+        cout << "for build test" << endl;
+        return 0;
+    }
     string endpoint = "cn-hangzhou-corp.sls.aliyuncs.com";
     string accessKeyId = "";
     string accessKey = "";
