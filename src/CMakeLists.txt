@@ -1,5 +1,5 @@
 
-find_package(protobuf CONFIG)
+find_package(Protobuf CONFIG)
 
 if(protobuf_FOUND)
     set(PROTOBUF_LIBRARIES "protobuf::libprotobuf")
@@ -24,15 +24,17 @@ add_library(${PROJECT_NAME} STATIC ${SRCS} ${LZ4_SRC_FILES} ${PROTO_SRCS})
 target_link_libraries(${PROJECT_NAME}
                       PUBLIC ${PROTOBUF_LIBRARIES}
                       PRIVATE ${CURL_LIBRARIES})
+message("PROTOBUF_INCLUDE_DIRS: ${PROTOBUF_INCLUDE_DIRS}")
+message("CURL_INCLUDE_DIRS: ${CURL_INCLUDE_DIRS}")
 target_include_directories(${PROJECT_NAME}
                             PUBLIC
-                            ${PROTOBUF_INCLUDE_DIRS}
+                            $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>
                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
                             $<BUILD_INTERFACE:${PROTO_INC_DIR}>
                             $<INSTALL_INTERFACE:include/sls>
                             $<INSTALL_INTERFACE:include>
                             PRIVATE
-                            ${CURL_INCLUDE_DIRS})
+                            $<BUILD_INTERFACE:${CURL_INCLUDE_DIRS}>)
 
 # install
 install(TARGETS ${PROJECT_NAME}
