@@ -88,8 +88,8 @@ static bool ParseFromStr(const SlsStringPiece& str, SLS_OUT Log& result)
             IF_CONFITION_RETURN_FALSE(pos == nullptr);
             result.time = data_time;
             hasTime = true;
+            break;
         }
-        break;
 
         case 2: // log content
         {
@@ -102,8 +102,8 @@ static bool ParseFromStr(const SlsStringPiece& str, SLS_OUT Log& result)
                 return false;
             result.contents.emplace_back(pair.first, pair.second);
             pos += len;
+            break;
         }
-        break;
 
         case 4: // nano time
         {
@@ -112,15 +112,15 @@ static bool ParseFromStr(const SlsStringPiece& str, SLS_OUT Log& result)
             std::memcpy(&result.timeNs, pos, 4);
             result.hasTimeNs = true;
             pos += 4;
+            break;
         }
-        break;
 
         default:
         {
             pos = SkipProtobufField(pos, end, mode);
             IF_CONFITION_RETURN_FALSE(pos == nullptr);
+            break;
         }
-        break;
         }
     }
     return hasTime && (pos == end);
@@ -187,8 +187,10 @@ static bool ParseFromStr(const SlsStringPiece& str, SLS_OUT LogGroup& result)
         }
 
         default:
+        {
             // unreachable
             break;
+        }
         }
     }
     return pos == end;
