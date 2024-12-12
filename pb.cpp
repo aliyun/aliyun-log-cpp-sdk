@@ -228,11 +228,16 @@ static bool ParseFromStr(const SlsStringPiece& str, SLS_OUT LogGroupList& result
     return pos == end;
 }
 
-bool PbEncoder::ParseFromString(const std::string& str, SLS_OUT LogGroupList& out)
+bool PbEncoder::ParseFromString(const std::string &str, SLS_OUT LogGroupList &out)
 {
-    return ParseFromStr(SlsStringPiece(str.c_str(), str.size()), out);
+    out.Clear();
+    if (!ParseFromStr(SlsStringPiece(str.c_str(), str.size()), out))
+    {
+        out.Clear();
+        return false;
+    }
+    return true;
 }
-
 
 /// for serialize
 
@@ -386,7 +391,6 @@ bool PbEncoder::SerializeToString(const LogGroup& logGroup, SLS_OUT std::string&
 
 bool LogGroupList::ParseFromString(const std::string& str)
 {
-    Clear();
     return PbEncoder::ParseFromString(str, *this);
 }
 
