@@ -489,7 +489,7 @@ void LOGClient::SendRequest(const string& project, const string& httpMethod, con
     string queryString;
     LOGAdapter::GetQueryString(parameterList, queryString);
    
-    mLOGSend(httpMethod, host, 80, url, queryString, header, body, mTimeout, httpMessage, mMaxSendSpeedInBytePerSec);
+    mLOGSend(httpMethod, host, 80, url, queryString, header, body, mTimeout, httpMessage, (curl_off_t)mMaxSendSpeedInBytePerSec);
     
     if (httpMessage.statusCode != 200)
     {
