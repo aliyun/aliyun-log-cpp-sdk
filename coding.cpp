@@ -45,6 +45,8 @@ char* EncodeVarint32(char* dst, uint32_t v)
 
 const char* SkipProtobufField(const char* pos, const char* limit, uint32_t wireType)
 {
+    if (pos > limit)
+        return nullptr;
     switch (wireType)
     {
     case 0: // Varint
@@ -54,21 +56,19 @@ const char* SkipProtobufField(const char* pos, const char* limit, uint32_t wireT
     }
     case 1: // fixed 64bit
     {
-        return pos + 8 > limit ? NULL : pos + 8;
+        return pos + 8 > limit ? nullptr : pos + 8;
     }
     case 2: // dynamic length
     {
         uint32_t len;
         pos = GetVarint32Ptr(pos, limit, &len);
-        if (pos == NULL)
-        {
-            return NULL;
-        }
-        return pos + len > limit ? NULL : pos + len;
+        if (pos == nullptr || pos + len > limit)
+            return nullptr;
+        return pos + len;
     }
     case 5: // fixed 32bit
     {
-        return pos + 4 > limit ? NULL : pos + 4;
+        return pos + 4 > limit ? nullptr : pos + 4;
     }
     default:
         return nullptr;

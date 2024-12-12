@@ -39,7 +39,7 @@ static bool ParseFromStr(const SlsStringPiece& str, SLS_OUT KvPair& result)
         CHECK_FIELD_TYPE(index, mode, 2);
         uint32_t len = 0;
         pos = GetVarint32Ptr(pos, end, &len);
-        IF_CONFITION_RETURN_FALSE(pos == NULL || pos + len > end);
+        IF_CONFITION_RETURN_FALSE(pos == nullptr || pos + len > end);
 
         // key = 1
         if (index == 1)
@@ -96,7 +96,7 @@ static bool ParseFromStr(const SlsStringPiece& str, SLS_OUT Log& result)
             CHECK_FIELD_TYPE(index, mode, 2);
             uint32_t len = 0;
             pos = GetVarint32Ptr(pos, end, &len);
-            IF_CONFITION_RETURN_FALSE(pos == nullptr);
+            IF_CONFITION_RETURN_FALSE(pos == nullptr || pos + len > end);
             KvPair pair;
             if (!ParseFromStr(SlsStringPiece(pos, len), pair))
                 return false;
@@ -108,7 +108,8 @@ static bool ParseFromStr(const SlsStringPiece& str, SLS_OUT Log& result)
         case 4: // nano time
         {
             CHECK_FIELD_TYPE(index, mode, 5);
-            result.timeNs = *(int32_t*)pos;
+            IF_CONFITION_RETURN_FALSE(pos + 4 > end);
+            std::memcpy(&result.timeNs, pos, 4);
             result.hasTimeNs = true;
             pos += 4;
         }

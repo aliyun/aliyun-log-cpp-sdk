@@ -10,24 +10,24 @@ namespace pb
 
 struct LogContent
 {
-    std::string key;
-    std::string value;
+    std::string key; // required
+    std::string value; // required
 
     LogContent() {}
     LogContent(const std::string& key, const std::string& value) : key(key), value(value) {}
 };
 struct LogTag
 {
-    std::string key;
-    std::string value;
+    std::string key; // required
+    std::string value; // required
 
     LogTag() {}
     LogTag(const std::string& key, const std::string& value) : key(key), value(value) {}
 };
 struct Log
 {
-    uint32_t time;
-    std::vector<LogContent> contents;
+    uint32_t time; // required
+    std::vector<LogContent> contents; // required
     bool hasTimeNs;
     uint32_t timeNs;
     Log() : time(0), hasTimeNs(false), timeNs(0) {}
