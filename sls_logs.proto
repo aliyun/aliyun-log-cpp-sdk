@@ -9,7 +9,7 @@ message Log
         required string Value = 2;
     }
     repeated Content Contents= 2;
-
+    optional fixed32 TimeNs = 4;
 }
 
 message LogTag
