@@ -5,7 +5,7 @@
 #include <map>
 #include <utility>
 #include "RestfulApiCommon.h"
-#include "sls_logs.pb.h"
+#include "pb.h"
 #include "resource.h"
 #include <pthread.h>
 #include "curl/curl.h"
@@ -96,7 +96,7 @@ typedef struct BatchLogData
 
 typedef struct PbBatchLogData
 {
-    sls_logs::LogGroupList logGroupList;
+    pb::LogGroupList logGroupList;
     uint32_t logGroupCount;
     std::string nextCursor;
 }PbBatchLogData;
@@ -337,7 +337,7 @@ public:
 * @param logGroup Log data. 
 * @return request_id.
 */
-    PostLogStoreLogsResponse  PostLogStoreLogs(const std::string& project, const std::string& logstore, const sls_logs::LogGroup& logGroup,const std::string& hashKey="");
+    PostLogStoreLogsResponse  PostLogStoreLogs(const std::string& project, const std::string& logstore, const pb::LogGroup& logGroup,const std::string& hashKey="");
 /** Get data from LOG service. Unsuccessful opertaion will cause an LOGException.
 * @param project The project name
 * @param logstore The logstore of the data. 
@@ -526,7 +526,7 @@ protected:
     void SendRequest(const std::string& project, const std::string& httpMethod, const std::string& url, const std::string& body, const std::map<std::string, std::string>& parameterList, std::map<std::string, std::string>& header, HttpMessage& httpMessage);
 private:
     GetCursorResponse GetCursor(const std::string& project, const std::string& logstore, uint32_t shardId, const std::string& paraKey, const std::string& paraValue);
-    PullDataResponse GetLogGroupList(const std::string& project, const std::string& logstore, uint32_t shardId, int count, const std::string& cursor, const std::string& endCursor, sls_logs::LogGroupList& logGroupList);
+    PullDataResponse GetLogGroupList(const std::string& project, const std::string& logstore, uint32_t shardId, int count, const std::string& cursor, const std::string& endCursor, pb::LogGroupList& logGroupList);
     void SetCommonHeader(std::map<std::string, std::string>& httpHeader, int32_t contentLength, const std::string& project="");
     void SetCommonParameter(std::map<std::string, std::string>& parameterList);
     std::string GetHost(const std::string& project);

@@ -1,41 +1,37 @@
-CFLAGS= -O2 -L./lib/ -std=gnu++11
-LIBS=-lslssdk
-LIBS+=-lsls_logs_pb
-LIBS+=-llz4
-LIBS+=-lcurl
-LIBS+=-lprotobuf
-LIBS+= -lpthread
+# Compiler and flags
+CXXFLAGS = -O2 -std=gnu++11 -g
+LDFLAGS = -L./lib/
+LIBS = -lslssdk -llz4 -lcurl -lpthread
 
 
-main:  sample.o libslssdk.a libsls_logs_pb.a
-	g++ -o sample sample.o   $(CFLAGS) $(LIBS)
+# Source files and directories
+SRC_DIR = .
+LIB_DIR = ./lib
 
-libslssdk.a:client.o resource.o adapter.o common.o 
-	ar rc lib/libslssdk.a  client.o resource.o adapter.o common.o 
+# Targets
+TARGET = sample
+LIB1 = $(LIB_DIR)/libslssdk.a
 
-libsls_logs_pb.a : sls_logs.pb.cc
-	g++ -c  sls_logs.pb.cc
-	ar rc lib/libsls_logs_pb.a sls_logs.pb.o
-
-proto.cc: sls_logs.proto
-	protoc  --cpp_out=./ sls_logs.proto
-
-adapter.o:   adapter.cpp
-	g++ -c  adapter.cpp
-
-common.o: common.cpp
-	g++ -c  common.cpp
-
-resource.o:  resource.cpp
-	g++ -c  resource.cpp
-
-client.o: client.cpp  proto.cc
-	g++ -c  client.cpp
-
-sample.o:sample.cpp proto.cc
-	g++ -c  sample.cpp
+# Source files
+SRCS = adapter.cpp common.cpp resource.cpp client.cpp sample.cpp pb.cpp coding.cpp
+OBJS = $(SRCS:.cpp=.o)
 
 
+# Default target
+all: $(TARGET)
 
+# Build executable
+$(TARGET): $(OBJS) $(LIB1)
+	$(CXX) -o $@ sample.o $(CXXFLAGS) $(LDFLAGS) $(LIBS)
+
+# Static libraries
+$(LIB1): client.o resource.o adapter.o common.o pb.o coding.o
+	ar rc $@ $^
+
+# Pattern rules for object files
+%.o: %.cpp
+	$(CXX) -c $< $(CXXFLAGS)
+
+# Clean up
 clean:
-	rm -f adapter.o common.o resource.o client.o sample.o sample sls_logs.pb.o lib/libslssdk.a sls_logs.pb.h sls_logs.pb.cc lib/libsls_logs_pb.a
+	rm -f $(OBJS) $(TARGET) $(LIB1)

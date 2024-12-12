@@ -24,7 +24,7 @@
 #define ETH_NAME "eth0"
 
 using namespace std;
-using namespace sls_logs;
+using namespace aliyun_log_sdk_v6::pb;
 using namespace rapidjson;
 extern const char* const aliyun_log_sdk_v6::LOG_SDK_IDENTIFICATION = "sls-cpp-sdk v0.6.2";
 static string GetHostIpByHostName()
@@ -240,7 +240,7 @@ static void ErrorCheck(const string& response, const string& requestId, const in
     }
 }
 
-static int32_t ParseLogGroupList(const int32_t logGroupCount, const uint32_t uncompressedSize, const string& content, sls_logs::LogGroupList& logGroupList)
+static int32_t ParseLogGroupList(const int32_t logGroupCount, const uint32_t uncompressedSize, const string& content, pb::LogGroupList& logGroupList)
 {
     string uncompressed = "";
     if (! aliyun_log_sdk_v6::CompressAlgorithm::UncompressLz4(content, uncompressedSize, uncompressed))
@@ -250,7 +250,7 @@ static int32_t ParseLogGroupList(const int32_t logGroupCount, const uint32_t unc
 
     if (logGroupCount > 0)
     {
-        if (!logGroupList.ParseFromString(uncompressed) || logGroupList.loggrouplist_size() != logGroupCount)
+        if (!logGroupList.ParseFromString(uncompressed) || logGroupList.logGroupList.size() != logGroupCount)
         {
             logGroupList.Clear();
             return 2;
@@ -265,30 +265,27 @@ bool ShardItem::isReadOnly()
     return status == LOG_SHARD_STATUS_READONLY;
 }
 
-static void ParseBatchLogData(const string& nextCursor, const sls_logs::LogGroupList& logGroupList, BatchLogData& batchLogData)
+static void ParseBatchLogData(const string& nextCursor, const pb::LogGroupList& logGroupList, BatchLogData& batchLogData)
 {
     batchLogData.nextCursor = nextCursor;
-    batchLogData.logGroupCount = logGroupList.loggrouplist_size();
-    for (uint32_t index = 0; index < batchLogData.logGroupCount; ++index)
+    batchLogData.logGroupCount = logGroupList.logGroupList.size();
+    for (const auto& logGroup : logGroupList.logGroupList)
     {
-        batchLogData.logGroups.push_back(vector<LogItem>());
-        LogGroup logGroup = logGroupList.loggrouplist(index);
-        for (int32_t logIdx = 0; logIdx < logGroup.logs_size(); ++logIdx)
+        vector<LogItem> logItems;
+        for (const Log& log : logGroup.logs)
         {
-            LogItem li;
-            const Log& log = logGroup.logs(logIdx);
-            li.timestamp = log.time();
-            li.topic = logGroup.topic();
-            li.source = logGroup.source();
-            for (int contentIdx = 0; contentIdx < log.contents_size(); ++contentIdx)
+            LogItem logItem;
+            logItem.timestamp = log.time;
+            logItem.topic = logGroup.topic;
+            logItem.source = logGroup.source;
+            for (const auto& content : log.contents)
             {
-                const Log_Content& lc = log.contents(contentIdx);
-                li.data.push_back(pair<string, string>(lc.key(), lc.value()));
+                logItem.data.push_back(pair<string, string>(content.key, content.value));
             }
-            batchLogData.logGroups.back().push_back(li);
+            logItems.push_back(logItem);
         }
+        batchLogData.logGroups.push_back(std::move(logItems));
     }
-    
 }
 
 
@@ -351,22 +348,20 @@ LOGClient::~LOGClient() throw()
     pthread_spin_destroy(&mSpinLock);
 }
 
-static void ConvertLogGroup(const vector<LogItem>& logGroup, LogGroup& pbLogGroup)
+static void ConvertLogGroup(const vector<LogItem>& logItems, pb::LogGroup& logGroup)
 {
-    if(logGroup.size()==0)
+    if (logItems.size()==0)
     {
         throw LOGException(LOGE_PARAMETER_INVALID, "Empty LogItem.");
     }
-    for(vector<LogItem>::const_iterator iter=logGroup.begin(); iter!=logGroup.end(); iter++)
+    for (const auto& logItem : logItems)
     {
-        Log* logPtr = pbLogGroup.add_logs();
-        logPtr->set_time(iter->timestamp);
-        for(vector<pair<string, string> >::const_iterator it=iter->data.begin(); it!=iter->data.end(); it++)
+        Log log(logItem.timestamp, {});
+        for (auto& p : logItem.data)
         {
-            Log_Content* contentPtr = logPtr->add_contents();
-            contentPtr->set_key(it->first);
-            contentPtr->set_value(it->second);
+            log.contents.push_back(LogContent{p.first, p.second});
         }
+        logGroup.logs.push_back(std::move(log));
     }
 }
 
@@ -501,30 +496,29 @@ void LOGClient::SendRequest(const string& project, const string& httpMethod, con
         ErrorCheck(httpMessage.content, httpMessage.header[X_LOG_REQUEST_ID], httpMessage.statusCode);
     }
 }
-PostLogStoreLogsResponse LOGClient::PostLogStoreLogs(const string& project, const string& logstore, const string& topic, const vector<LogItem>& logGroup,const std::string& hashKey)
+PostLogStoreLogsResponse LOGClient::PostLogStoreLogs(const string& project, const string& logstore, const string& topic, const vector<LogItem>& logItems,const std::string& hashKey)
 {
-    LogGroup pbLogGroup;
-    ConvertLogGroup(logGroup, pbLogGroup);
-    pbLogGroup.set_topic(topic);
-    pbLogGroup.set_source(mSource);
-    pbLogGroup.set_category(logstore);
-    return PostLogStoreLogs(project, logstore, pbLogGroup,hashKey);
+    pb::LogGroup logGroup;
+    ConvertLogGroup(logItems, logGroup);
+    logGroup.topic = topic;
+    logGroup.source = mSource;
+    return PostLogStoreLogs(project, logstore, logGroup, hashKey);
 }
 
-PostLogStoreLogsResponse LOGClient::PostLogStoreLogs(const string& project, const string& logstore, const LogGroup& logGroup,const std::string& hashKey)
+PostLogStoreLogsResponse LOGClient::PostLogStoreLogs(const string& project, const string& logstore, const pb::LogGroup& logGroup,const std::string& hashKey)
 {
     string body;
     string serializeData;
-    if ((logGroup.source()).empty())
+    if (logGroup.source.empty())
     {
-        LogGroup pbLogGroup;
-        pbLogGroup = logGroup;
-        pbLogGroup.set_source(mSource);
-        pbLogGroup.SerializeToString(&serializeData);
+        pb::LogGroup newLogGroup;
+        newLogGroup = logGroup;
+        newLogGroup.source = mSource;
+        newLogGroup.SerializeToString(serializeData);
     }
     else
     {
-        logGroup.SerializeToString(&serializeData);
+        logGroup.SerializeToString(serializeData);
     }
 
     string operation = LOGSTORES;
@@ -2041,7 +2035,7 @@ GetPbBatchLogResponse LOGClient::GetPbBatchLog(const string& project, const stri
     ret.statusCode = res.statusCode;
     ret.requestId = res.requestId;
     ret.result.nextCursor = res.cursor;
-    ret.result.logGroupCount = ret.result.logGroupList.loggrouplist_size();
+    ret.result.logGroupCount = ret.result.logGroupList.logGroupList.size();
     return ret;
 }
 
@@ -2049,7 +2043,7 @@ GetBatchLogResponse LOGClient::GetBatchLog(const string& project, const string& 
 {
     GetBatchLogResponse ret;
 
-    LogGroupList logGroupList;
+    pb::LogGroupList logGroupList;
     
     PullDataResponse res = GetLogGroupList(project, logstore, shardId, count, cursor, endCursor, logGroupList);
     ret.statusCode = res.statusCode;
@@ -2060,7 +2054,7 @@ GetBatchLogResponse LOGClient::GetBatchLog(const string& project, const string& 
     return ret;
 }
 
-PullDataResponse LOGClient::GetLogGroupList(const string& project, const string& logstore, uint32_t shardId, int count, const string& cursor, const std::string& endCursor, sls_logs::LogGroupList& logGroupList)
+PullDataResponse LOGClient::GetLogGroupList(const string& project, const string& logstore, uint32_t shardId, int count, const string& cursor, const std::string& endCursor, pb::LogGroupList& logGroupList)
 {
     if (project.empty() || logstore.empty())
         throw LOGException(LOGE_PARAMETER_INVALID, "project or logstore invalid.");
