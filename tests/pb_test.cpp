@@ -431,3 +431,55 @@ TEST_CASE("pb")
         REQUIRE(logGroupList.logGroupList[1].source == "source2");
     }
 }
+
+static std::string GenerateRandomBytes(size_t length)
+{
+    std::string result;
+    result.resize(length);
+    std::srand(static_cast<unsigned int>(std::time(nullptr)));
+    for (size_t i = 0; i < length; i++)
+    {
+        result[i] = static_cast<char>(std::rand() % 256);
+    }
+    return result;
+}
+
+TEST_CASE("invalid pb")
+{
+    SUBCASE("random bytes test not crash")
+    {
+        for (int i = 0; i < 10000; i++)
+        {
+            size_t length = rand() % 100000;
+            std::string data = GenerateRandomBytes(length);
+            REQUIRE(data.size() == length);
+            LogGroupList logGroupList;
+            PbEncoder::ParseFromString(data, logGroupList);
+        }
+    }
+
+    SUBCASE("truncated valid bytes not crash")
+    {
+        std::vector<std::string> validDataHex{
+            "0a130894c3d4f905259373c92912060a01611201621a0022093132382e392e392e3132060a013412013532060a0136120137",
+            "0a130894c3d4f905259373c92912060a01611201620a130893fb90ab062594579a2312060a01621201611a0022093132382e392e39"
+            "2e3132060a013412013532060a0136120137",
+            "0a190894c3d4f90512060a016112016212090a02323212036162631a0568656c6c6f22093132372e302e302e3132060a0134120135"
+            "32060a0136120137",
+            "0a300894c3d4f90512060a016112016212090a023232120361626312060a0163120164120d0a01781208616263a0616266611a0568"
+            "656c6c6f22093132372e302e302e31320c0a057461675f6b1203747878"};
+        for (const auto &hex : validDataHex)
+        {
+            std::string data = ToLogGroupList(fromHex(hex));
+            LogGroupList logGroupList;
+            REQUIRE(PbEncoder::ParseFromString(data, logGroupList));
+
+            for (size_t i = 1; i < data.size() - 1; i++)
+            {
+                std::string truncated = data.substr(0, data.size() - i);
+                LogGroupList logGroupList2;
+                REQUIRE(!PbEncoder::ParseFromString(truncated, logGroupList2));
+            }
+        }
+    }
+}
