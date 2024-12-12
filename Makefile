@@ -1,8 +1,10 @@
 # Compiler and flags
-CXXFLAGS = -O2 -std=gnu++11 -g
-LDFLAGS = -L./lib/
+CXXFLAGS ?= -O2 -std=gnu++11 -g
+LDFLAGS ?= -L./lib/
 LIBS = -lslssdk -llz4 -lcurl -lpthread
 
+MOREFLAGS ?= -Wall -Wextra -pedantic -Wno-unused-parameter -Wno-ignored-qualifiers
+CXXFLAGS += $(MOREFLAGS)
 
 # Source files and directories
 SRC_DIR = .

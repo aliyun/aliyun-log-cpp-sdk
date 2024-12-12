@@ -250,7 +250,7 @@ static int32_t ParseLogGroupList(const int32_t logGroupCount, const uint32_t unc
 
     if (logGroupCount > 0)
     {
-        if (!logGroupList.ParseFromString(uncompressed) || logGroupList.logGroupList.size() != logGroupCount)
+        if (!logGroupList.ParseFromString(uncompressed) || (int32_t)logGroupList.logGroupList.size() != logGroupCount)
         {
             logGroupList.Clear();
             return 2;
