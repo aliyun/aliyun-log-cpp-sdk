@@ -327,7 +327,7 @@ void LOGAdapter::Send(const string& httpMethod, const string& host, const int32_
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
         curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, CONNECT_TIMEOUT);
         curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1);
-        curl_easy_setopt(curl, CURLOPT_MAX_SEND_SPEED_LARGE, (curl_offset_t)maxspeed);
+        curl_easy_setopt(curl, CURLOPT_MAX_SEND_SPEED_LARGE, (curl_off_t)maxspeed);
         if(httpMethod   == HTTP_POST)
         {
             curl_easy_setopt(curl, CURLOPT_POST, 1);

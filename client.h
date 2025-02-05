@@ -4,10 +4,11 @@
 #include <vector>
 #include <map>
 #include <utility>
+#include <mutex>
 #include "RestfulApiCommon.h"
 #include "pb.h"
 #include "resource.h"
-#include <pthread.h>
+
 
 namespace ehttp
 {
@@ -518,7 +519,7 @@ protected:
     std::string mKeyProvider;
     std::string mHostFieldSuffix;
     bool mIsHostRawIp;
-    pthread_spinlock_t mSpinLock;
+    std::mutex mMutex;
     //HttpMessage (*mLOGSend)(const std::string& url, const std::map<std::string, std::string>& header, const std::string& body, const LOG_Request_Mode requestMode, int32_t timeout); 
     std::string (*mGetDateString)();
     void (*mLOGSend)(const std::string& httpMethod, const std::string& host, const int32_t port, const std::string& url, const std::string& queryString, const std::map<std::string, std::string>& header, const std::string& body, const int32_t timeout, HttpMessage& httpMessage, const int64_t maxspeed); 

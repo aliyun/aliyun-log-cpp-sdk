@@ -303,7 +303,6 @@ LOGClient::LOGClient(const string& slsHost, const string& accessKeyId, const str
     mGetDateString(CodecTool::GetDateString),
     mLOGSend(LOGAdapter::Send)
 {
-    pthread_spin_init(&mSpinLock, PTHREAD_PROCESS_PRIVATE);
     SetSlsHost(slsHost);
     if(mSource=="")
     {
@@ -330,7 +329,6 @@ LOGClient::LOGClient(const string& slsHost, const string& accessKeyId, const str
     mGetDateString(CodecTool::GetDateString),
     mLOGSend(LOGAdapter::Send)
 {
-    pthread_spin_init(&mSpinLock, PTHREAD_PROCESS_PRIVATE);
     SetSlsHost(slsHost);
     if(mSource=="")
     {
@@ -345,7 +343,6 @@ LOGClient::LOGClient(const string& slsHost, const string& accessKeyId, const str
 
 LOGClient::~LOGClient() throw()
 {
-    pthread_spin_destroy(&mSpinLock);
 }
 
 static void ConvertLogGroup(const vector<LogItem>& logItems, pb::LogGroup& logGroup)
@@ -367,52 +364,42 @@ static void ConvertLogGroup(const vector<LogItem>& logItems, pb::LogGroup& logGr
 
 void LOGClient::SetAccessKey(const string& accessKey)
 {
-    pthread_spin_lock(&mSpinLock);
+    std::lock_guard<std::mutex> lock(mMutex);
     mAccessKey = accessKey;
-    pthread_spin_unlock(&mSpinLock);
 }
 
 string LOGClient::GetAccessKey()
 {
-    pthread_spin_lock(&mSpinLock);
-    string accessKey = mAccessKey;
-    pthread_spin_unlock(&mSpinLock);
-    return accessKey;
+    std::lock_guard<std::mutex> lock(mMutex);
+    return mAccessKey;
 }
 
 void LOGClient::SetAccessKeyId(const string& accessKeyId)
 {
-    pthread_spin_lock(&mSpinLock);
+    std::lock_guard<std::mutex> lock(mMutex);
     mAccessKeyId = accessKeyId;
-    pthread_spin_unlock(&mSpinLock);
 }
 
 string LOGClient::GetAccessKeyId()
 {
-    pthread_spin_lock(&mSpinLock);
-    string accessKeyId = mAccessKeyId;
-    pthread_spin_unlock(&mSpinLock);
-    return accessKeyId;
+    std::lock_guard<std::mutex> lock(mMutex);
+    return mAccessKeyId;
 }
 
 string LOGClient::GetSlsHost()
 {
-    pthread_spin_lock(&mSpinLock);
-    string slsHost = mSlsHost;
-    pthread_spin_unlock(&mSpinLock);
-    return slsHost;
+    std::lock_guard<std::mutex> lock(mMutex);
+    return mSlsHost;
 }
 
 string LOGClient::GetHostFieldSuffix()
 {
-    pthread_spin_lock(&mSpinLock);
-    string hostFieldSuffix = mHostFieldSuffix;
-    pthread_spin_unlock(&mSpinLock);
-    return hostFieldSuffix;
+    std::lock_guard<std::mutex> lock(mMutex);
+    return mHostFieldSuffix;
 }
 void LOGClient::SetSlsHost(const string& slsHost)
 {
-    pthread_spin_lock(&mSpinLock);
+   std::lock_guard<std::mutex> lock(mMutex);
     //mSlsHost = slsHost;
     size_t  bpos = slsHost.find("://");
     if(bpos == string::npos)
@@ -438,7 +425,6 @@ void LOGClient::SetSlsHost(const string& slsHost)
         mIsHostRawIp = true;
     else
         mIsHostRawIp = false;
-    pthread_spin_unlock(&mSpinLock);
 }
 
 void LOGClient::SetCommonHeader(map<string, string>& httpHeader, int32_t contentLength, const string& project)
