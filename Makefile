@@ -23,6 +23,7 @@ LZ4_SRCS = $(LZ4_SRC_DIR)/lz4.c $(LZ4_SRC_DIR)/xxhash.c
 LZ4_OBJS = lz4.o xxhash.o
 
 # targets
+.PHONY: all clean
 
 SLS_LIB_DEPS = $(OBJS)
 # if LZ4_LIB_DIR is not set, build lz4 from source
@@ -34,13 +35,16 @@ endif
 
 # sls lib
 $(SLS_LIB): $(SLS_LIB_DEPS)
-	@echo "Building static library $(SLS_LIB_DEPS)"
+	@echo "Building static library"
 	mkdir -p $(LIB_OUTPUT_DIR)
 	ar rcs $@ $(OBJS)
+
+all: $(SLS_LIB) $(SAMPLE)
 
 # sample
 SAMPLE = sample
 $(SAMPLE): $(OBJS) $(SLS_LIB) sample.o
+	@echo "Building sample"
 	$(CXX) -o $@ sample.o $(CXXFLAGS) $(LDFLAGS)
 
 sample.o: sample.cpp
@@ -48,6 +52,7 @@ sample.o: sample.cpp
 
 # lz4
 $(LZ4_LIB): $(LZ4_OBJS)
+	@echo "Building lz4 from source"
 	ar rcs $@ $(LZ4_OBJS)
 
 # Pattern rules for object files
@@ -59,6 +64,7 @@ $(LZ4_LIB): $(LZ4_OBJS)
 
 # Clean up
 clean:
+	@echo "Cleaning up..."
 	rm -f $(OBJS) $(SAMPLE) $(SLS_LIB)
 	rm -f *.o
 	rm -f ./lib/*.a
