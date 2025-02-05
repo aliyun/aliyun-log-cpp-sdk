@@ -2,6 +2,7 @@
 #include <sys/time.h>
 #include <iostream>
 #include <iomanip>
+#include <curl/curl.h>
 
 using namespace std;
 
@@ -285,7 +286,7 @@ static size_t header_write_callback(char* buffer, size_t size, size_t nmemb, map
     }
     return sizes;
 }
-void LOGAdapter::Send(const string& httpMethod, const string& host, const int32_t port, const string& url, const string& queryString, const map<string, string>& header, const string& body, const int32_t timeout, HttpMessage& httpMessage, const curl_off_t maxspeed) 
+void LOGAdapter::Send(const string& httpMethod, const string& host, const int32_t port, const string& url, const string& queryString, const map<string, string>& header, const string& body, const int32_t timeout, HttpMessage& httpMessage, const int64_t maxspeed) 
 {
     /*
     for(map<string, string>::const_iterator iter = header.begin();iter != header.end();iter++)
@@ -326,7 +327,7 @@ void LOGAdapter::Send(const string& httpMethod, const string& host, const int32_
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
         curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, CONNECT_TIMEOUT);
         curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1);
-        curl_easy_setopt(curl, CURLOPT_MAX_SEND_SPEED_LARGE, maxspeed);
+        curl_easy_setopt(curl, CURLOPT_MAX_SEND_SPEED_LARGE, (curl_offset_t)maxspeed);
         if(httpMethod   == HTTP_POST)
         {
             curl_easy_setopt(curl, CURLOPT_POST, 1);
