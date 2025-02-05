@@ -442,7 +442,7 @@ void LOGClient::SetCommonHeader(map<string, string>& httpHeader, int32_t content
     httpHeader[X_LOG_APIVERSION] = LOG_API_VERSION;
     httpHeader[X_LOG_SIGNATUREMETHOD] = HMAC_SHA1;
     httpHeader[DATE] = CodecTool::GetDateString();
-    httpHeader[CONTENT_LENGTH] = ToString(contentLength);
+    httpHeader[CONTENT_LENGTH] = std::to_string(contentLength);
     if(!mSecurityToken.empty())
     {
         httpHeader[X_ACS_SECURITY_TOKEN] = mSecurityToken;
@@ -531,7 +531,7 @@ PostLogStoreLogsResponse LOGClient::PostLogStoreLogs(const string& project, cons
         body = serializeData;
     }
     
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(serializeData.size());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(serializeData.size());
     httpHeader[CONTENT_MD5] = CodecTool::CalcMD5(body);
     
     map<string, string> parameterList;
@@ -589,12 +589,12 @@ GetLogStoreHistogramResponse LOGClient::GetLogStoreHistogram(const string& proje
     SetCommonParameter(parameterList);
     parameterList["type"] = "histogram";
     parameterList["topic"] = topic;
-    parameterList["from"] = ToString(beginTime);
-    parameterList["to"] = ToString(endTime);
+    parameterList["from"] = std::to_string(beginTime);
+    parameterList["to"] = std::to_string(endTime);
     parameterList["query"] = query;
 
     map<string, string> httpHeader;
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     httpHeader[CONTENT_TYPE] = "";
 
     HttpMessage httpResponse;
@@ -663,15 +663,15 @@ GetLogStoreLogsResponse LOGClient::GetLogStoreLogs(const string& project, const 
     SetCommonParameter(parameterList);
     parameterList["type"]="log";
     parameterList["topic"]=topic;
-    parameterList["from"]=ToString(beginTime);
-    parameterList["to"]=ToString(endTime);
-    parameterList["reverse"]=ToString(reverseFlag);
-    parameterList["line"]=ToString(lines);
-    parameterList["offset"]=ToString(offset);
+    parameterList["from"] = std::to_string(beginTime);
+    parameterList["to"] = std::to_string(endTime);
+    parameterList["reverse"] = std::to_string(reverseFlag);
+    parameterList["line"] = std::to_string(lines);
+    parameterList["offset"] = std::to_string(offset);
     parameterList["query"]=query;
 
     map<string, string> httpHeader;
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     httpHeader[CONTENT_TYPE] = "";
 
     HttpMessage httpResponse;
@@ -694,7 +694,7 @@ CreateConsumerGroupResponse LOGClient::CreateConsumerGroup(const std::string& pr
     map<string, string> httpHeader;
     httpHeader[CONTENT_TYPE] = TYPE_LOG_JSON;
     httpHeader[CONTENT_MD5] = CodecTool::CalcMD5(body);
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     
     map<string, string> parameterList;
     SetCommonParameter(parameterList);
@@ -737,7 +737,7 @@ Response LOGClient::CreateLogStore(const string& project, const LogStore& logSto
     map<string, string> httpHeader;
     httpHeader[CONTENT_TYPE] = TYPE_LOG_JSON;
     httpHeader[CONTENT_MD5] = CodecTool::CalcMD5(body);
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     
     map<string, string> parameterList;
     SetCommonParameter(parameterList);
@@ -762,7 +762,7 @@ Response LOGClient::UpdateLogStore(const string& project, const LogStore& logSto
     map<string, string> httpHeader;
     httpHeader[CONTENT_TYPE] = TYPE_LOG_JSON;
     httpHeader[CONTENT_MD5] = CodecTool::CalcMD5(body);
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     
     map<string, string> parameterList;
     SetCommonParameter(parameterList);
@@ -786,7 +786,7 @@ Response LOGClient::DeleteLogStore(const string& project, const string& logStore
     
     map<string, string> httpHeader;
     httpHeader[CONTENT_TYPE] = "";
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     
     map<string, string> parameterList;
     SetCommonParameter(parameterList);
@@ -822,7 +822,7 @@ GetLogStoreResponse LOGClient::GetLogStore(const string& project, const string& 
     
     map<string, string> httpHeader;
     httpHeader[CONTENT_TYPE] = "";
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     
     map<string, string> parameterList;
     SetCommonParameter(parameterList);
@@ -844,7 +844,7 @@ static void ExtractHeartbeat(HttpMessage& httpMessage, std::vector<uint32_t>& sh
     try
     {
         ExtractJsonResult(httpMessage.content, doc);
-        typeof(doc.GetArray()) array = doc.GetArray();
+        auto array = doc.GetArray();
         for (Value::ConstValueIterator itr = array.Begin(); itr != array.End(); ++itr)
         {
             shards.push_back(itr->GetUint());
@@ -861,7 +861,7 @@ static void ExtractConsumerGroupCheckpoints(HttpMessage& httpMessage, vector<Con
     try
     {
         ExtractJsonResult(httpMessage.content, doc);
-        typeof(doc.GetArray()) array = doc.GetArray();
+        auto array = doc.GetArray();
         for (Value::ConstValueIterator itr = array.Begin(); itr != array.End(); ++itr)
         {
             ConsumerGroupCheckpoint cp((*itr)["shard"].GetUint(), (*itr)["checkpoint"].GetString(), (*itr)["updateTime"].GetUint64());
@@ -879,7 +879,7 @@ static void ExtractConsumerGroups(HttpMessage& httpMessage, vector<ConsumerGroup
     try
     {
         ExtractJsonResult(httpMessage.content, doc);
-        typeof(doc.GetArray()) array = doc.GetArray();
+        auto array = doc.GetArray();
         for (Value::ConstValueIterator itr = array.Begin(); itr != array.End(); ++itr)
         {
             ConsumerGroup group((*itr)["name"].GetString(), (*itr)["timeout"].GetUint(), (*itr)["order"].GetBool());
@@ -941,7 +941,7 @@ HeartbeatResponse LOGClient::ConsumerGroupHeartbeat(const std::string& project, 
     map<string, string> httpHeader;
     httpHeader[CONTENT_TYPE] = TYPE_LOG_JSON;
     httpHeader[CONTENT_MD5] = CodecTool::CalcMD5(body);
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     
     map<string, string> parameterList;
     SetCommonParameter(parameterList);
@@ -967,7 +967,7 @@ UpdateCheckpointResponse LOGClient::UpdateCheckpoint(const std::string& project,
     map<string, string> httpHeader;
     httpHeader[CONTENT_TYPE] = TYPE_LOG_JSON;
     httpHeader[CONTENT_MD5] = CodecTool::CalcMD5(body);
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     
     map<string, string> parameterList;
     SetCommonParameter(parameterList);
@@ -1013,16 +1013,16 @@ ListLogStoresResponse LOGClient::ListLogStores(const string& project, const stri
     }
     if (offset >= 0)
     {
-        parameterList["offset"] = ToString(offset);
+        parameterList["offset"] = std::to_string(offset);
     }
     if (size >= 0)
     {
-        parameterList["size"] = ToString(size);
+        parameterList["size"] = std::to_string(size);
     }
     
     map<string, string> httpHeader;
     httpHeader[CONTENT_TYPE] = "";
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     
     HttpMessage httpResponse;
     SendRequest(project, HTTP_GET, operation, body, parameterList, httpHeader, httpResponse);
@@ -1046,7 +1046,7 @@ Response LOGClient::CreateIndex(const string& project, const string& logStore, c
     map<string, string> httpHeader;
     httpHeader[CONTENT_TYPE] = TYPE_LOG_JSON;
     httpHeader[CONTENT_MD5] = CodecTool::CalcMD5(body);
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     
     map<string, string> parameterList;
     SetCommonParameter(parameterList);
@@ -1071,7 +1071,7 @@ Response LOGClient::UpdateIndex(const string& project, const string& logStore, c
     map<string, string> httpHeader;
     httpHeader[CONTENT_TYPE] = TYPE_LOG_JSON;
     httpHeader[CONTENT_MD5] = CodecTool::CalcMD5(body);
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     
     map<string, string> parameterList;
     SetCommonParameter(parameterList);
@@ -1107,7 +1107,7 @@ GetIndexResponse LOGClient::GetIndex(const string& project, const string& logSto
     
     map<string, string> httpHeader;
     httpHeader[CONTENT_TYPE] = "";
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     
     map<string, string> parameterList;
     SetCommonParameter(parameterList);
@@ -1133,7 +1133,7 @@ Response LOGClient::DeleteIndex(const string& project, const string& logStore)
     
     map<string, string> httpHeader;
     httpHeader[CONTENT_TYPE] = "";
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     
     map<string, string> parameterList;
     SetCommonParameter(parameterList);
@@ -1156,7 +1156,7 @@ Response LOGClient::CreateConfig(const string& project, const Config& config)
     string operation = CONFIGS;
     
     map<string, string> httpHeader;
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     httpHeader[CONTENT_TYPE] = "";
     httpHeader[CONTENT_MD5] = CodecTool::CalcMD5(body);
     
@@ -1181,7 +1181,7 @@ Response LOGClient::UpdateConfig(const string& project, const Config& config)
     operation.append("/").append(config.GetConfigName());
     
     map<string, string> httpHeader;
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     httpHeader[CONTENT_TYPE] = "";
     httpHeader[CONTENT_MD5] = CodecTool::CalcMD5(body);
     
@@ -1206,7 +1206,7 @@ Response LOGClient::DeleteConfig(const string& project, const string& config)
     operation.append("/").append(config);
     
     map<string, string> httpHeader;
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     httpHeader[CONTENT_TYPE] = "";
     
     map<string, string> parameterList;
@@ -1242,7 +1242,7 @@ GetConfigResponse LOGClient::GetConfig(const string& project, const string& conf
     operation.append("/").append(config);
     
     map<string, string> httpHeader;
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     httpHeader[CONTENT_TYPE] = "";
     
     map<string, string> parameterList;
@@ -1300,15 +1300,15 @@ ListConfigsResponse LOGClient::ListConfigs(const string& project, const string& 
     }
     if (offset >= 0)
     {
-        parameterList["offset"] = ToString(offset);
+        parameterList["offset"] = std::to_string(offset);
     }
     if (size >= 0)
     {
-        parameterList["size"] = ToString(size);
+        parameterList["size"] = std::to_string(size);
     }
     
     map<string, string> httpHeader;
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     httpHeader[CONTENT_TYPE] = "";
     
     HttpMessage httpResponse;
@@ -1332,7 +1332,7 @@ Response LOGClient::CreateMachineGroup(const string& project, const MachineGroup
     map<string, string> httpHeader;
     httpHeader[CONTENT_TYPE] = TYPE_LOG_JSON;
     httpHeader[CONTENT_MD5] = CodecTool::CalcMD5(body);
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     
     map<string, string> parameterList;
     SetCommonParameter(parameterList);
@@ -1357,7 +1357,7 @@ Response LOGClient::UpdateMachineGroup(const string& project, const MachineGroup
     map<string, string> httpHeader;
     httpHeader[CONTENT_TYPE] = TYPE_LOG_JSON;
     httpHeader[CONTENT_MD5] = CodecTool::CalcMD5(body);
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     
     map<string, string> parameterList;
     SetCommonParameter(parameterList);
@@ -1382,7 +1382,7 @@ Response LOGClient::DeleteMachineGroup(const string& project, const string& mach
     map<string, string> httpHeader;
     httpHeader[CONTENT_TYPE] = TYPE_LOG_JSON;
     httpHeader[CONTENT_MD5] = CodecTool::CalcMD5(body);
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     
     map<string, string> parameterList;
     SetCommonParameter(parameterList);
@@ -1417,7 +1417,7 @@ GetMachineGroupResponse LOGClient::GetMachineGroup(const string& project, const 
     operation.append("/").append(machineGroup);
     
     map<string, string> httpHeader;
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     httpHeader[CONTENT_TYPE] = "";
     
     map<string, string> parameterList;
@@ -1471,15 +1471,15 @@ ListMachineGroupsResponse LOGClient::ListMachineGroups(const string& project, co
     SetCommonParameter(parameterList);
     if (offset >= 0)
     {
-        parameterList["offset"] = ToString(offset);
+        parameterList["offset"] = std::to_string(offset);
     }
     if (size >= 0)
     {
-        parameterList["size"] = ToString(size);
+        parameterList["size"] = std::to_string(size);
     }
     
     map<string, string> httpHeader;
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     httpHeader[CONTENT_TYPE] = "";
     
     HttpMessage httpResponse;
@@ -1505,7 +1505,7 @@ Response LOGClient::ApplyConfigToMachineGroup(const string& project, const strin
     map<string, string> httpHeader;
     httpHeader[CONTENT_TYPE] = TYPE_LOG_JSON;
     httpHeader[CONTENT_MD5] = CodecTool::CalcMD5(body);
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     
     map<string, string> parameterList;
     SetCommonParameter(parameterList);
@@ -1531,7 +1531,7 @@ Response LOGClient::RemoveConfigFromMachineGroup(const string& project, const st
     map<string, string> httpHeader;
     httpHeader[CONTENT_TYPE] = TYPE_LOG_JSON;
     httpHeader[CONTENT_MD5] = CodecTool::CalcMD5(body);
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     
     map<string, string> parameterList;
     SetCommonParameter(parameterList);
@@ -1582,7 +1582,7 @@ GetAppliedConfigsResponse LOGClient::GetAppliedConfigs(const string& project, co
     map<string, string> httpHeader;
     httpHeader[CONTENT_TYPE] = TYPE_LOG_JSON;
     httpHeader[CONTENT_MD5] = CodecTool::CalcMD5(body);
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     
     map<string, string> parameterList;
     SetCommonParameter(parameterList);
@@ -1607,12 +1607,12 @@ LogStoreSqlResponse LOGClient::ExecuteLogStoreSql(const std::string &project, co
     map<string, string> parameterList;
     SetCommonParameter(parameterList);
     parameterList["type"] = "log";
-    parameterList["from"] = ToString(beginTime);
-    parameterList["to"] = ToString(endTime);
+    parameterList["from"] = std::to_string(beginTime);
+    parameterList["to"] = std::to_string(endTime);
     parameterList["query"] = query;
-    parameterList["powerSql"] = ToString(powerSql);
+    parameterList["powerSql"] = std::to_string(powerSql);
     map<string, string> httpHeader;
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     httpHeader[CONTENT_TYPE] = "";
     HttpMessage httpResponse;
     SendRequest(project, HTTP_GET, operation, body, parameterList, httpHeader, httpResponse);
@@ -1637,9 +1637,9 @@ ProjectSqlResponse LOGClient::ExecuteProjectSql(const std::string &project, cons
     map<string, string> parameterList;
     SetCommonParameter(parameterList);
     parameterList["query"] = query;
-    parameterList["powerSql"] = ToString(powerSql);
+    parameterList["powerSql"] = std::to_string(powerSql);
     map<string, string> httpHeader;
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     httpHeader[CONTENT_TYPE] = "";
     HttpMessage httpResponse;
     SendRequest(project, HTTP_GET, operation, body, parameterList, httpHeader, httpResponse);
@@ -1671,7 +1671,7 @@ CreateSqlInstanceResponse LOGClient::CreateSqlInstance(const std::string &projec
     map<string, string> parameterList;
     SetCommonParameter(parameterList);
     map<string, string> httpHeader;
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     httpHeader[CONTENT_TYPE] = TYPE_LOG_JSON;
     HttpMessage httpResponse;
     SendRequest(project, HTTP_POST, operation, body, parameterList, httpHeader, httpResponse);
@@ -1694,7 +1694,7 @@ UpdateSqlInstanceResponse LOGClient::UpdateSqlInstance(const std::string &projec
     map<string, string> parameterList;
     SetCommonParameter(parameterList);
     map<string, string> httpHeader;
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     httpHeader[CONTENT_TYPE] = TYPE_LOG_JSON;
     HttpMessage httpResponse;
     SendRequest(project, HTTP_POST, operation, body, parameterList, httpHeader, httpResponse);
@@ -1710,7 +1710,7 @@ ListSqlInstanceResponse LOGClient::ListSqlInstance(const std::string &project)
     map<string, string> parameterList;
     SetCommonParameter(parameterList);
     map<string, string> httpHeader;
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     httpHeader[CONTENT_TYPE] = "";
     HttpMessage httpResponse;
     SendRequest(project, HTTP_POST, operation, body, parameterList, httpHeader, httpResponse);
@@ -1776,11 +1776,11 @@ ListLogStoreTopicsResponse LOGClient::ListLogStoreTopics(const string& project, 
     SetCommonParameter(parameterList);
     
     parameterList["type"] = "topic";
-    parameterList["line"] = ToString(line);
+    parameterList["line"] = std::to_string(line);
     parameterList["token"] = nextToken;
     
     map<string, string> httpHeader;
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     httpHeader[CONTENT_TYPE] = "";
     
     HttpMessage httpResponse;
@@ -1797,7 +1797,7 @@ ListLogStoreTopicsResponse LOGClient::ListLogStoreTopics(const string& project, 
 
 GetCursorResponse LOGClient::GetCursor(const string& project, const string& logstore, uint32_t shardId, uint32_t fromTime)
 {
-    return GetCursor(project, logstore, shardId, "from", ToString(fromTime));
+    return GetCursor(project, logstore, shardId, "from",std::to_string(fromTime));
 }
 
 GetCursorResponse LOGClient::GetCursor(const string& project, const string& logstore, uint32_t shardId, LOG_Cursor_Mode cursorMode)
@@ -1822,7 +1822,7 @@ GetCursorResponse LOGClient::GetCursor(const string& project, const string& logs
     if (project.empty() || logstore.empty())
         throw LOGException(LOGE_PARAMETER_INVALID, "project or logstore invalid.");
 
-    string operation = LOGSTORES + string("/") + logstore + SHARDS + string("/") + ToString(shardId);
+    string operation = LOGSTORES + string("/") + logstore + SHARDS + string("/") + std::to_string(shardId);
 
     string body;
     map<string, string> parameterList;
@@ -1831,7 +1831,7 @@ GetCursorResponse LOGClient::GetCursor(const string& project, const string& logs
     parameterList[paraKey] = paraValue;
     map<string, string> httpHeader;
     
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     httpHeader[CONTENT_TYPE] = "";
     
     HttpMessage httpResponse;
@@ -1859,7 +1859,7 @@ ListShardsResponse LOGClient::ListShards(const string& project, const string& lo
     SetCommonParameter(parameterList);
 
     map<string, string> httpHeader;
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     httpHeader[CONTENT_TYPE] = "";
     
     HttpMessage httpResponse;
@@ -1899,7 +1899,7 @@ SplitShardResponse LOGClient::SplitShard(const string& project, const string& lo
 {
     if (project.empty() || logstore.empty())
         throw LOGException(LOGE_PARAMETER_INVALID, "project or logstore invalid.");
-    string operation = LOGSTORES + string("/") + logstore + SHARDS+"/"+ ToString(shardId);
+    string operation = LOGSTORES + string("/") + logstore + SHARDS+"/"+ std::to_string(shardId);
 ;
     string body = "";
 
@@ -1909,7 +1909,7 @@ SplitShardResponse LOGClient::SplitShard(const string& project, const string& lo
     SetCommonParameter(parameterList);
 
     map<string, string> httpHeader;
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     httpHeader[CONTENT_TYPE] = "";
     
     HttpMessage httpResponse;
@@ -1947,7 +1947,7 @@ MergeShardsResponse LOGClient::MergeShard(const string& project, const string& l
 {
     if (project.empty() || logstore.empty())
         throw LOGException(LOGE_PARAMETER_INVALID, "project or logstore invalid.");
-    string operation = LOGSTORES + string("/") + logstore + SHARDS+string("/") + ToString(shardId);;
+    string operation = LOGSTORES + string("/") + logstore + SHARDS+string("/") + std::to_string(shardId);;
 
     string body = "";
 
@@ -1956,7 +1956,7 @@ MergeShardsResponse LOGClient::MergeShard(const string& project, const string& l
     SetCommonParameter(parameterList);
 
     map<string, string> httpHeader;
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     httpHeader[CONTENT_TYPE] = "";
     
     HttpMessage httpResponse;
@@ -1995,14 +1995,14 @@ Response LOGClient::DeleteShard( const std::string& project,const std::string& l
 {
     if (project.empty() || logstore.empty())
         throw LOGException(LOGE_PARAMETER_INVALID, "project or logstore invalid.");
-    string operation = LOGSTORES + string("/") + logstore + SHARDS+string("/") + ToString(shardId);;
+    string operation = LOGSTORES + string("/") + logstore + SHARDS+string("/") + std::to_string(shardId);;
     string body = "";
 
     map<string, string> parameterList;
     SetCommonParameter(parameterList);
 
     map<string, string> httpHeader;
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     httpHeader[CONTENT_TYPE] = "";
     
     HttpMessage httpResponse;
@@ -2044,7 +2044,7 @@ PullDataResponse LOGClient::GetLogGroupList(const string& project, const string&
 {
     if (project.empty() || logstore.empty())
         throw LOGException(LOGE_PARAMETER_INVALID, "project or logstore invalid.");
-    string operation = LOGSTORES + string("/") + logstore + SHARDS + string("/") + ToString(shardId);
+    string operation = LOGSTORES + string("/") + logstore + SHARDS + string("/") + std::to_string(shardId);
     string body;
     map<string, string> parameterList;
     SetCommonParameter(parameterList);
@@ -2052,12 +2052,12 @@ PullDataResponse LOGClient::GetLogGroupList(const string& project, const string&
     parameterList["cursor"] = cursor;
     if (!endCursor.empty())
         parameterList["end_cursor"] = endCursor;
-    parameterList["count"] = ToString(count);
+    parameterList["count"] = std::to_string(count);
     map<string, string> httpHeader;
     
     httpHeader[ACCEPT_ENCODING] = LOG_LZ4; 
     httpHeader[HTTP_ACCEPT] = TYPE_LOG_PROTOBUF;
-    httpHeader[X_LOG_BODYRAWSIZE] = ToString(body.length());
+    httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     httpHeader[CONTENT_TYPE] = "";
     
     HttpMessage httpResponse;
