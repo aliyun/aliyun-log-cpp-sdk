@@ -2,6 +2,43 @@
 #include "lz4.h"
 #include <cstdint>
 
+#if defined(_MSC_VER)
+
+#include <stdlib.h>
+#define __sls_swap32 _byteswap_ulong
+
+#elif defined(__APPLE__)
+
+#include <libkern/OSByteOrder.h>
+#define __sls_swap32(x) OSSwapInt32(x)
+
+#elif defined(__linux__)
+
+#include <byteswap.h>
+#define __sls_swap32(x) bswap_32(x)
+
+#elif defined(__FreeBSD__)
+
+#include <sys/endian.h>
+#define __sls_swap32(x) bswap32(x)
+
+#elif defined(__OpenBSD__)
+
+#include <sys/types.h>
+#define __sls_swap32(x) swap32(x)
+
+#else
+
+static uint32_t __sls_swap32 (uint32_t x)
+{
+    return  ((x << 24) & 0xff000000 ) |
+            ((x <<  8) & 0x00ff0000 ) |
+            ((x >>  8) & 0x0000ff00 ) |
+            ((x >> 24) & 0x000000ff );
+}
+
+#endif
+
 
 namespace aliyun_log_sdk_v6
 {
@@ -381,22 +418,9 @@ const uint32_t SHA1::IV[SHA1_DIGEST_WORDS] = {
 const static uint32_t iii=1;
 const static bool littleEndian = *(uint8_t*)&iii!=0;
 
-static inline uint32_t __sls_swap_endian32(uint32_t x) {
-#if defined(_MSC_VER) // MSVC needs to be first
-    return _byteswap_ulong(x);
-#elif defined(__has_builtin) && __has_builtin(__builtin_bswap32)
-    return __builtin_bswap32(x);
-#else
-    return ((x << 24) & 0xff000000u) | 
-           ((x << 8) & 0x00ff0000u) | 
-           ((x >> 8) & 0x0000ff00u) | 
-           ((x >> 24) & 0x000000ffu);
-#endif
-}
-
 inline void	make_big_endian32(uint32_t *data, unsigned n) 
 {
-    if (littleEndian) for (; n>0; ++data,--n) *data = __sls_swap_endian32(*data);
+    if (littleEndian) for (; n>0; ++data,--n) *data = __sls_swap32(*data);
 }
 
 inline size_t min(size_t a,size_t b) {return a<b ? a : b;}
