@@ -660,7 +660,7 @@ GetLogStoreLogsResponse LOGClient::GetLogStoreLogs(const string& project, const 
     parameterList["topic"]=topic;
     parameterList["from"] = std::to_string(beginTime);
     parameterList["to"] = std::to_string(endTime);
-    parameterList["reverse"] = std::to_string(reverseFlag);
+    parameterList["reverse"] = reverseFlag ? "true" : "false";
     parameterList["line"] = std::to_string(lines);
     parameterList["offset"] = std::to_string(offset);
     parameterList["query"]=query;
@@ -1605,7 +1605,7 @@ LogStoreSqlResponse LOGClient::ExecuteLogStoreSql(const std::string &project, co
     parameterList["from"] = std::to_string(beginTime);
     parameterList["to"] = std::to_string(endTime);
     parameterList["query"] = query;
-    parameterList["powerSql"] = std::to_string(powerSql);
+    parameterList["powerSql"] = powerSql ? "true" : "false";
     map<string, string> httpHeader;
     httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     httpHeader[CONTENT_TYPE] = "";
@@ -1632,7 +1632,7 @@ ProjectSqlResponse LOGClient::ExecuteProjectSql(const std::string &project, cons
     map<string, string> parameterList;
     SetCommonParameter(parameterList);
     parameterList["query"] = query;
-    parameterList["powerSql"] = std::to_string(powerSql);
+    parameterList["powerSql"] = powerSql ? "true" : "false";
     map<string, string> httpHeader;
     httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     httpHeader[CONTENT_TYPE] = "";
