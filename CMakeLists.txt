@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 2.6)
 project(sls-sdk-cpp)
 
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wextra -pedantic -O2 -Wno-unused-parameter -Wno-ignored-qualifiers")
 
 add_library(slssdk
             client.cpp
@@ -13,12 +12,18 @@ add_library(slssdk
             util.cpp
             pb.cpp)
 
-# lib curl
+# lib curl must be provided by user
 target_include_directories(slssdk PRIVATE ${CURL_INCLUDE_DIR})
 target_link_directories(slssdk PUBLIC ${CURL_LIB_DIR})
-target_link_libraries(slssdk PUBLIC curl)
 
-# lib lz4
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_link_libraries(slssdk PUBLIC libcurl_debug)  # Linking debug version
+else()
+    target_link_libraries(slssdk PUBLIC curl)  # Linking release version
+endif()
+
+
 if ((LZ4_INCLUDE_DIR) AND (LZ4_LIB_DIR))
     target_include_directories(slssdk PRIVATE ${LZ4_INCLUDE_DIR})
     target_link_directories(slssdk PUBLIC ${LZ4_LIB_DIR})

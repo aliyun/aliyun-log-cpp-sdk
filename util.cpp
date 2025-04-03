@@ -4,7 +4,7 @@
 #include <ctime>
 #include <iostream>
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
@@ -57,7 +57,7 @@ static std::string GetHostIpByHostName()
 
 static std::string GetHostIpByETHName()
 {
-#ifdef _WIN32
+#ifdef _MSC_VER
     DWORD dwSize = 0, dwRetVal = 0;
     PMIB_IPADDRTABLE pIPAddrTable = nullptr;
 
@@ -139,7 +139,7 @@ std::string GetHostIp()
 
 bool InitNetWork()
 {
-#ifdef _WIN32
+#ifdef _MSC_VER
     WSADATA data;
     if (WSAStartup(MAKEWORD(2, 2), &data) != 0)
     {
@@ -151,7 +151,7 @@ bool InitNetWork()
 
 void CleanNetWork()
 {
-#ifdef _WIN32
+#ifdef _MSC_VER
     WSACleanup();
 #endif
 }

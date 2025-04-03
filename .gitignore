@@ -2,3 +2,5 @@
 *.a
 build/
 .vscode/
+lib/liblz4.a
+lib/libslssdk.a

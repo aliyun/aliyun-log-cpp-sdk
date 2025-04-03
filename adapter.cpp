@@ -181,7 +181,7 @@ std::string CodecTool::ToGmtTime(std::time_t &t, const std::string& format)
 {
     std::stringstream date;
     std::tm tm;
-#ifdef _WIN32
+#ifdef _MSC_VER
     ::gmtime_s(&tm, &t);
 #else
     ::gmtime_r(&t, &tm);
