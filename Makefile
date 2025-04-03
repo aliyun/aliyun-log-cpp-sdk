@@ -6,7 +6,7 @@ LZ4_LIB = $(LIB_OUTPUT_DIR)/liblz4.a
 COMMON_FLAGS = -g -Wall -Wextra -pedantic
 CFLAGS += $(COMMON_FLAGS) -O3 -std=c99 -Wundef -Wshadow -Wcast-align -Wstrict-prototypes
 CXXFLAGS += $(COMMON_FLAGS) -O2 -std=c++11 -Wno-unused-parameter -Wno-ignored-qualifiers
-LDFLAGS += -L$(LIB_OUTPUT_DIR) -lslssdk -lcurl -lpthread 
+LDFLAGS += -L$(LIB_OUTPUT_DIR) -lslssdk -lcurl -lpthread -llz4
 
 
 # lz4
@@ -17,7 +17,6 @@ LZ4_INCLUDE_DIR ?= ./lz4
 LZ4_LIB_DIR ?= 
 LZ4_SRC_DIR = ./lz4
 CXXFLAGS += -I$(LZ4_INCLUDE_DIR)
-LDFLAGS += -llz4
 
 # curl
 # use `make CURL_INCLUDE_DIR=/path/to/curl/include CURL_LIB_DIR=/path/to/curl/lib` to override curl lib dependency
@@ -25,7 +24,6 @@ LDFLAGS += -llz4
 # if CURL_INCLUDE_DIR and CURL_LIB_DIR are not set, try use curl from default system path
 CURL_INCLUDE_DIR ?= 
 CURL_LIB_DIR ?=
-LDFLAGS += -lcurl
 ifneq ($(CURL_INCLUDE_DIR), )
 	CXXFLAGS += -I$(CURL_INCLUDE_DIR)
 endif
@@ -57,20 +55,22 @@ $(SLS_LIB): $(SLS_LIB_DEPS)
 	mkdir -p $(LIB_OUTPUT_DIR)
 	ar rcs $@ $(OBJS)
 
+SAMPLE = sample
+
 all: $(SLS_LIB) $(SAMPLE)
 
 # sample
-SAMPLE = sample
 $(SAMPLE): $(OBJS) $(SLS_LIB) sample.o
 	@echo "Building sample"
 	$(CXX) -o $@ sample.o $(CXXFLAGS) $(LDFLAGS)
 
-sample.o: sample.cpp
+sample.o: sample.cpp,
 	$(CXX) -c $< $(CXXFLAGS)
 
 # lz4
 $(LZ4_LIB): $(LZ4_OBJS)
 	@echo "Building lz4 from source"
+	mkdir -p $(LIB_OUTPUT_DIR)
 	ar rcs $@ $(LZ4_OBJS)
 
 # Pattern rules for object files
