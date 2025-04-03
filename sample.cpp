@@ -12,7 +12,7 @@
 #include "common.h"
 #include <string>
 #include <iostream>
-#include <unistd.h>
+// #include <unistd.h>
 using namespace aliyun_log_sdk_v6;
 using namespace std;
 int main(int argc,char ** argv)
@@ -41,14 +41,14 @@ int main(int argc,char ** argv)
         uint32_t shardId = 2;
         int32_t beginTime =  time(NULL);
         ptr -> PostLogStoreLogs(project,logstore,topic,logGroup);
-        sleep(1);
+        
         ptr -> PostLogStoreLogs(project,logstore,topic,logGroup);
-        sleep(1);
+        
         int32_t endTime = time(NULL);
         ptr -> PostLogStoreLogs(project,logstore,topic,logGroup);
-        sleep(1);
+
         ptr -> PostLogStoreLogs(project,logstore,topic,logGroup);
-        sleep(1);
+
         GetCursorResponse beginCursorResp = ptr->GetCursor(project, logstore, shardId, beginTime);
         GetCursorResponse endCursorResp = ptr->GetCursor(project, logstore, shardId, endTime);
         GetBatchLogResponse getLogResp = ptr->GetBatchLog(project, logstore, shardId, 1000, beginCursorResp.result);
@@ -65,7 +65,7 @@ int main(int argc,char ** argv)
         {
             cout<<lcps.consumerGroupCheckpoints[i].GetShard() <<", " << lcps.consumerGroupCheckpoints[i].GetCheckpoint()<<", "<<lcps.consumerGroupCheckpoints[i].GetUpdateTime()<<endl;
         }
-        while(true){
+        for (int i = 0; i < 2; i++) {
             HeartbeatResponse resp = ptr->ConsumerGroupHeartbeat(project, logstore, "hahhah", "cc1", std::vector<uint32_t>());
             cout<<"cc1, heartbeat: ";
             for(std::vector<uint32_t>::const_iterator it = resp.shards.begin(); it != resp.shards.end(); ++it)
@@ -76,7 +76,6 @@ int main(int argc,char ** argv)
             for(std::vector<uint32_t>::const_iterator it = resp.shards.begin(); it != resp.shards.end(); ++it)
                 cout<<*it<<", ";
             cout<<endl;
-            usleep(2 * 1000 * 1000);
         }
     }
     catch(LOGException & e)

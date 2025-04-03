@@ -32,7 +32,7 @@ ifneq ($(CURL_LIB_DIR), )
 endif
 
 # source files
-SRCS = adapter.cpp common.cpp resource.cpp client.cpp pb.cpp coding.cpp
+SRCS = adapter.cpp common.cpp resource.cpp client.cpp pb.cpp coding.cpp util.cpp
 OBJS = $(SRCS:.cpp=.o)
 
 LZ4_SRCS = $(LZ4_SRC_DIR)/lz4.c $(LZ4_SRC_DIR)/xxhash.c
@@ -64,7 +64,7 @@ $(SAMPLE): $(OBJS) $(SLS_LIB) sample.o
 	@echo "Building sample"
 	$(CXX) -o $@ sample.o $(CXXFLAGS) $(LDFLAGS)
 
-sample.o: sample.cpp,
+sample.o: sample.cpp
 	$(CXX) -c $< $(CXXFLAGS)
 
 # lz4
