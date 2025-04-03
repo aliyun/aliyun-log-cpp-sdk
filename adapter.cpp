@@ -1,7 +1,10 @@
 #include "adapter.h"
-#include <sys/time.h>
-#include <iostream>
+
+#include <sstream>
 #include <iomanip>
+
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
 #include <curl/curl.h>
 
 using namespace std;

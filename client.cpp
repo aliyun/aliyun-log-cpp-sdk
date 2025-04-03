@@ -6,7 +6,6 @@
 #include "rapidjson/stringbuffer.h"
 #include <cstdio>
 #include <cstdlib>
-#include <curl/curl.h>
 #include <string>
 #include "util.h"
 
@@ -396,7 +395,7 @@ void LOGClient::SendRequest(const string& project, const string& httpMethod, con
     string queryString;
     LOGAdapter::GetQueryString(parameterList, queryString);
    
-    mLOGSend(httpMethod, host, 80, url, queryString, header, body, mTimeout, httpMessage, (curl_off_t)mMaxSendSpeedInBytePerSec);
+    mLOGSend(httpMethod, host, 80, url, queryString, header, body, mTimeout, httpMessage, mMaxSendSpeedInBytePerSec);
     
     if (httpMessage.statusCode != 200)
     {

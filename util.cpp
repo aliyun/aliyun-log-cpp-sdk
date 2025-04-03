@@ -2,13 +2,19 @@
 
 #include <cstring>
 #include <ctime>
+#include <iostream>
 
 #ifdef _WIN32
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "iphlpapi.lib")
-#include <iphlpapi.h>
+// must in the order as below
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <iphlpapi.h>
+#include <windows.h>
 #else
 #include <arpa/inet.h>
 #include <sys/ioctl.h>
@@ -52,23 +58,21 @@ static std::string GetHostIpByHostName()
 static std::string GetHostIpByETHName()
 {
 #ifdef _WIN32
-    PMIB_IPADDRTABLE pIPAddrTable = (MIB_IPADDRTABLE*)malloc(sizeof(MIB_IPADDRTABLE));
+    DWORD dwSize = 0, dwRetVal = 0;
+    PMIB_IPADDRTABLE pIPAddrTable = nullptr;
+
+
+    GetIpAddrTable(pIPAddrTable, &dwSize, 0);
+
+    pIPAddrTable = (MIB_IPADDRTABLE*)malloc(dwSize);
     if (!pIPAddrTable)
     {
         return "";
     }
-    DWORD dwSize = 0, dwRetVal = 0;
-    if (GetIpAddrTable(pIPAddrTable, &dwSize, 0) == ERROR_INSUFFICIENT_BUFFER)
-    {
-        free(pIPAddrTable);
-        pIPAddrTable = (MIB_IPADDRTABLE*)malloc(dwSize); // re-allocate
-    }
-    // second call
-    if ((dwRetVal = GetIpAddrTable(pIPAddrTable, &dwSize, 0)) != NO_ERROR)
+    if ((dwRetVal = GetIpAddrTable(pIPAddrTable, &dwSize, 0)) == NO_ERROR)
     {
         for (int i = 0; i < (int)pIPAddrTable->dwNumEntries; ++i)
         {
-            // ignore disconnected / deleted / transient ip addresses
             if (pIPAddrTable->table[i].wType & (MIB_IPADDR_DELETED | MIB_IPADDR_DISCONNECTED | MIB_IPADDR_TRANSIENT))
             {
                 continue;
@@ -87,7 +91,6 @@ static std::string GetHostIpByETHName()
     if (pIPAddrTable)
     {
         free(pIPAddrTable);
-        pIPAddrTable = NULL;
     }
     return "";
 #else

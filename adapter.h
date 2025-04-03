@@ -3,11 +3,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <netdb.h>
-#include <arpa/inet.h>      // inet_addr
-#include <sys/ioctl.h>
 #include "common.h"
 #include "client.h"
 #include "RestfulApiCommon.h"
