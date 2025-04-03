@@ -10,6 +10,7 @@ add_library(slssdk
             adapter.cpp
             common.cpp
             coding.cpp
+            util.cpp
             pb.cpp)
 
 # lib curl

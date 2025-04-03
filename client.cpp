@@ -4,95 +4,16 @@
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
-#include <sys/ioctl.h>
-#include <arpa/inet.h>
-#include <iostream>
-#include <curl/curl.h>
-#include <unistd.h> 
-#include <netdb.h>
-#include <sys/socket.h> 
-#include <netinet/in.h> 
-#include <sys/ioctl.h> 
-#include <net/if.h> 
-#include <net/if_arp.h>
-#include <string>
-#include <cstdlib>
-
-#include <iostream>
 #include <cstdio>
-
-#define ETH_NAME "eth0"
+#include <cstdlib>
+#include <curl/curl.h>
+#include <string>
+#include "util.h"
 
 using namespace std;
 using namespace aliyun_log_sdk_v6::pb;
 using namespace rapidjson;
 extern const char* const aliyun_log_sdk_v6::LOG_SDK_IDENTIFICATION = "sls-cpp-sdk v0.6.2";
-static string GetHostIpByHostName()
-{
-    char hostname[255];
-    gethostname(hostname, 255);
-    struct hostent* entry = gethostbyname(hostname);
-    if (entry == NULL)
-    {
-        return string();
-    }
-    struct in_addr* addr = (struct in_addr*)entry -> h_addr_list[0];
-    if (addr == NULL)
-    {
-        return string();
-    }
-    char* ipaddr = inet_ntoa(*addr);
-    if (ipaddr == NULL)
-    {
-        return string();
-    }
-    return string(ipaddr);
-}
-
-
-static string GetHostIpByETHName()
-{
-    int   sock;    
-    struct   sockaddr_in   sin;    
-    struct   ifreq   ifr;    
-
-    sock =  socket(AF_INET,   SOCK_DGRAM,   0);    
-    if (sock == -1) 
-    { 
-       return string();
-    }    
-
-    // use eth0 as the default ETH name 
-    strncpy(ifr.ifr_name, "eth0", IFNAMSIZ);    
-    ifr.ifr_name[IFNAMSIZ-1] = 0;    
-
-    if (ioctl(sock, SIOCGIFADDR, &ifr) < 0)    
-    {    
-        close(sock);//added by gaolei 13-10-09
-        return string();
-    }          
-
-    memcpy(&sin, &ifr.ifr_addr, sizeof(sin));    
-
-    char* ipaddr = inet_ntoa(sin.sin_addr);
-    close(sock); //added by gaolei 13-10-09
-    if ( ipaddr == NULL)
-    {
-        return string();
-    }
-    return string(ipaddr);
-}
-
-static string GetHostIp()
-{
-    string ip = GetHostIpByHostName();
-    if (ip.empty() || ip.find("127.0.0.1") != string::npos)
-    {
-        return GetHostIpByETHName();
-    }
-    return ip;
-}
-
 
 namespace aliyun_log_sdk_v6
 {
@@ -305,13 +226,14 @@ LOGClient::LOGClient(const string& slsHost, const string& accessKeyId, const str
     SetSlsHost(slsHost);
     if(mSource=="")
     {
-        mSource = GetHostIp();
+        mSource = internal::GetHostIp();
     }
     if(mTimeout<=0)
     {
         mTimeout = LOG_REQUEST_TIMEOUT;
     }
     mMaxSendSpeedInBytePerSec = 1024 * 1024 * 1024;
+    internal::InitNetWork();
 }
 LOGClient::LOGClient(const string& slsHost, const string& accessKeyId, const string& accessKey, const std::string& securityToken, int32_t timeout, const string& source, bool compressFlag):
     mSlsHost(slsHost),
@@ -330,7 +252,7 @@ LOGClient::LOGClient(const string& slsHost, const string& accessKeyId, const str
     SetSlsHost(slsHost);
     if(mSource=="")
     {
-        mSource = GetHostIp();
+        mSource = internal::GetHostIp();
     }
     if(mTimeout<=0)
     {
@@ -341,6 +263,7 @@ LOGClient::LOGClient(const string& slsHost, const string& accessKeyId, const str
 
 LOGClient::~LOGClient() throw()
 {
+    internal::CleanNetWork();
 }
 
 static void ConvertLogGroup(const vector<LogItem>& logItems, pb::LogGroup& logGroup)

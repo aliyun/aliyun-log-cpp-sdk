@@ -113,6 +113,35 @@ extern const char* const LOG_ERROR_MESSAGE = "errorMessage";
 extern const char* const LOG_SHARD_STATUS_READWRITE= "readwrite";
 extern const char* const LOG_SHARD_STATUS_READONLY = "readonly";
 
+class BodyTransfer
+{
+public:
+    explicit BodyTransfer(const std::string& data) : data(data) {}
+
+    size_t read(char* ptr, size_t wanted)
+    {
+        size_t remains = std::max((size_t)0, data.size() - transfered);
+        if (remains == 0)
+        {
+            return 0;
+        }
+        size_t readBytes = std::min(remains, wanted);
+        std::memcpy(ptr, data.c_str() + transfered, readBytes);
+        transfered += readBytes;
+        return readBytes;
+    }
+private:
+    size_t transfered = 0;
+    const std::string& data;
+};
+
+static size_t sendBody(char *ptr, size_t size, size_t nmemb, void *userdata)
+{
+    BodyTransfer *state = static_cast<BodyTransfer *>(userdata);
+    const size_t wanted = size * nmemb;
+    return state->read(ptr, wanted);
+}
+
 static std::string HexToString(const uint8_t md5[16])
 {
     static const char* table = "0123456789ABCDEF";
@@ -185,21 +214,6 @@ std::string CodecTool::GetDateString()
 {
     return GetDateString(DATE_FORMAT_RFC822);
 }
-time_t CodecTool::DecodeDateString(const std::string dateString, const std::string& dateFormat)
-{
-  struct tm t;
-  memset(&t, 0, sizeof(t));
-  t.tm_sec = -1;
-  strptime(dateString.c_str(), dateFormat.c_str(),&t);
-  if(t.tm_sec == -1)
-  {
-      throw LOGException(LOGE_PARAMETER_INVALID, string("Invalid date string:") + dateString + ",format:" + dateFormat);
-  }
-  struct timezone tz;
-  struct timeval tv;
-  gettimeofday(&tv, &tz);
-  return mktime(&t)-tz.tz_minuteswest*60;
-}
 
 bool CodecTool::StartWith(const std::string& input, const std::string& pattern)
 {
@@ -242,7 +256,7 @@ void LOGAdapter::GetQueryString(const map<string, string>& parameterList, string
 }
 static size_t data_write_callback(char* buffer, size_t size, size_t nmemb, string* write_buf)
 {
-    unsigned long sizes = size * nmemb;
+    size_t sizes = size * nmemb;
 
     if (buffer == NULL)
     {   
@@ -254,13 +268,13 @@ static size_t data_write_callback(char* buffer, size_t size, size_t nmemb, strin
 
 static size_t header_write_callback(char* buffer, size_t size, size_t nmemb, map<string,string>* write_buf)
 {   
-    unsigned long sizes = size * nmemb;
+    size_t sizes = size * nmemb;
 
     if (buffer == NULL)
     {   
         return 0;
     }
-    unsigned long colonIndex;
+    size_t colonIndex;
     for(colonIndex=1; colonIndex<sizes-2; colonIndex++)
     {   
         if(buffer[colonIndex] == ':')break;
@@ -319,25 +333,29 @@ void LOGAdapter::Send(const string& httpMethod, const string& host, const int32_
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, data_write_callback);
         curl_easy_setopt(curl, CURLOPT_WRITEHEADER, &responseHeader);
+        curl_easy_setopt(curl, CURLOPT_TCP_NODELAY, 1);
         curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, header_write_callback);
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
         curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, CONNECT_TIMEOUT);
         curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1);
         curl_easy_setopt(curl, CURLOPT_MAX_SEND_SPEED_LARGE, (curl_off_t)maxspeed);
-        if(httpMethod   == HTTP_POST)
+        if (httpMethod == HTTP_POST)
         {
-            curl_easy_setopt(curl, CURLOPT_POST, 1);
-            curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE_LARGE, body.size());
-            curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body.c_str());
+            curl_easy_setopt(curl, CURLOPT_POST, 1L);
+            BodyTransfer transfer(body);
+            curl_easy_setopt(curl, CURLOPT_READDATA, &transfer);
+            curl_easy_setopt(curl, CURLOPT_READFUNCTION, sendBody);
         }
-        else if(httpMethod == HTTP_DELETE)
+        else if (httpMethod == HTTP_DELETE)
         {
-            curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST,HTTP_DELETE);
+            curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, HTTP_DELETE);
         }
-        else if(httpMethod == HTTP_PUT){
-            curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, HTTP_PUT);
-            curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE_LARGE, body.size());
-            curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body.c_str());
+        else if (httpMethod == HTTP_PUT)
+        {
+            curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
+            BodyTransfer transfer(body);
+            curl_easy_setopt(curl, CURLOPT_READDATA, &transfer);
+            curl_easy_setopt(curl, CURLOPT_READFUNCTION, sendBody);
         }
 
         res = curl_easy_perform(curl);
