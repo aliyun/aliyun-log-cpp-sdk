@@ -2,6 +2,8 @@
 
 this is the C++ SDK version 0.6.0 for SLS 
 
+[中文文档](README_CN.md) | English
+
 # dependency
 
 - curl: required, use the system curl or your own [curl](https://curl.se/docs/install.html)  
@@ -43,16 +45,6 @@ this is the C++ SDK version 0.6.0 for SLS
     sudo yum install libcurl-devel
     ```
 
-- **lz4**
-
-    to use your own curl lib, set `LZ4_INCLUDE_DIR` and `LZ4_LIB_DIR` as follows
-
-    ```bash
-    make LZ4_INCLUDE_DIR=/usr/local/include LZ4_LIB_DIR=/usr/local/lib
-    ```
-    otherwise, the makefile will build it from [source](lz4/lz4.h)
-
-
 ## using cmake
 
 - build lib with cmake
@@ -78,11 +70,5 @@ this is the C++ SDK version 0.6.0 for SLS
     cmake .. -DCURL_INCLUDE_DIR=/usr/local/include -DCURL_LIB_DIR=/usr/local/lib
     ```
 
-- **lz4**
-
-    `LZ4_INCLUDE_DIR` and `LZ4_LIB_DIR` is optional for building libslssdk, this sdk will build lz4 from source if not set. To use your own lz4 lib, set `LZ4_INCLUDE_DIR` and `LZ4_LIB_DIR` as follows
-    ```bash
-    cmake .. -DLZ4_INCLUDE_DIR=/usr/local/include -DLZ4_LIB_DIR=/usr/local/lib
-    ```
 
 
