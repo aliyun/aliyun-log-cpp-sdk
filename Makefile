@@ -64,7 +64,7 @@ $(SAMPLE): $(OBJS) $(SLS_LIB) sample.o
 	@echo "Building sample"
 	$(CXX) -o $@ sample.o $(CXXFLAGS) $(LDFLAGS)
 
-sample.o: sample.cpp,
+sample.o: sample.cpp
 	$(CXX) -c $< $(CXXFLAGS)
 
 # lz4
