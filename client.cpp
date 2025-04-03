@@ -297,7 +297,6 @@ LOGClient::LOGClient(const string& slsHost, const string& accessKeyId, const str
     mCompressFlag(compressFlag),
     mTimeout(timeout),
     mUserAgent(LOG_SDK_IDENTIFICATION),
-    mKeyProvider(""),
     mHostFieldSuffix(""),
     mIsHostRawIp(false),    
     mGetDateString(CodecTool::GetDateString),
@@ -323,7 +322,6 @@ LOGClient::LOGClient(const string& slsHost, const string& accessKeyId, const str
     mCompressFlag(compressFlag),
     mTimeout(timeout),
     mUserAgent(LOG_SDK_IDENTIFICATION),
-    mKeyProvider(""),
     mHostFieldSuffix(""),
     mIsHostRawIp(false),    
     mGetDateString(CodecTool::GetDateString),
@@ -515,9 +513,6 @@ PostLogStoreLogsResponse LOGClient::PostLogStoreLogs(const string& project, cons
         operation.append("/shards/route");
     map<string, string> httpHeader;
     httpHeader[CONTENT_TYPE] = TYPE_LOG_PROTOBUF;
-    if(mKeyProvider.empty()==false)
-        httpHeader[X_LOG_KEYPROVIDER] = mKeyProvider;
-
     if(mCompressFlag)
     {
         if(! aliyun_log_sdk_v6::CompressAlgorithm::CompressLz4(serializeData, body))

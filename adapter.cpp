@@ -67,10 +67,8 @@ extern const char* const HTTP_DELETE = "DELETE";
 extern const char* const HOST = "Host";
 extern const char* const DATE = "Date";
 extern const char* const USER_AGENT = "User-Agent";
-extern const char* const LOG_OLD_HEADER_PREFIX = "x-sls-";
 extern const char* const LOG_HEADER_PREFIX = "x-log-";
 extern const char* const ACS_HEADER_PREFIX = "x-acs-";
-extern const char* const X_LOG_KEYPROVIDER = "x-log-keyprovider";
 extern const char* const X_LOG_APIVERSION = "x-log-apiversion";
 extern const char* const X_LOG_COMPRESSTYPE = "x-log-compresstype";
 extern const char* const X_LOG_BODYRAWSIZE = "x-log-bodyrawsize";
@@ -101,8 +99,6 @@ extern const char* const TYPE_LOG_JSON ="application/json";
 extern const char* const LOGITEM_TIME_STAMP_LABEL="__time__";
 extern const char* const LOGITEM_SOURCE_LABEL="__source__";
 extern const char* const LOG_API_VERSION = "0.6.0";
-extern const char* const LOGTAIL_USER_AGENT = "ali-log-logtail";
-extern const char* const MD5_SHA1_SALT_KEYPROVIDER = "md5-sha1-salt";
 extern const char* const LOG_TYPE_CURSOR = "cursor";
 extern const char* const LOG_TYPE = "type";
 extern const char* const LOGE_NOT_SUPPORTED_ACCEPT_CONTENT_TYPE = "InvalidAcceptContentType";
@@ -409,12 +405,7 @@ string LOGAdapter::GetUrlSignature(const string& httpMethod, const string& opera
         osstream.append("\n");
         for(map<string,string>::const_iterator iter=httpHeader.begin(); iter!=httpHeader.end(); ++iter)
         {
-            if(CodecTool::StartWith(iter->first, LOG_OLD_HEADER_PREFIX))
-            {
-                std::string key = iter->first;
-                endingMap.insert(std::make_pair(key.replace(0, std::strlen(LOG_OLD_HEADER_PREFIX), LOG_HEADER_PREFIX), iter->second));
-            }
-            else if(CodecTool::StartWith(iter->first, LOG_HEADER_PREFIX) || CodecTool::StartWith(iter->first, ACS_HEADER_PREFIX))
+            if(CodecTool::StartWith(iter->first, LOG_HEADER_PREFIX) || CodecTool::StartWith(iter->first, ACS_HEADER_PREFIX))
             {
                 endingMap.insert(std::make_pair(iter->first, iter->second));
             }

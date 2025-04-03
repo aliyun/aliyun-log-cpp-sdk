@@ -484,7 +484,6 @@ public:
     ListSqlInstanceResponse ListSqlInstance(const std::string &project);
 
     void SetUserAgent(const std::string& userAgent) {mUserAgent = userAgent;}
-    void SetKeyProvider(const std::string& keyProvider) {mKeyProvider = keyProvider;}
 
     void SetAccessKey(const std::string& accessKey);
     std::string GetAccessKey();
@@ -516,7 +515,6 @@ protected:
     bool mCompressFlag;
     int32_t mTimeout;
     std::string mUserAgent;
-    std::string mKeyProvider;
     std::string mHostFieldSuffix;
     bool mIsHostRawIp;
     std::mutex mMutex;
