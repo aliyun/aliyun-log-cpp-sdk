@@ -425,7 +425,7 @@ public:
  */
 typedef struct HttpMessage
 {
-    int32_t statusCode;///<Http status code
+    int32_t statusCode = -1;///<Http status code
     std::map<std::string,std::string> header;///<Only contains the header lines which have key:value pair
     std::string content;///<Http content
 /** Constructor with no parameter.

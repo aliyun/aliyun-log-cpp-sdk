@@ -310,7 +310,7 @@ public:
 */
     LOGClient(const std::string& slsHost, const std::string& accessKeyId, const std::string& accessKey, int32_t timeout=LOG_REQUEST_TIMEOUT, const std::string& source="", bool compressFlag=true);
     LOGClient(const std::string& slsHost, const std::string& accessKeyId, const std::string& accessKey, const std::string& securityToken, int32_t timeout=LOG_REQUEST_TIMEOUT, const std::string& source="", bool compressFlag=true);
-    ~LOGClient() throw();
+    ~LOGClient();
 
     CreateConsumerGroupResponse CreateConsumerGroup(const std::string& project , 
             const std::string& logstore, 

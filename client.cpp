@@ -222,6 +222,7 @@ LOGClient::LOGClient(const string& slsHost, const string& accessKeyId, const str
     mGetDateString(CodecTool::GetDateString),
     mLOGSend(LOGAdapter::Send)
 {
+    internal::InitNetWork();
     SetSlsHost(slsHost);
     if(mSource=="")
     {
@@ -232,7 +233,6 @@ LOGClient::LOGClient(const string& slsHost, const string& accessKeyId, const str
         mTimeout = LOG_REQUEST_TIMEOUT;
     }
     mMaxSendSpeedInBytePerSec = 1024 * 1024 * 1024;
-    internal::InitNetWork();
 }
 LOGClient::LOGClient(const string& slsHost, const string& accessKeyId, const string& accessKey, const std::string& securityToken, int32_t timeout, const string& source, bool compressFlag):
     mSlsHost(slsHost),
@@ -248,6 +248,7 @@ LOGClient::LOGClient(const string& slsHost, const string& accessKeyId, const str
     mGetDateString(CodecTool::GetDateString),
     mLOGSend(LOGAdapter::Send)
 {
+    internal::InitNetWork();
     SetSlsHost(slsHost);
     if(mSource=="")
     {
@@ -260,7 +261,7 @@ LOGClient::LOGClient(const string& slsHost, const string& accessKeyId, const str
     mMaxSendSpeedInBytePerSec = 1024 * 1024 * 1024;
 }
 
-LOGClient::~LOGClient() throw()
+LOGClient::~LOGClient()
 {
     internal::CleanNetWork();
 }
@@ -319,7 +320,7 @@ string LOGClient::GetHostFieldSuffix()
 }
 void LOGClient::SetSlsHost(const string& slsHost)
 {
-   std::lock_guard<std::mutex> lock(mMutex);
+    std::lock_guard<std::mutex> lock(mMutex);
     //mSlsHost = slsHost;
     size_t  bpos = slsHost.find("://");
     if(bpos == string::npos)
@@ -394,7 +395,6 @@ void LOGClient::SendRequest(const string& project, const string& httpMethod, con
     
     string queryString;
     LOGAdapter::GetQueryString(parameterList, queryString);
-   
     mLOGSend(httpMethod, host, 80, url, queryString, header, body, mTimeout, httpMessage, mMaxSendSpeedInBytePerSec);
     
     if (httpMessage.statusCode != 200)
@@ -458,7 +458,7 @@ PostLogStoreLogsResponse LOGClient::PostLogStoreLogs(const string& project, cons
     
     HttpMessage httpResponse;
     SendRequest(project, HTTP_POST, operation, body, parameterList, httpHeader, httpResponse);
-   
+
     PostLogStoreLogsResponse ret;
     ret.bodyBytes = body.size();
     ret.statusCode = httpResponse.statusCode;
