@@ -224,15 +224,7 @@ bool CodecTool::StartWith(const std::string& input, const std::string& pattern)
     {
         return false;
     }
-
-    size_t i = 0;
-    while (i < pattern.length()
-        && input[i] == pattern[i])
-    {
-        i++;
-    }
-
-    return i == pattern.length();
+    return input.compare(0, pattern.length(), pattern) == 0;
 }
 string CodecTool::UrlEncode(const string& url)
 {   
@@ -412,7 +404,6 @@ string LOGAdapter::GetUrlSignature(const string& httpMethod, const string& opera
     {
         contentType = iter->second;
     }
-    std::map<string,string> endingMap;
     switch(sigType)
     {
     case BASE64_SHA1_MD5:
@@ -428,15 +419,11 @@ string LOGAdapter::GetUrlSignature(const string& httpMethod, const string& opera
         {
             if(CodecTool::StartWith(iter->first, LOG_HEADER_PREFIX) || CodecTool::StartWith(iter->first, ACS_HEADER_PREFIX))
             {
-                endingMap.insert(std::make_pair(iter->first, iter->second));
-            }
-        }
-        for(map<string,string>::const_iterator it=endingMap.begin(); it!=endingMap.end(); ++it)
-        {
-                osstream.append(it->first);
+                osstream.append(iter->first);
                 osstream.append(":");
-                osstream.append(it->second);
+                osstream.append(iter->second);
                 osstream.append("\n");
+            }
         }
         osstream.append(operationType);
         if (parameterList.size() > 0) osstream.append("?");
@@ -458,4 +445,3 @@ string LOGAdapter::GetUrlSignature(const string& httpMethod, const string& opera
     return signature;
 }
 }
-
