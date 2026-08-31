@@ -485,7 +485,7 @@ static void ExtractLogMeta(HttpMessage& httpMessage, LogMeta& logMeta)
         logMeta.metaItems.reserve(logMeta.metaItems.size() + document.Size());
         for (rapidjson::Value::ConstValueIterator itr = document.Begin(); itr != document.End(); ++itr)
         {
-            logMeta.metaItems.push_back(LogMetaItem());
+            logMeta.metaItems.emplace_back();
             LogMetaItem& metaItem = logMeta.metaItems.back();
             ExtractJsonResult(*itr, "from", metaItem.from);
             ExtractJsonResult(*itr, "to", metaItem.to);
@@ -546,7 +546,7 @@ static void ExtractLogs(HttpMessage& httpMessage, LogResult& logResult)
         logResult.logdatas.reserve(logResult.logdatas.size() + document.Size());
         for (rapidjson::Value::ConstValueIterator itr = document.Begin(); itr != document.End(); ++itr)
         {
-            logResult.logdatas.push_back(LogItem());
+            logResult.logdatas.emplace_back();
             LogItem& logItem = logResult.logdatas.back();
                 
             string logTimeStamp = "";
@@ -561,7 +561,7 @@ static void ExtractLogs(HttpMessage& httpMessage, LogResult& logResult)
                 {
                     if (mItr->value.IsString())
                     {
-                        logItem.data.push_back(pair<string,string>(mItr->name.GetString(), mItr->value.GetString()));
+                        logItem.data.emplace_back(mItr->name.GetString(), mItr->value.GetString());
                     }
                     else
                     {
@@ -791,8 +791,7 @@ static void ExtractConsumerGroupCheckpoints(HttpMessage& httpMessage, vector<Con
         cps.reserve(cps.size() + array.Size());
         for (Value::ConstValueIterator itr = array.Begin(); itr != array.End(); ++itr)
         {
-            ConsumerGroupCheckpoint cp((*itr)["shard"].GetUint(), (*itr)["checkpoint"].GetString(), (*itr)["updateTime"].GetUint64());
-            cps.push_back(cp);
+            cps.emplace_back((*itr)["shard"].GetUint(), (*itr)["checkpoint"].GetString(), (*itr)["updateTime"].GetUint64());
         }
     }
     catch(JsonException& e)
@@ -810,8 +809,7 @@ static void ExtractConsumerGroups(HttpMessage& httpMessage, vector<ConsumerGroup
         consumerGroups.reserve(consumerGroups.size() + array.Size());
         for (Value::ConstValueIterator itr = array.Begin(); itr != array.End(); ++itr)
         {
-            ConsumerGroup group((*itr)["name"].GetString(), (*itr)["timeout"].GetUint(), (*itr)["order"].GetBool());
-            consumerGroups.push_back(group);
+            consumerGroups.emplace_back((*itr)["name"].GetString(), (*itr)["timeout"].GetUint(), (*itr)["order"].GetBool());
         }
     }
     catch(JsonException& e)
@@ -831,7 +829,7 @@ static void ExtractLogStores(HttpMessage& httpMessage, vector<string>& logStores
         {
             if (itr->IsString())
             {
-                logStoresResult.push_back(itr->GetString());
+                logStoresResult.emplace_back(itr->GetString());
             }
             else
             {
@@ -1202,7 +1200,7 @@ static void ExtractConfigs(HttpMessage& httpMessage, vector<string>& configsResu
         {
             if (itr->IsString())
             {
-                configsResult.push_back(itr->GetString());
+                configsResult.emplace_back(itr->GetString());
             }
             else
             {
@@ -1378,7 +1376,7 @@ static void ExtractMachineGroups(HttpMessage& httpMessage, vector<string>& machi
         {
             if (itr->IsString())
             {
-                machineGroupsResult.push_back(itr->GetString());
+                machineGroupsResult.emplace_back(itr->GetString());
             }
             else
             {
@@ -1490,7 +1488,7 @@ static void ExtractApplyConfigs(HttpMessage& httpMessage, vector<string>& config
         {
             if (itr->IsString())
             {
-                configsResult.push_back(itr->GetString());
+                configsResult.emplace_back(itr->GetString());
             }
             else
             {
@@ -1665,7 +1663,7 @@ ListSqlInstanceResponse LOGClient::ListSqlInstance(const std::string &project)
             sqlInstance.updateTime = atoi(value.c_str());
             ExtractJsonResult(*itr, "createTime", value);
             sqlInstance.createTime = atoi(value.c_str());
-            ret.sqlInstances.push_back(sqlInstance);
+            ret.sqlInstances.push_back(std::move(sqlInstance));
         }
     }
     catch (JsonException &e)
@@ -1687,7 +1685,7 @@ static void ExtractTopics(HttpMessage& httpMessage, vector<string>& result)
         {
             if (itr->IsString())
             {
-                result.push_back(itr->GetString());
+                result.emplace_back(itr->GetString());
             }
             else
             {
@@ -1819,7 +1817,7 @@ ListShardsResponse LOGClient::ListShards(const string& project, const string& lo
                 ExtractJsonResult(*itr,"inclusiveBeginKey",shardItem.inclusiveBeginKey);
                 ExtractJsonResult(*itr,"exclusiveEndKey",shardItem.exclusiveEndKey);
                 ExtractJsonResult(*itr, "createTime", shardItem.createTime);
-                ret.result.push_back(shardItem);
+                ret.result.push_back(std::move(shardItem));
             }
             else
             {
@@ -1869,7 +1867,7 @@ SplitShardResponse LOGClient::SplitShard(const string& project, const string& lo
                 ExtractJsonResult(*itr,"status",shardItem.status);
                 ExtractJsonResult(*itr,"inclusiveBeginKey",shardItem.inclusiveBeginKey);
                 ExtractJsonResult(*itr,"exclusiveEndKey",shardItem.exclusiveEndKey);
-                ret.result.push_back(shardItem);
+                ret.result.push_back(std::move(shardItem));
             }
             else
             {
@@ -1918,7 +1916,7 @@ MergeShardsResponse LOGClient::MergeShard(const string& project, const string& l
                 ExtractJsonResult(*itr,"inclusiveBeginKey",shardItem.inclusiveBeginKey);
                 ExtractJsonResult(*itr,"exclusiveEndKey",shardItem.exclusiveEndKey);
                 ExtractJsonResult(*itr,"createTime",shardItem.createTime);
-                ret.result.push_back(shardItem);
+                ret.result.push_back(std::move(shardItem));
             }
             else
             {
