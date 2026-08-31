@@ -189,20 +189,23 @@ static void ParseBatchLogData(const string& nextCursor, const pb::LogGroupList& 
 {
     batchLogData.nextCursor = nextCursor;
     batchLogData.logGroupCount = logGroupList.logGroupList.size();
+    batchLogData.logGroups.reserve(batchLogData.logGroups.size() + logGroupList.logGroupList.size());
     for (const auto& logGroup : logGroupList.logGroupList)
     {
         vector<LogItem> logItems;
+        logItems.reserve(logGroup.logs.size());
         for (const Log& log : logGroup.logs)
         {
             LogItem logItem;
             logItem.timestamp = log.time;
             logItem.topic = logGroup.topic;
             logItem.source = logGroup.source;
+            logItem.data.reserve(log.contents.size());
             for (const auto& content : log.contents)
             {
-                logItem.data.push_back(pair<string, string>(content.key, content.value));
+                logItem.data.emplace_back(content.key, content.value);
             }
-            logItems.push_back(logItem);
+            logItems.push_back(std::move(logItem));
         }
         batchLogData.logGroups.push_back(std::move(logItems));
     }
@@ -272,12 +275,14 @@ static void ConvertLogGroup(const vector<LogItem>& logItems, pb::LogGroup& logGr
     {
         throw LOGException(LOGE_PARAMETER_INVALID, "Empty LogItem.");
     }
+    logGroup.logs.reserve(logGroup.logs.size() + logItems.size());
     for (const auto& logItem : logItems)
     {
         Log log(logItem.timestamp, {});
+        log.contents.reserve(logItem.data.size());
         for (auto& p : logItem.data)
         {
-            log.contents.push_back(LogContent{p.first, p.second});
+            log.contents.emplace_back(p.first, p.second);
         }
         logGroup.logs.push_back(std::move(log));
     }
