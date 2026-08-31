@@ -482,6 +482,7 @@ static void ExtractLogMeta(HttpMessage& httpMessage, LogMeta& logMeta)
         logMeta.count = atoi(httpMessage.header[X_LOG_COUNT].c_str());
 
         //const rapidjson::Value& histograms = GetJsonValue(document, "histograms");
+        logMeta.metaItems.reserve(logMeta.metaItems.size() + document.Size());
         for (rapidjson::Value::ConstValueIterator itr = document.Begin(); itr != document.End(); ++itr)
         {
             logMeta.metaItems.push_back(LogMetaItem());
@@ -542,6 +543,7 @@ static void ExtractLogs(HttpMessage& httpMessage, LogResult& logResult)
         logResult.logline = atoi(httpMessage.header[X_LOG_COUNT].c_str());
 
         //const rapidjson::Value& logs = GetJsonValue(document, "logs");
+        logResult.logdatas.reserve(logResult.logdatas.size() + document.Size());
         for (rapidjson::Value::ConstValueIterator itr = document.Begin(); itr != document.End(); ++itr)
         {
             logResult.logdatas.push_back(LogItem());
@@ -552,6 +554,7 @@ static void ExtractLogs(HttpMessage& httpMessage, LogResult& logResult)
             logItem.timestamp = atoi(logTimeStamp.c_str());
 
             ExtractJsonResult(*itr, LOGITEM_SOURCE_LABEL, logItem.source);
+            logItem.data.reserve(itr->MemberCount());
             for (rapidjson::Value::ConstMemberIterator mItr = itr->MemberBegin(); mItr != itr->MemberEnd(); ++mItr)
             {
                 if (string(mItr->name.GetString()) != string(LOGITEM_TIME_STAMP_LABEL) && string(mItr->name.GetString()) != string(LOGITEM_SOURCE_LABEL))
@@ -767,6 +770,7 @@ static void ExtractHeartbeat(HttpMessage& httpMessage, std::vector<uint32_t>& sh
     {
         ExtractJsonResult(httpMessage.content, doc);
         auto array = doc.GetArray();
+        shards.reserve(shards.size() + array.Size());
         for (Value::ConstValueIterator itr = array.Begin(); itr != array.End(); ++itr)
         {
             shards.push_back(itr->GetUint());
@@ -784,6 +788,7 @@ static void ExtractConsumerGroupCheckpoints(HttpMessage& httpMessage, vector<Con
     {
         ExtractJsonResult(httpMessage.content, doc);
         auto array = doc.GetArray();
+        cps.reserve(cps.size() + array.Size());
         for (Value::ConstValueIterator itr = array.Begin(); itr != array.End(); ++itr)
         {
             ConsumerGroupCheckpoint cp((*itr)["shard"].GetUint(), (*itr)["checkpoint"].GetString(), (*itr)["updateTime"].GetUint64());
@@ -802,6 +807,7 @@ static void ExtractConsumerGroups(HttpMessage& httpMessage, vector<ConsumerGroup
     {
         ExtractJsonResult(httpMessage.content, doc);
         auto array = doc.GetArray();
+        consumerGroups.reserve(consumerGroups.size() + array.Size());
         for (Value::ConstValueIterator itr = array.Begin(); itr != array.End(); ++itr)
         {
             ConsumerGroup group((*itr)["name"].GetString(), (*itr)["timeout"].GetUint(), (*itr)["order"].GetBool());
@@ -820,6 +826,7 @@ static void ExtractLogStores(HttpMessage& httpMessage, vector<string>& logStores
     {
         ExtractJsonResult(httpMessage.content, document);    
         const rapidjson::Value& logStores = GetJsonValue(document, "logstores");
+        logStoresResult.reserve(logStoresResult.size() + logStores.Size());
         for (rapidjson::Value::ConstValueIterator itr = logStores.Begin(); itr != logStores.End(); ++itr)
         {
             if (itr->IsString())
@@ -1190,6 +1197,7 @@ static void ExtractConfigs(HttpMessage& httpMessage, vector<string>& configsResu
         ExtractJsonResult(httpMessage.content, document);    
         
         const rapidjson::Value& configs = GetJsonValue(document, "configs");
+        configsResult.reserve(configsResult.size() + configs.Size());
         for (rapidjson::Value::ConstValueIterator itr = configs.Begin(); itr != configs.End(); ++itr)
         {
             if (itr->IsString())
@@ -1365,6 +1373,7 @@ static void ExtractMachineGroups(HttpMessage& httpMessage, vector<string>& machi
         ExtractJsonResult(httpMessage.content, document);    
         
         const rapidjson::Value& machineGroups = GetJsonValue(document, "machinegroups");
+        machineGroupsResult.reserve(machineGroupsResult.size() + machineGroups.Size());
         for (rapidjson::Value::ConstValueIterator itr = machineGroups.Begin(); itr != machineGroups.End(); ++itr)
         {
             if (itr->IsString())
@@ -1476,6 +1485,7 @@ static void ExtractApplyConfigs(HttpMessage& httpMessage, vector<string>& config
         ExtractJsonResult(httpMessage.content, document);    
         
         const rapidjson::Value& configs = GetJsonValue(document, "configs");
+        configsResult.reserve(configsResult.size() + configs.Size());
         for (rapidjson::Value::ConstValueIterator itr = configs.Begin(); itr != configs.End(); ++itr)
         {
             if (itr->IsString())
@@ -1643,6 +1653,7 @@ ListSqlInstanceResponse LOGClient::ListSqlInstance(const std::string &project)
     try
     {
         ExtractJsonResult(httpResponse.content, document);
+        ret.sqlInstances.reserve(ret.sqlInstances.size() + document.Size());
         for (rapidjson::Value::ConstValueIterator itr = document.Begin(); itr != document.End(); ++itr)
         {
             SqlInstance sqlInstance;
@@ -1671,6 +1682,7 @@ static void ExtractTopics(HttpMessage& httpMessage, vector<string>& result)
     {
         ExtractJsonResult(httpMessage.content, document);    
         
+        result.reserve(result.size() + document.Size());
         for (rapidjson::Value::ConstValueIterator itr = document.Begin(); itr != document.End(); ++itr)
         {
             if (itr->IsString())
@@ -1796,6 +1808,7 @@ ListShardsResponse LOGClient::ListShards(const string& project, const string& lo
 
     if (document.IsArray())
     {
+        ret.result.reserve(document.Size());
         for (rapidjson::Value::ConstValueIterator itr = document.Begin(); itr != document.End(); ++itr)
         {
             if (itr->IsObject())
@@ -1846,6 +1859,7 @@ SplitShardResponse LOGClient::SplitShard(const string& project, const string& lo
 
     if (document.IsArray())
     {
+        ret.result.reserve(document.Size());
         for (rapidjson::Value::ConstValueIterator itr = document.Begin(); itr != document.End(); ++itr)
         {
             if (itr->IsObject())
@@ -1893,6 +1907,7 @@ MergeShardsResponse LOGClient::MergeShard(const string& project, const string& l
 
     if (document.IsArray())
     {
+        ret.result.reserve(document.Size());
         for (rapidjson::Value::ConstValueIterator itr = document.Begin(); itr != document.End(); ++itr)
         {
             if (itr->IsObject())
