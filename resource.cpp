@@ -201,7 +201,7 @@ void ConfigInputDetail::FromJson(const Value& value)
     {
         if (itr->IsString())
         {
-            mKey.push_back(itr->GetString());
+            mKey.emplace_back(itr->GetString());
         }
         else
         {
@@ -215,7 +215,7 @@ void ConfigInputDetail::FromJson(const Value& value)
     {
         if (itr->IsString())
         {
-            mFilterKey.push_back(itr->GetString());
+            mFilterKey.emplace_back(itr->GetString());
         }
         else
         {
@@ -229,7 +229,7 @@ void ConfigInputDetail::FromJson(const Value& value)
     {
         if (itr->IsString())
         {
-            mFilterRegex.push_back(itr->GetString());
+            mFilterRegex.emplace_back(itr->GetString());
         }
         else
         {
@@ -462,7 +462,7 @@ void Line::FromJson(const rapidjson::Value& value)
     {
         if (itr->IsString())
         {
-           mToken.push_back(itr->GetString());
+           mToken.emplace_back(itr->GetString());
         }
         else
         {
@@ -479,7 +479,7 @@ void Line::FromJson(const rapidjson::Value& value)
         {
             if (itr->IsString())
             {
-                mIncludeKeys.push_back(itr->GetString());
+                mIncludeKeys.emplace_back(itr->GetString());
             }
             else
             {
@@ -497,7 +497,7 @@ void Line::FromJson(const rapidjson::Value& value)
         {
             if (itr->IsString())
             {
-                mExcludeKeys.push_back(itr->GetString());
+                mExcludeKeys.emplace_back(itr->GetString());
             }
             else
             {
@@ -556,7 +556,7 @@ void KeyContent::FromJson(const rapidjson::Value& value)
         if (itr->IsString())
         {
             //cout << "key's token:" << itr->GetString() << endl;
-            mToken.push_back(itr->GetString());
+            mToken.emplace_back(itr->GetString());
         }
         else
         {
@@ -682,7 +682,7 @@ void AllKeys::FromJson(const Value& value)
     {
         if (itr->IsString())
         {
-            mToken.push_back(itr->GetString());
+            mToken.emplace_back(itr->GetString());
         }
         else
         {
@@ -799,7 +799,7 @@ void Index::FromJson(const Value& value)
         {
             if (itr->IsString())
             {
-                mLogReduceWhiteList.push_back(itr->GetString());
+                mLogReduceWhiteList.emplace_back(itr->GetString());
             }
             else
             {
@@ -815,7 +815,7 @@ void Index::FromJson(const Value& value)
         {
             if (itr->IsString())
             {
-                mLogReduceBlackList.push_back(itr->GetString());
+                mLogReduceBlackList.emplace_back(itr->GetString());
             }
             else
             {
@@ -1057,7 +1057,7 @@ void MachineGroup::FromJson(const Value& value)
     {
         if (itr->IsString())
         {
-            mMachineList.push_back(itr->GetString());
+            mMachineList.emplace_back(itr->GetString());
         }
         else
         {
