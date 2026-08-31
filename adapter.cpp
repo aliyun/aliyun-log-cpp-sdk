@@ -238,6 +238,12 @@ string CodecTool::UrlEncode(const string& url)
 void LOGAdapter::GetQueryString(const map<string, string>& parameterList, string &queryString)
 {
     queryString.clear();
+    size_t querySize = parameterList.empty() ? 0 : parameterList.size() - 1;
+    for (map<string, string>::const_iterator iter = parameterList.begin(); iter != parameterList.end(); ++iter)
+    {
+        querySize += iter->first.size() + 1 + iter->second.size();
+    }
+    queryString.reserve(querySize);
     for(map<string, string>::const_iterator iter=parameterList.begin(); iter!=parameterList.end(); ++iter)
     {
         if (iter != parameterList.begin())
@@ -312,9 +318,15 @@ void LOGAdapter::Send(const string& httpMethod, const string& host, const int32_
     {
         headers = curl_slist_append(headers, (iter->first + ":" + iter->second).c_str());
     }
-    string queryUrl = host + url;
+    string queryUrl;
+    queryUrl.reserve(host.size() + url.size() + (queryString.empty() ? 0 : queryString.size() + 1));
+    queryUrl.append(host);
+    queryUrl.append(url);
     if(queryString.empty() == false)
-        queryUrl += "?"+queryString;
+    {
+        queryUrl.append("?");
+        queryUrl.append(queryString);
+    }
 
     CURL* curl = curl_easy_init();
     
