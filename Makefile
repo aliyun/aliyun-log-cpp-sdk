@@ -8,6 +8,10 @@ CFLAGS += $(COMMON_FLAGS) -O3 -std=c99 -Wundef -Wshadow -Wcast-align -Wstrict-pr
 CXXFLAGS += $(COMMON_FLAGS) -O2 -std=c++11 -Wno-unused-parameter -Wno-ignored-qualifiers
 LDFLAGS += -L$(LIB_OUTPUT_DIR) -lslssdk -lcurl -lpthread -llz4
 
+ifneq ($(strip $(ALIYUN_LOG_SDK_NAMESPACE)),)
+override CXXFLAGS += -DALIYUN_LOG_SDK_NAMESPACE=$(ALIYUN_LOG_SDK_NAMESPACE)
+endif
+
 
 # lz4
 # use `make LZ4_INCLUDE_DIR=/path/to/lz4/include LZ4_LIB_DIR=/path/to/lz4/lib` to override lz4 lib dependency

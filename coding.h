@@ -2,8 +2,9 @@
 
 #include <string>
 #include <cstring>
+#include "sls_namespace.h"
 
-namespace aliyun_log_sdk_v6
+namespace ALIYUN_LOG_SDK_NAMESPACE
 {
 struct SlsStringPiece
 {
@@ -103,4 +104,4 @@ inline static int32_t GetEncodeVarint32Len(uint32_t v)
     }
 }
 
-} // namespace aliyun_log_sdk_v6
+} // namespace ALIYUN_LOG_SDK_NAMESPACE

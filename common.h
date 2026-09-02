@@ -9,6 +9,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include "sls_namespace.h"
 
 #define SHA1_INPUT_WORDS    16          
 #define SHA1_DIGEST_WORDS   5
@@ -18,7 +19,7 @@
 #define BIT_COUNT_WORDS     2
 #define BIT_COUNT_BYTES     (BIT_COUNT_WORDS*sizeof(uint32_t))
 
-namespace aliyun_log_sdk_v6
+namespace ALIYUN_LOG_SDK_NAMESPACE
 {
 /** Calculate Md5 for a byte stream,
 * result is stored in md5[16]

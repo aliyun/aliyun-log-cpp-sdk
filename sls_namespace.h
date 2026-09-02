@@ -1,0 +1,8 @@
+#ifndef ALIYUN_LOG_SDK_NAMESPACE_CONFIG_H
+#define ALIYUN_LOG_SDK_NAMESPACE_CONFIG_H
+
+#ifndef ALIYUN_LOG_SDK_NAMESPACE
+#define ALIYUN_LOG_SDK_NAMESPACE aliyun_log_sdk_v6
+#endif
+
+#endif

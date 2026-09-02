@@ -16,7 +16,7 @@
 using namespace std;
 using namespace rapidjson;
 
-namespace aliyun_log_sdk_v6
+namespace ALIYUN_LOG_SDK_NAMESPACE
 {
 /***************Resource**************/
 string Resource::ToJsonString() const

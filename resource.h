@@ -17,10 +17,11 @@
 #include <map>
 #include <set>
 #include <memory>
+#include "sls_namespace.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/document.h"
 
-namespace aliyun_log_sdk_v6
+namespace ALIYUN_LOG_SDK_NAMESPACE
 {
 class Resource
 {

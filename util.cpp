@@ -25,9 +25,9 @@
 #endif
 
 using namespace std;
-using namespace aliyun_log_sdk_v6::internal;
+using namespace ALIYUN_LOG_SDK_NAMESPACE::internal;
 
-namespace aliyun_log_sdk_v6
+namespace ALIYUN_LOG_SDK_NAMESPACE
 {
 namespace internal
 {
@@ -157,4 +157,4 @@ void CleanNetWork()
 }
 
 } // namespace internal
-} // namespace aliyun_log_sdk_v6
+} // namespace ALIYUN_LOG_SDK_NAMESPACE

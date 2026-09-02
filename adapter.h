@@ -3,11 +3,12 @@
 #include <string>
 #include <vector>
 #include <map>
+#include "sls_namespace.h"
 #include "common.h"
 #include "client.h"
 #include "RestfulApiCommon.h"
 #include <ctime>
-namespace aliyun_log_sdk_v6
+namespace ALIYUN_LOG_SDK_NAMESPACE
 {
 typedef enum{BASE64_SHA1_MD5} LOGSigType;
 const uint32_t CONNECT_TIMEOUT = 5; //second

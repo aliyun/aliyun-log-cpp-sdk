@@ -69,3 +69,17 @@ cmake .. -DCURL_INCLUDE_DIR=/usr/local/include -DCURL_LIB_DIR=/usr/local/lib
 ```bash
 cmake --build .
 ```
+
+## 自定义命名空间
+
+SDK 默认使用 `aliyun_log_sdk_v6`。如果需要避免符号冲突，可以在构建时通过
+`ALIYUN_LOG_SDK_NAMESPACE` 指定其他 C++ 标识符：
+
+```bash
+cmake .. -DALIYUN_LOG_SDK_NAMESPACE=my_sls_sdk
+# 或者
+make ALIYUN_LOG_SDK_NAMESPACE=my_sls_sdk
+```
+
+包含 SDK 头文件的应用程序必须使用与 SDK 库相同的定义，例如
+`-DALIYUN_LOG_SDK_NAMESPACE=my_sls_sdk`。该值必须是单个合法的 C++ 标识符。

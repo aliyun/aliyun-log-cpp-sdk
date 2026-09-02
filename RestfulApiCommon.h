@@ -4,8 +4,9 @@
 #include <vector>
 #include <map>
 #include "stdint.h"
+#include "sls_namespace.h"
 
-namespace aliyun_log_sdk_v6
+namespace ALIYUN_LOG_SDK_NAMESPACE
 {
 extern const char * const DATE_FORMAT_RFC822;// "%a, %d %b %Y %H:%M:%S GMT" ///<RFC822 date formate, GMT time.
 //typedef enum {REQUEST_GET= 1, REQUEST_POST } LOG_Request_Mode;///<Http Request Method.

@@ -2,8 +2,9 @@
 
 #include <string>
 #include <vector>
+#include "sls_namespace.h"
 
-namespace aliyun_log_sdk_v6
+namespace ALIYUN_LOG_SDK_NAMESPACE
 {
 namespace pb
 {
@@ -85,4 +86,4 @@ public:
 };
 
 } // namespace pb
-} // namespace aliyun_log_sdk_v6
+} // namespace ALIYUN_LOG_SDK_NAMESPACE

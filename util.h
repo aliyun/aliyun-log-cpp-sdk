@@ -1,7 +1,8 @@
 
 #include <string>
+#include "sls_namespace.h"
 
-namespace aliyun_log_sdk_v6
+namespace ALIYUN_LOG_SDK_NAMESPACE
 {
     namespace internal
     {

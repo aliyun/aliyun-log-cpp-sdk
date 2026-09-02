@@ -8,8 +8,8 @@
 #include <sstream>
 
 using namespace std;
-using namespace aliyun_log_sdk_v6;
-using namespace aliyun_log_sdk_v6::pb;
+using namespace ALIYUN_LOG_SDK_NAMESPACE;
+using namespace ALIYUN_LOG_SDK_NAMESPACE::pb;
 
 static std::string toHexSpaced(const std::string& data)
 {
