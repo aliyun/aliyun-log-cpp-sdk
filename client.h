@@ -285,7 +285,8 @@ struct SqlInstance
     int cu;
     time_t createTime;
     time_t updateTime;
-    SqlInstance() : cu(0), createTime(0), updateTime(0) {}
+    bool useAsDefault;
+    SqlInstance() : cu(0), createTime(0), updateTime(0), useAsDefault(false) {}
 };
 struct ListSqlInstanceResponse : public Response
 {
@@ -481,6 +482,7 @@ public:
     ProjectSqlResponse ExecuteProjectSql(const std::string &project, const std::string &query, bool powerSql);
     CreateSqlInstanceResponse CreateSqlInstance(const std::string &project, int cu);
     UpdateSqlInstanceResponse UpdateSqlInstance(const std::string &project, int cu);
+    UpdateSqlInstanceResponse UpdateSqlInstance(const std::string &project, int cu, bool useAsDefault);
     ListSqlInstanceResponse ListSqlInstance(const std::string &project);
 
     void SetUserAgent(const std::string& userAgent) {mUserAgent = userAgent;}
@@ -508,6 +510,7 @@ public:
     void SetMaxSendSpeed(const int64_t speed){ mMaxSendSpeedInBytePerSec = speed; }
 protected:
     std::string mSlsHost;
+    bool mUsingHttps;
     std::string mAccessKeyId;
     std::string mAccessKey;
     std::string mSecurityToken;
@@ -520,15 +523,21 @@ protected:
     std::mutex mMutex;
     //HttpMessage (*mLOGSend)(const std::string& url, const std::map<std::string, std::string>& header, const std::string& body, const LOG_Request_Mode requestMode, int32_t timeout); 
     std::string (*mGetDateString)();
-    void (*mLOGSend)(const std::string& httpMethod, const std::string& host, const int32_t port, const std::string& url, const std::string& queryString, const std::map<std::string, std::string>& header, const std::string& body, const int32_t timeout, HttpMessage& httpMessage, const int64_t maxspeed); 
+    void (*mLOGSend)(const std::string& httpMethod, const std::string& host, const int32_t port, const bool usingHttps, const std::string& url, const std::string& queryString, const std::map<std::string, std::string>& header, const std::string& body, const int32_t timeout, HttpMessage& httpMessage, const int64_t maxspeed);
     int64_t mMaxSendSpeedInBytePerSec;
     void SendRequest(const std::string& project, const std::string& httpMethod, const std::string& url, const std::string& body, const std::map<std::string, std::string>& parameterList, std::map<std::string, std::string>& header, HttpMessage& httpMessage);
 private:
+    struct HostInfo
+    {
+        std::string host;
+        bool usingHttps;
+    };
+
     GetCursorResponse GetCursor(const std::string& project, const std::string& logstore, uint32_t shardId, const std::string& paraKey, const std::string& paraValue);
     PullDataResponse GetLogGroupList(const std::string& project, const std::string& logstore, uint32_t shardId, int count, const std::string& cursor, const std::string& endCursor, pb::LogGroupList& logGroupList);
-    void SetCommonHeader(std::map<std::string, std::string>& httpHeader, int32_t contentLength, const std::string& project="");
+    void SetCommonHeader(std::map<std::string, std::string>& httpHeader, int32_t contentLength, const std::string& host);
     void SetCommonParameter(std::map<std::string, std::string>& parameterList);
-    std::string GetHost(const std::string& project);
+    HostInfo GetHost(const std::string& project);
 };
 }
 #endif

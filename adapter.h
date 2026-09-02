@@ -34,11 +34,10 @@ class LOGAdapter
 {
 public:
     static void GetQueryString(const std::map<std::string, std::string>& parameterList, std::string &queryString);
-    static void Send(const std::string& httpMethod, const std::string& host, const int32_t port, const std::string& url, const std::string& queryString, const std::map<std::string, std::string>& header, const std::string& body, const int32_t timeout, HttpMessage& httpMessage, const int64_t maxspeed = 0);
+    static void Send(const std::string& httpMethod, const std::string& host, const int32_t port, const bool usingHttps, const std::string& url, const std::string& queryString, const std::map<std::string, std::string>& header, const std::string& body, const int32_t timeout, HttpMessage& httpMessage, const int64_t maxspeed = 0);
     static std::string GetUrlSignature(const std::string& httpMethod, const std::string& operationType, std::map<std::string, std::string>& httpHeader, const std::map<std::string, std::string>& parameterList, const std::string& content, const std::string& signKey, const LOGSigType sigType = BASE64_SHA1_MD5);
 };
 
 
 }
 #endif
-

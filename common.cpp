@@ -589,52 +589,34 @@ void Base64Encoding(std::istream& is, std::ostream& os, char makeupChar, const c
 
 bool CompressAlgorithm::CompressLz4(const char*  srcPtr,  const uint32_t srcSize, std::string& dst)
 {
-    uint32_t encodingSize = LZ4_compressBound(srcSize);
-    dst.resize(encodingSize);
-    char* compressed = const_cast<char*>(dst.c_str());
-    try
-    {   
-        encodingSize = LZ4_compress(srcPtr, compressed, srcSize);
-        if (encodingSize)
-        {  
-            dst.resize(encodingSize);
-            return true;
-        }
-    }
-    catch (...)
-    {   
+    dst.resize(static_cast<size_t>(LZ4_compressBound(static_cast<int>(srcSize))));
+    const int compressedSize = LZ4_compress(srcPtr, &dst[0], static_cast<int>(srcSize));
+    if (compressedSize > 0)
+    {
+        dst.resize(static_cast<size_t>(compressedSize));
+        return true;
     }
     return false;
 }
 
 bool CompressAlgorithm::CompressLz4(const std::string& src, std::string& dst)
 {
-    return CompressLz4(src.c_str(), src.length(), dst);
+    return CompressLz4(src.data(), static_cast<uint32_t>(src.size()), dst);
 }
 
 bool CompressAlgorithm::UncompressLz4(const char*  srcPtr, const uint32_t srcSize, const uint32_t rawSize, std::string& dst)
 {
     dst.resize(rawSize);
-    char* unCompressed = const_cast<char*>(dst.c_str());
-    uint32_t length = 0;
-    try
-    {
-        length = LZ4_decompress_safe(srcPtr, unCompressed, srcSize, rawSize);
-    }
-    catch(...)
-    {
-        return false;
-    }
-    if (length != rawSize)
-    {   
-        return false;
-    }
-    return true;
+    const int length = LZ4_decompress_safe(srcPtr,
+                                           &dst[0],
+                                           static_cast<int>(srcSize),
+                                           static_cast<int>(rawSize));
+    return length == static_cast<int>(rawSize);
 }
 
 bool CompressAlgorithm::UncompressLz4(const std::string& src, const uint32_t rawSize, std::string& dst)
 {
-    return UncompressLz4(src.c_str(), src.length(), rawSize, dst);
+    return UncompressLz4(src.data(), static_cast<uint32_t>(src.size()), rawSize, dst);
 }
 template<class T>
 inline std::string SignedToString(const T& n)

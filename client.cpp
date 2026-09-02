@@ -189,20 +189,23 @@ static void ParseBatchLogData(const string& nextCursor, const pb::LogGroupList& 
 {
     batchLogData.nextCursor = nextCursor;
     batchLogData.logGroupCount = logGroupList.logGroupList.size();
+    batchLogData.logGroups.reserve(batchLogData.logGroups.size() + logGroupList.logGroupList.size());
     for (const auto& logGroup : logGroupList.logGroupList)
     {
         vector<LogItem> logItems;
+        logItems.reserve(logGroup.logs.size());
         for (const Log& log : logGroup.logs)
         {
             LogItem logItem;
             logItem.timestamp = log.time;
             logItem.topic = logGroup.topic;
             logItem.source = logGroup.source;
+            logItem.data.reserve(log.contents.size());
             for (const auto& content : log.contents)
             {
-                logItem.data.push_back(pair<string, string>(content.key, content.value));
+                logItem.data.emplace_back(content.key, content.value);
             }
-            logItems.push_back(logItem);
+            logItems.push_back(std::move(logItem));
         }
         batchLogData.logGroups.push_back(std::move(logItems));
     }
@@ -211,6 +214,7 @@ static void ParseBatchLogData(const string& nextCursor, const pb::LogGroupList& 
 
 LOGClient::LOGClient(const string& slsHost, const string& accessKeyId, const string& accessKey, int32_t timeout, const string& source, bool compressFlag):
     mSlsHost(slsHost),
+    mUsingHttps(false),
     mAccessKeyId(accessKeyId),
     mAccessKey(accessKey),
     mSource(source),
@@ -236,6 +240,7 @@ LOGClient::LOGClient(const string& slsHost, const string& accessKeyId, const str
 }
 LOGClient::LOGClient(const string& slsHost, const string& accessKeyId, const string& accessKey, const std::string& securityToken, int32_t timeout, const string& source, bool compressFlag):
     mSlsHost(slsHost),
+    mUsingHttps(false),
     mAccessKeyId(accessKeyId),
     mAccessKey(accessKey),
     mSecurityToken(securityToken),
@@ -272,12 +277,14 @@ static void ConvertLogGroup(const vector<LogItem>& logItems, pb::LogGroup& logGr
     {
         throw LOGException(LOGE_PARAMETER_INVALID, "Empty LogItem.");
     }
+    logGroup.logs.reserve(logGroup.logs.size() + logItems.size());
     for (const auto& logItem : logItems)
     {
         Log log(logItem.timestamp, {});
+        log.contents.reserve(logItem.data.size());
         for (auto& p : logItem.data)
         {
-            log.contents.push_back(LogContent{p.first, p.second});
+            log.contents.emplace_back(p.first, p.second);
         }
         logGroup.logs.push_back(std::move(log));
     }
@@ -320,45 +327,41 @@ string LOGClient::GetHostFieldSuffix()
 }
 void LOGClient::SetSlsHost(const string& slsHost)
 {
-    std::lock_guard<std::mutex> lock(mMutex);
-    //mSlsHost = slsHost;
-    size_t  bpos = slsHost.find("://");
-    if(bpos == string::npos)
-        bpos = 0;
-    else
-        bpos += 3;
-    string tmpstr = slsHost.substr(bpos);
-    size_t  epos = tmpstr.find_first_of("/");
-    if(epos == string::npos)
-        epos = tmpstr.length();
-    string host = tmpstr.substr(0,epos);
-    
-    mSlsHost = host;
-
-    mHostFieldSuffix = "." + host;
+    string host = slsHost;
+    bool usingHttps = false;
+    if (slsHost.compare(0, 8, "https://") == 0)
+    {
+        usingHttps = true;
+        host.erase(0, 8);
+    }
+    else if (slsHost.compare(0, 7, "http://") == 0)
+    {
+        host.erase(0, 7);
+    }
+    const size_t pathPos = host.find('/');
+    if (pathPos != string::npos)
+    {
+        host.erase(pathPos);
+    }
+    string hostFieldSuffix = "." + host;
     size_t i = 0;
     for(; i < host.length(); ++i)
     {
         if((host[i] >= 'a' && host[i] <= 'z') || (host[i] >= 'A' && host[i] <= 'Z'))
             break;
     }
-    if(i == host.length())
-        mIsHostRawIp = true;
-    else
-        mIsHostRawIp = false;
+    const bool isHostRawIp = i == host.length();
+
+    std::lock_guard<std::mutex> lock(mMutex);
+    mUsingHttps = usingHttps;
+    mSlsHost = host;
+    mHostFieldSuffix = hostFieldSuffix;
+    mIsHostRawIp = isHostRawIp;
 }
 
-void LOGClient::SetCommonHeader(map<string, string>& httpHeader, int32_t contentLength, const string& project)
+void LOGClient::SetCommonHeader(map<string, string>& httpHeader, int32_t contentLength, const string& host)
 {
-    if (project != "")
-    {
-        httpHeader[HOST] = project + GetHostFieldSuffix();
-    }
-    else
-    {
-        httpHeader[HOST] = GetSlsHost();
-    }
-
+    httpHeader[HOST] = host;
     httpHeader[USER_AGENT] = mUserAgent;
     httpHeader[X_LOG_APIVERSION] = LOG_API_VERSION;
     httpHeader[X_LOG_SIGNATUREMETHOD] = HMAC_SHA1;
@@ -374,28 +377,27 @@ void LOGClient::SetCommonParameter(map<string, string>& parameterList)
 {
 }
 
-string LOGClient::GetHost(const string& project)
+LOGClient::HostInfo LOGClient::GetHost(const string& project)
 {
-    if(mIsHostRawIp || project == "")
+    std::lock_guard<std::mutex> lock(mMutex);
+    HostInfo hostInfo{mSlsHost, mUsingHttps};
+    if (!mIsHostRawIp && !project.empty())
     {
-        return GetSlsHost();
+        hostInfo.host = project + mHostFieldSuffix;
     }
-    else
-    {
-        return project + GetHostFieldSuffix();
-    }
+    return hostInfo;
 }
 
 void LOGClient::SendRequest(const string& project, const string& httpMethod, const string& url, const string& body, const map<string, string>& parameterList, map<string, string>& header, HttpMessage& httpMessage)
 {
-    string host = GetHost(project);
-    SetCommonHeader(header, body.length(), project);
+    const HostInfo hostInfo = GetHost(project);
+    SetCommonHeader(header, body.length(), hostInfo.host);
     string signature = LOGAdapter::GetUrlSignature(httpMethod, url, header, parameterList, body, GetAccessKey());
     header[AUTHORIZATION] = LOG_HEADSIGNATURE_PREFIX + GetAccessKeyId() + ':' + signature;
     
     string queryString;
     LOGAdapter::GetQueryString(parameterList, queryString);
-    mLOGSend(httpMethod, host, 80, url, queryString, header, body, mTimeout, httpMessage, mMaxSendSpeedInBytePerSec);
+    mLOGSend(httpMethod, hostInfo.host, 80, hostInfo.usingHttps, url, queryString, header, body, mTimeout, httpMessage, mMaxSendSpeedInBytePerSec);
     
     if (httpMessage.statusCode != 200)
     {
@@ -477,9 +479,10 @@ static void ExtractLogMeta(HttpMessage& httpMessage, LogMeta& logMeta)
         logMeta.count = atoi(httpMessage.header[X_LOG_COUNT].c_str());
 
         //const rapidjson::Value& histograms = GetJsonValue(document, "histograms");
+        logMeta.metaItems.reserve(logMeta.metaItems.size() + document.Size());
         for (rapidjson::Value::ConstValueIterator itr = document.Begin(); itr != document.End(); ++itr)
         {
-            logMeta.metaItems.push_back(LogMetaItem());
+            logMeta.metaItems.emplace_back();
             LogMetaItem& metaItem = logMeta.metaItems.back();
             ExtractJsonResult(*itr, "from", metaItem.from);
             ExtractJsonResult(*itr, "to", metaItem.to);
@@ -537,9 +540,10 @@ static void ExtractLogs(HttpMessage& httpMessage, LogResult& logResult)
         logResult.logline = atoi(httpMessage.header[X_LOG_COUNT].c_str());
 
         //const rapidjson::Value& logs = GetJsonValue(document, "logs");
+        logResult.logdatas.reserve(logResult.logdatas.size() + document.Size());
         for (rapidjson::Value::ConstValueIterator itr = document.Begin(); itr != document.End(); ++itr)
         {
-            logResult.logdatas.push_back(LogItem());
+            logResult.logdatas.emplace_back();
             LogItem& logItem = logResult.logdatas.back();
                 
             string logTimeStamp = "";
@@ -547,13 +551,14 @@ static void ExtractLogs(HttpMessage& httpMessage, LogResult& logResult)
             logItem.timestamp = atoi(logTimeStamp.c_str());
 
             ExtractJsonResult(*itr, LOGITEM_SOURCE_LABEL, logItem.source);
+            logItem.data.reserve(itr->MemberCount());
             for (rapidjson::Value::ConstMemberIterator mItr = itr->MemberBegin(); mItr != itr->MemberEnd(); ++mItr)
             {
                 if (string(mItr->name.GetString()) != string(LOGITEM_TIME_STAMP_LABEL) && string(mItr->name.GetString()) != string(LOGITEM_SOURCE_LABEL))
                 {
                     if (mItr->value.IsString())
                     {
-                        logItem.data.push_back(pair<string,string>(mItr->name.GetString(), mItr->value.GetString()));
+                        logItem.data.emplace_back(mItr->name.GetString(), mItr->value.GetString());
                     }
                     else
                     {
@@ -762,6 +767,7 @@ static void ExtractHeartbeat(HttpMessage& httpMessage, std::vector<uint32_t>& sh
     {
         ExtractJsonResult(httpMessage.content, doc);
         auto array = doc.GetArray();
+        shards.reserve(shards.size() + array.Size());
         for (Value::ConstValueIterator itr = array.Begin(); itr != array.End(); ++itr)
         {
             shards.push_back(itr->GetUint());
@@ -779,10 +785,10 @@ static void ExtractConsumerGroupCheckpoints(HttpMessage& httpMessage, vector<Con
     {
         ExtractJsonResult(httpMessage.content, doc);
         auto array = doc.GetArray();
+        cps.reserve(cps.size() + array.Size());
         for (Value::ConstValueIterator itr = array.Begin(); itr != array.End(); ++itr)
         {
-            ConsumerGroupCheckpoint cp((*itr)["shard"].GetUint(), (*itr)["checkpoint"].GetString(), (*itr)["updateTime"].GetUint64());
-            cps.push_back(cp);
+            cps.emplace_back((*itr)["shard"].GetUint(), (*itr)["checkpoint"].GetString(), (*itr)["updateTime"].GetUint64());
         }
     }
     catch(JsonException& e)
@@ -797,10 +803,10 @@ static void ExtractConsumerGroups(HttpMessage& httpMessage, vector<ConsumerGroup
     {
         ExtractJsonResult(httpMessage.content, doc);
         auto array = doc.GetArray();
+        consumerGroups.reserve(consumerGroups.size() + array.Size());
         for (Value::ConstValueIterator itr = array.Begin(); itr != array.End(); ++itr)
         {
-            ConsumerGroup group((*itr)["name"].GetString(), (*itr)["timeout"].GetUint(), (*itr)["order"].GetBool());
-            consumerGroups.push_back(group);
+            consumerGroups.emplace_back((*itr)["name"].GetString(), (*itr)["timeout"].GetUint(), (*itr)["order"].GetBool());
         }
     }
     catch(JsonException& e)
@@ -815,11 +821,12 @@ static void ExtractLogStores(HttpMessage& httpMessage, vector<string>& logStores
     {
         ExtractJsonResult(httpMessage.content, document);    
         const rapidjson::Value& logStores = GetJsonValue(document, "logstores");
+        logStoresResult.reserve(logStoresResult.size() + logStores.Size());
         for (rapidjson::Value::ConstValueIterator itr = logStores.Begin(); itr != logStores.End(); ++itr)
         {
             if (itr->IsString())
             {
-                logStoresResult.push_back(itr->GetString());
+                logStoresResult.emplace_back(itr->GetString());
             }
             else
             {
@@ -1185,11 +1192,12 @@ static void ExtractConfigs(HttpMessage& httpMessage, vector<string>& configsResu
         ExtractJsonResult(httpMessage.content, document);    
         
         const rapidjson::Value& configs = GetJsonValue(document, "configs");
+        configsResult.reserve(configsResult.size() + configs.Size());
         for (rapidjson::Value::ConstValueIterator itr = configs.Begin(); itr != configs.End(); ++itr)
         {
             if (itr->IsString())
             {
-                configsResult.push_back(itr->GetString());
+                configsResult.emplace_back(itr->GetString());
             }
             else
             {
@@ -1360,11 +1368,12 @@ static void ExtractMachineGroups(HttpMessage& httpMessage, vector<string>& machi
         ExtractJsonResult(httpMessage.content, document);    
         
         const rapidjson::Value& machineGroups = GetJsonValue(document, "machinegroups");
+        machineGroupsResult.reserve(machineGroupsResult.size() + machineGroups.Size());
         for (rapidjson::Value::ConstValueIterator itr = machineGroups.Begin(); itr != machineGroups.End(); ++itr)
         {
             if (itr->IsString())
             {
-                machineGroupsResult.push_back(itr->GetString());
+                machineGroupsResult.emplace_back(itr->GetString());
             }
             else
             {
@@ -1471,11 +1480,12 @@ static void ExtractApplyConfigs(HttpMessage& httpMessage, vector<string>& config
         ExtractJsonResult(httpMessage.content, document);    
         
         const rapidjson::Value& configs = GetJsonValue(document, "configs");
+        configsResult.reserve(configsResult.size() + configs.Size());
         for (rapidjson::Value::ConstValueIterator itr = configs.Begin(); itr != configs.End(); ++itr)
         {
             if (itr->IsString())
             {
-                configsResult.push_back(itr->GetString());
+                configsResult.emplace_back(itr->GetString());
             }
             else
             {
@@ -1599,6 +1609,11 @@ CreateSqlInstanceResponse LOGClient::CreateSqlInstance(const std::string &projec
 }
 UpdateSqlInstanceResponse LOGClient::UpdateSqlInstance(const std::string &project, int cu)
 {
+    return UpdateSqlInstance(project, cu, false);
+}
+
+UpdateSqlInstanceResponse LOGClient::UpdateSqlInstance(const std::string &project, int cu, bool useAsDefault)
+{
     std::string operation = "/sqlinstance";
     std::string body;
     rapidjson::StringBuffer stringBuffer;
@@ -1606,6 +1621,8 @@ UpdateSqlInstanceResponse LOGClient::UpdateSqlInstance(const std::string &projec
     writer.StartObject();
     writer.Key("cu");
     writer.Int(cu);
+    writer.Key("useAsDefault");
+    writer.Bool(useAsDefault);
     writer.EndObject();
     body = stringBuffer.GetString();
     map<string, string> parameterList;
@@ -1614,7 +1631,7 @@ UpdateSqlInstanceResponse LOGClient::UpdateSqlInstance(const std::string &projec
     httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     httpHeader[CONTENT_TYPE] = TYPE_LOG_JSON;
     HttpMessage httpResponse;
-    SendRequest(project, HTTP_POST, operation, body, parameterList, httpHeader, httpResponse);
+    SendRequest(project, HTTP_PUT, operation, body, parameterList, httpHeader, httpResponse);
     UpdateSqlInstanceResponse ret;
     ret.statusCode = httpResponse.statusCode;
     ret.requestId = httpResponse.header[X_LOG_REQUEST_ID];
@@ -1630,7 +1647,7 @@ ListSqlInstanceResponse LOGClient::ListSqlInstance(const std::string &project)
     httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     httpHeader[CONTENT_TYPE] = "";
     HttpMessage httpResponse;
-    SendRequest(project, HTTP_POST, operation, body, parameterList, httpHeader, httpResponse);
+    SendRequest(project, HTTP_GET, operation, body, parameterList, httpHeader, httpResponse);
     ListSqlInstanceResponse ret;
     ret.statusCode = httpResponse.statusCode;
     ret.requestId = httpResponse.header[X_LOG_REQUEST_ID];
@@ -1638,18 +1655,27 @@ ListSqlInstanceResponse LOGClient::ListSqlInstance(const std::string &project)
     try
     {
         ExtractJsonResult(httpResponse.content, document);
+        if (!document.IsArray())
+        {
+            throw JsonException("ValueTypeException", "SQL instance response is not an array");
+        }
+        ret.sqlInstances.reserve(ret.sqlInstances.size() + document.Size());
         for (rapidjson::Value::ConstValueIterator itr = document.Begin(); itr != document.End(); ++itr)
         {
             SqlInstance sqlInstance;
             ExtractJsonResult(*itr, "name", sqlInstance.name);
-            string value;
-            ExtractJsonResult(*itr, "cu", value);
-            sqlInstance.cu = atoi(value.c_str());
-            ExtractJsonResult(*itr, "updateTime", value);
-            sqlInstance.updateTime = atoi(value.c_str());
-            ExtractJsonResult(*itr, "createTime", value);
-            sqlInstance.createTime = atoi(value.c_str());
-            ret.sqlInstances.push_back(sqlInstance);
+            ExtractJsonResult(*itr, "cu", sqlInstance.cu);
+            int64_t updateTime;
+            ExtractJsonResult(*itr, "updateTime", updateTime);
+            sqlInstance.updateTime = static_cast<time_t>(updateTime);
+            int64_t createTime;
+            ExtractJsonResult(*itr, "createTime", createTime);
+            sqlInstance.createTime = static_cast<time_t>(createTime);
+            if (itr->HasMember("useAsDefault"))
+            {
+                ExtractJsonResult(*itr, "useAsDefault", sqlInstance.useAsDefault);
+            }
+            ret.sqlInstances.push_back(std::move(sqlInstance));
         }
     }
     catch (JsonException &e)
@@ -1666,11 +1692,12 @@ static void ExtractTopics(HttpMessage& httpMessage, vector<string>& result)
     {
         ExtractJsonResult(httpMessage.content, document);    
         
+        result.reserve(result.size() + document.Size());
         for (rapidjson::Value::ConstValueIterator itr = document.Begin(); itr != document.End(); ++itr)
         {
             if (itr->IsString())
             {
-                result.push_back(itr->GetString());
+                result.emplace_back(itr->GetString());
             }
             else
             {
@@ -1791,6 +1818,7 @@ ListShardsResponse LOGClient::ListShards(const string& project, const string& lo
 
     if (document.IsArray())
     {
+        ret.result.reserve(document.Size());
         for (rapidjson::Value::ConstValueIterator itr = document.Begin(); itr != document.End(); ++itr)
         {
             if (itr->IsObject())
@@ -1801,7 +1829,7 @@ ListShardsResponse LOGClient::ListShards(const string& project, const string& lo
                 ExtractJsonResult(*itr,"inclusiveBeginKey",shardItem.inclusiveBeginKey);
                 ExtractJsonResult(*itr,"exclusiveEndKey",shardItem.exclusiveEndKey);
                 ExtractJsonResult(*itr, "createTime", shardItem.createTime);
-                ret.result.push_back(shardItem);
+                ret.result.push_back(std::move(shardItem));
             }
             else
             {
@@ -1841,6 +1869,7 @@ SplitShardResponse LOGClient::SplitShard(const string& project, const string& lo
 
     if (document.IsArray())
     {
+        ret.result.reserve(document.Size());
         for (rapidjson::Value::ConstValueIterator itr = document.Begin(); itr != document.End(); ++itr)
         {
             if (itr->IsObject())
@@ -1850,7 +1879,7 @@ SplitShardResponse LOGClient::SplitShard(const string& project, const string& lo
                 ExtractJsonResult(*itr,"status",shardItem.status);
                 ExtractJsonResult(*itr,"inclusiveBeginKey",shardItem.inclusiveBeginKey);
                 ExtractJsonResult(*itr,"exclusiveEndKey",shardItem.exclusiveEndKey);
-                ret.result.push_back(shardItem);
+                ret.result.push_back(std::move(shardItem));
             }
             else
             {
@@ -1888,6 +1917,7 @@ MergeShardsResponse LOGClient::MergeShard(const string& project, const string& l
 
     if (document.IsArray())
     {
+        ret.result.reserve(document.Size());
         for (rapidjson::Value::ConstValueIterator itr = document.Begin(); itr != document.End(); ++itr)
         {
             if (itr->IsObject())
@@ -1898,7 +1928,7 @@ MergeShardsResponse LOGClient::MergeShard(const string& project, const string& l
                 ExtractJsonResult(*itr,"inclusiveBeginKey",shardItem.inclusiveBeginKey);
                 ExtractJsonResult(*itr,"exclusiveEndKey",shardItem.exclusiveEndKey);
                 ExtractJsonResult(*itr,"createTime",shardItem.createTime);
-                ret.result.push_back(shardItem);
+                ret.result.push_back(std::move(shardItem));
             }
             else
             {

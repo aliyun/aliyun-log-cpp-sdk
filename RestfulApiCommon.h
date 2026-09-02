@@ -78,7 +78,7 @@ extern const char* const X_LOG_REQUEST_ID;// = "x-log-requestid";
 
 extern const char* const X_LOG_PROGRESS;// = "x-log-progress";
 extern const char* const X_LOG_COUNT;// = "x-log-count";
-extern const char *const X_LOG_PROCESSED_ROWS;      // = "x-log-processoed-rows";
+extern const char *const X_LOG_PROCESSED_ROWS;      // = "x-log-processed-rows";
 extern const char *const X_LOG_ELASPED_MILLISECOND; // = "x-log-elapsed-millisecond";
 extern const char *const X_LOG_CPU_SEC;             // = "x-log-cpu-sec";
 extern const char *const X_LOG_CPU_CORES;           // = "x-log-cpu-cores";

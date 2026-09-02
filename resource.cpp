@@ -196,11 +196,12 @@ void ConfigInputDetail::FromJson(const Value& value)
     ExtractJsonResult(value, "regex", mRegex);
 
     const Value& key = GetJsonValue(value, "key");
+    mKey.reserve(mKey.size() + key.Size());
     for (Value::ConstValueIterator itr = key.Begin(); itr != key.End(); ++itr)
     {
         if (itr->IsString())
         {
-            mKey.push_back(itr->GetString());
+            mKey.emplace_back(itr->GetString());
         }
         else
         {
@@ -209,11 +210,12 @@ void ConfigInputDetail::FromJson(const Value& value)
     }
 
     const Value& filterKey = GetJsonValue(value, "filterKey");
+    mFilterKey.reserve(mFilterKey.size() + filterKey.Size());
     for (Value::ConstValueIterator itr = filterKey.Begin(); itr != filterKey.End(); ++itr)
     {
         if (itr->IsString())
         {
-            mFilterKey.push_back(itr->GetString());
+            mFilterKey.emplace_back(itr->GetString());
         }
         else
         {
@@ -222,11 +224,12 @@ void ConfigInputDetail::FromJson(const Value& value)
     }
 
     const Value& filterRegex = GetJsonValue(value, "filterRegex");
+    mFilterRegex.reserve(mFilterRegex.size() + filterRegex.Size());
     for (Value::ConstValueIterator itr = filterRegex.Begin(); itr != filterRegex.End(); ++itr)
     {
         if (itr->IsString())
         {
-            mFilterRegex.push_back(itr->GetString());
+            mFilterRegex.emplace_back(itr->GetString());
         }
         else
         {
@@ -454,11 +457,12 @@ void Line::SetFullValues(rapidjson::Writer<rapidjson::StringBuffer>& writer) con
 void Line::FromJson(const rapidjson::Value& value)
 {
     const Value& token = GetJsonValue(value, "token");
+    mToken.reserve(mToken.size() + token.Size());
     for (Value::ConstValueIterator itr = token.Begin(); itr != token.End(); ++itr)
     {
         if (itr->IsString())
         {
-           mToken.push_back(itr->GetString());
+           mToken.emplace_back(itr->GetString());
         }
         else
         {
@@ -470,11 +474,12 @@ void Line::FromJson(const rapidjson::Value& value)
     {
         mIncludeKeysSet = true;
         const Value& includeKeys = GetJsonValue(value, "include_keys");
+        mIncludeKeys.reserve(mIncludeKeys.size() + includeKeys.Size());
         for (Value::ConstValueIterator itr = includeKeys.Begin(); itr != includeKeys.End(); ++itr)
         {
             if (itr->IsString())
             {
-                mIncludeKeys.push_back(itr->GetString());
+                mIncludeKeys.emplace_back(itr->GetString());
             }
             else
             {
@@ -487,11 +492,12 @@ void Line::FromJson(const rapidjson::Value& value)
     {
         mExcludeKeysSet = true;
         const Value& excludeKeys = GetJsonValue(value, "exclude_keys");
+        mExcludeKeys.reserve(mExcludeKeys.size() + excludeKeys.Size());
         for (Value::ConstValueIterator itr = excludeKeys.Begin(); itr != excludeKeys.End(); ++itr)
         {
             if (itr->IsString())
             {
-                mExcludeKeys.push_back(itr->GetString());
+                mExcludeKeys.emplace_back(itr->GetString());
             }
             else
             {
@@ -544,12 +550,13 @@ void KeyContent::SetFullValues(rapidjson::Writer<rapidjson::StringBuffer>& write
 void KeyContent::FromJson(const rapidjson::Value& value)
 {
     const Value &token = GetJsonValue(value, "token");
+    mToken.reserve(mToken.size() + token.Size());
     for (Value::ConstValueIterator itr = token.Begin(); itr != token.End(); ++itr)
     {
         if (itr->IsString())
         {
             //cout << "key's token:" << itr->GetString() << endl;
-            mToken.push_back(itr->GetString());
+            mToken.emplace_back(itr->GetString());
         }
         else
         {
@@ -670,11 +677,12 @@ void AllKeys::SetFullValues(Writer<StringBuffer>& writer) const
 void AllKeys::FromJson(const Value& value)
 {
     const Value& token = GetJsonValue(value, "token");
+    mToken.reserve(mToken.size() + token.Size());
     for (Value::ConstValueIterator itr = token.Begin(); itr != token.End(); ++itr)
     {
         if (itr->IsString())
         {
-            mToken.push_back(itr->GetString());
+            mToken.emplace_back(itr->GetString());
         }
         else
         {
@@ -786,11 +794,12 @@ void Index::FromJson(const Value& value)
     if (value.HasMember("log_reduce_white_list"))
     {
         const Value &logReduceWhiteList = GetJsonValue(value, "log_reduce_white_list");
+        mLogReduceWhiteList.reserve(mLogReduceWhiteList.size() + logReduceWhiteList.Size());
         for (Value::ConstValueIterator itr = logReduceWhiteList.Begin(); itr != logReduceWhiteList.End(); ++itr)
         {
             if (itr->IsString())
             {
-                mLogReduceWhiteList.push_back(itr->GetString());
+                mLogReduceWhiteList.emplace_back(itr->GetString());
             }
             else
             {
@@ -801,11 +810,12 @@ void Index::FromJson(const Value& value)
     if (value.HasMember("log_reduce_black_list"))
     {
         const Value &logReduceBlackList = GetJsonValue(value, "log_reduce_black_list");
+        mLogReduceBlackList.reserve(mLogReduceBlackList.size() + logReduceBlackList.Size());
         for (Value::ConstValueIterator itr = logReduceBlackList.Begin(); itr != logReduceBlackList.End(); ++itr)
         {
             if (itr->IsString())
             {
-                mLogReduceBlackList.push_back(itr->GetString());
+                mLogReduceBlackList.emplace_back(itr->GetString());
             }
             else
             {
@@ -866,6 +876,7 @@ void ACL::RemovePrivilege(const ACLPrivilege& privilege)
 vector<string> ACL::GetPrivilege() const
 {
     vector<string> privilege;
+    privilege.reserve(mPrivilege.size());
     for (set<string>::const_iterator iter = mPrivilege.begin();iter != mPrivilege.end();iter++)
     {
         privilege.push_back(*iter);
@@ -1041,11 +1052,12 @@ void MachineGroup::FromJson(const Value& value)
     ExtractJsonResult(value, "machineIdentifyType", mMachineIdentifyType);
 
     const Value& machineList = GetJsonValue(value, "machineList");
+    mMachineList.reserve(mMachineList.size() + machineList.Size());
     for (Value::ConstValueIterator itr = machineList.Begin(); itr != machineList.End(); ++itr)
     {
         if (itr->IsString())
         {
-            mMachineList.push_back(itr->GetString());
+            mMachineList.emplace_back(itr->GetString());
         }
         else
         {
