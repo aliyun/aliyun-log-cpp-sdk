@@ -214,6 +214,7 @@ static void ParseBatchLogData(const string& nextCursor, const pb::LogGroupList& 
 
 LOGClient::LOGClient(const string& slsHost, const string& accessKeyId, const string& accessKey, int32_t timeout, const string& source, bool compressFlag):
     mSlsHost(slsHost),
+    mUsingHttps(false),
     mAccessKeyId(accessKeyId),
     mAccessKey(accessKey),
     mSource(source),
@@ -239,6 +240,7 @@ LOGClient::LOGClient(const string& slsHost, const string& accessKeyId, const str
 }
 LOGClient::LOGClient(const string& slsHost, const string& accessKeyId, const string& accessKey, const std::string& securityToken, int32_t timeout, const string& source, bool compressFlag):
     mSlsHost(slsHost),
+    mUsingHttps(false),
     mAccessKeyId(accessKeyId),
     mAccessKey(accessKey),
     mSecurityToken(securityToken),
@@ -325,45 +327,41 @@ string LOGClient::GetHostFieldSuffix()
 }
 void LOGClient::SetSlsHost(const string& slsHost)
 {
-    std::lock_guard<std::mutex> lock(mMutex);
-    //mSlsHost = slsHost;
-    size_t  bpos = slsHost.find("://");
-    if(bpos == string::npos)
-        bpos = 0;
-    else
-        bpos += 3;
-    string tmpstr = slsHost.substr(bpos);
-    size_t  epos = tmpstr.find_first_of("/");
-    if(epos == string::npos)
-        epos = tmpstr.length();
-    string host = tmpstr.substr(0,epos);
-    
-    mSlsHost = host;
-
-    mHostFieldSuffix = "." + host;
+    string host = slsHost;
+    bool usingHttps = false;
+    if (slsHost.compare(0, 8, "https://") == 0)
+    {
+        usingHttps = true;
+        host.erase(0, 8);
+    }
+    else if (slsHost.compare(0, 7, "http://") == 0)
+    {
+        host.erase(0, 7);
+    }
+    const size_t pathPos = host.find('/');
+    if (pathPos != string::npos)
+    {
+        host.erase(pathPos);
+    }
+    string hostFieldSuffix = "." + host;
     size_t i = 0;
     for(; i < host.length(); ++i)
     {
         if((host[i] >= 'a' && host[i] <= 'z') || (host[i] >= 'A' && host[i] <= 'Z'))
             break;
     }
-    if(i == host.length())
-        mIsHostRawIp = true;
-    else
-        mIsHostRawIp = false;
+    const bool isHostRawIp = i == host.length();
+
+    std::lock_guard<std::mutex> lock(mMutex);
+    mUsingHttps = usingHttps;
+    mSlsHost = host;
+    mHostFieldSuffix = hostFieldSuffix;
+    mIsHostRawIp = isHostRawIp;
 }
 
-void LOGClient::SetCommonHeader(map<string, string>& httpHeader, int32_t contentLength, const string& project)
+void LOGClient::SetCommonHeader(map<string, string>& httpHeader, int32_t contentLength, const string& host)
 {
-    if (project != "")
-    {
-        httpHeader[HOST] = project + GetHostFieldSuffix();
-    }
-    else
-    {
-        httpHeader[HOST] = GetSlsHost();
-    }
-
+    httpHeader[HOST] = host;
     httpHeader[USER_AGENT] = mUserAgent;
     httpHeader[X_LOG_APIVERSION] = LOG_API_VERSION;
     httpHeader[X_LOG_SIGNATUREMETHOD] = HMAC_SHA1;
@@ -379,28 +377,27 @@ void LOGClient::SetCommonParameter(map<string, string>& parameterList)
 {
 }
 
-string LOGClient::GetHost(const string& project)
+LOGClient::HostInfo LOGClient::GetHost(const string& project)
 {
-    if(mIsHostRawIp || project == "")
+    std::lock_guard<std::mutex> lock(mMutex);
+    HostInfo hostInfo{mSlsHost, mUsingHttps};
+    if (!mIsHostRawIp && !project.empty())
     {
-        return GetSlsHost();
+        hostInfo.host = project + mHostFieldSuffix;
     }
-    else
-    {
-        return project + GetHostFieldSuffix();
-    }
+    return hostInfo;
 }
 
 void LOGClient::SendRequest(const string& project, const string& httpMethod, const string& url, const string& body, const map<string, string>& parameterList, map<string, string>& header, HttpMessage& httpMessage)
 {
-    string host = GetHost(project);
-    SetCommonHeader(header, body.length(), project);
+    const HostInfo hostInfo = GetHost(project);
+    SetCommonHeader(header, body.length(), hostInfo.host);
     string signature = LOGAdapter::GetUrlSignature(httpMethod, url, header, parameterList, body, GetAccessKey());
     header[AUTHORIZATION] = LOG_HEADSIGNATURE_PREFIX + GetAccessKeyId() + ':' + signature;
     
     string queryString;
     LOGAdapter::GetQueryString(parameterList, queryString);
-    mLOGSend(httpMethod, host, 80, url, queryString, header, body, mTimeout, httpMessage, mMaxSendSpeedInBytePerSec);
+    mLOGSend(httpMethod, hostInfo.host, 80, hostInfo.usingHttps, url, queryString, header, body, mTimeout, httpMessage, mMaxSendSpeedInBytePerSec);
     
     if (httpMessage.statusCode != 200)
     {
@@ -1612,6 +1609,11 @@ CreateSqlInstanceResponse LOGClient::CreateSqlInstance(const std::string &projec
 }
 UpdateSqlInstanceResponse LOGClient::UpdateSqlInstance(const std::string &project, int cu)
 {
+    return UpdateSqlInstance(project, cu, false);
+}
+
+UpdateSqlInstanceResponse LOGClient::UpdateSqlInstance(const std::string &project, int cu, bool useAsDefault)
+{
     std::string operation = "/sqlinstance";
     std::string body;
     rapidjson::StringBuffer stringBuffer;
@@ -1619,6 +1621,8 @@ UpdateSqlInstanceResponse LOGClient::UpdateSqlInstance(const std::string &projec
     writer.StartObject();
     writer.Key("cu");
     writer.Int(cu);
+    writer.Key("useAsDefault");
+    writer.Bool(useAsDefault);
     writer.EndObject();
     body = stringBuffer.GetString();
     map<string, string> parameterList;
@@ -1627,7 +1631,7 @@ UpdateSqlInstanceResponse LOGClient::UpdateSqlInstance(const std::string &projec
     httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     httpHeader[CONTENT_TYPE] = TYPE_LOG_JSON;
     HttpMessage httpResponse;
-    SendRequest(project, HTTP_POST, operation, body, parameterList, httpHeader, httpResponse);
+    SendRequest(project, HTTP_PUT, operation, body, parameterList, httpHeader, httpResponse);
     UpdateSqlInstanceResponse ret;
     ret.statusCode = httpResponse.statusCode;
     ret.requestId = httpResponse.header[X_LOG_REQUEST_ID];
@@ -1643,7 +1647,7 @@ ListSqlInstanceResponse LOGClient::ListSqlInstance(const std::string &project)
     httpHeader[X_LOG_BODYRAWSIZE] = std::to_string(body.length());
     httpHeader[CONTENT_TYPE] = "";
     HttpMessage httpResponse;
-    SendRequest(project, HTTP_POST, operation, body, parameterList, httpHeader, httpResponse);
+    SendRequest(project, HTTP_GET, operation, body, parameterList, httpHeader, httpResponse);
     ListSqlInstanceResponse ret;
     ret.statusCode = httpResponse.statusCode;
     ret.requestId = httpResponse.header[X_LOG_REQUEST_ID];
@@ -1651,18 +1655,26 @@ ListSqlInstanceResponse LOGClient::ListSqlInstance(const std::string &project)
     try
     {
         ExtractJsonResult(httpResponse.content, document);
+        if (!document.IsArray())
+        {
+            throw JsonException("ValueTypeException", "SQL instance response is not an array");
+        }
         ret.sqlInstances.reserve(ret.sqlInstances.size() + document.Size());
         for (rapidjson::Value::ConstValueIterator itr = document.Begin(); itr != document.End(); ++itr)
         {
             SqlInstance sqlInstance;
             ExtractJsonResult(*itr, "name", sqlInstance.name);
-            string value;
-            ExtractJsonResult(*itr, "cu", value);
-            sqlInstance.cu = atoi(value.c_str());
-            ExtractJsonResult(*itr, "updateTime", value);
-            sqlInstance.updateTime = atoi(value.c_str());
-            ExtractJsonResult(*itr, "createTime", value);
-            sqlInstance.createTime = atoi(value.c_str());
+            ExtractJsonResult(*itr, "cu", sqlInstance.cu);
+            int64_t updateTime;
+            ExtractJsonResult(*itr, "updateTime", updateTime);
+            sqlInstance.updateTime = static_cast<time_t>(updateTime);
+            int64_t createTime;
+            ExtractJsonResult(*itr, "createTime", createTime);
+            sqlInstance.createTime = static_cast<time_t>(createTime);
+            if (itr->HasMember("useAsDefault"))
+            {
+                ExtractJsonResult(*itr, "useAsDefault", sqlInstance.useAsDefault);
+            }
             ret.sqlInstances.push_back(std::move(sqlInstance));
         }
     }
