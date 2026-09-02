@@ -91,7 +91,6 @@ public:
 std::string ToString(const int32_t& n); 
 std::string ToString(const uint32_t& n); 
 std::string ToString(const size_t&n);
-std::string ToString(const time_t&n);
 std::string ToString(const int64_t& n);
 std::string ToString(const bool& n);
 }
