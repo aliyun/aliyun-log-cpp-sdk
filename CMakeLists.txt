@@ -3,6 +3,13 @@ project(sls-sdk-cpp)
 
 set(CMAKE_CXX_STANDARD 11)
 
+set(ALIYUN_LOG_SDK_NAMESPACE "" CACHE STRING "Override the aliyun_log_sdk_v6 namespace")
+if(NOT "${ALIYUN_LOG_SDK_NAMESPACE}" STREQUAL "")
+    if(NOT "${ALIYUN_LOG_SDK_NAMESPACE}" MATCHES "^[A-Za-z_][A-Za-z0-9_]*$")
+        message(FATAL_ERROR "ALIYUN_LOG_SDK_NAMESPACE must be a valid C++ identifier")
+    endif()
+endif()
+
 add_library(slssdk
             client.cpp
             resource.cpp
@@ -11,6 +18,10 @@ add_library(slssdk
             coding.cpp
             util.cpp
             pb.cpp)
+
+if(NOT "${ALIYUN_LOG_SDK_NAMESPACE}" STREQUAL "")
+    target_compile_definitions(slssdk PUBLIC ALIYUN_LOG_SDK_NAMESPACE=${ALIYUN_LOG_SDK_NAMESPACE})
+endif()
 
 # lib curl must be provided by user
 target_include_directories(slssdk PRIVATE ${CURL_INCLUDE_DIR})
@@ -39,7 +50,7 @@ install(TARGETS slssdk
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib)
 
-install(FILES client.h RestfulApiCommon.h resource.h pb.h
+install(FILES client.h RestfulApiCommon.h resource.h pb.h sls_namespace.h
         DESTINATION include)
 install(DIRECTORY rapidjson
         DESTINATION include)

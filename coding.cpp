@@ -2,7 +2,7 @@
 
 using namespace std;
 
-namespace aliyun_log_sdk_v6
+namespace ALIYUN_LOG_SDK_NAMESPACE
 {
 
 char* EncodeVarint32(char* dst, uint32_t v)
@@ -75,4 +75,4 @@ const char* SkipProtobufField(const char* pos, const char* limit, uint32_t wireT
     }
 }
 
-} // namespace aliyun_log_sdk_v6
+} // namespace ALIYUN_LOG_SDK_NAMESPACE

@@ -5,6 +5,7 @@
 #include <map>
 #include <utility>
 #include <mutex>
+#include "sls_namespace.h"
 #include "RestfulApiCommon.h"
 #include "pb.h"
 #include "resource.h"
@@ -26,7 +27,7 @@ class Closure;
 }
 typedef class google::protobuf::Closure RPCClosure;
 
-namespace aliyun_log_sdk_v6
+namespace ALIYUN_LOG_SDK_NAMESPACE
 {
 
 void ExtractJsonResult(const std::string& response, rapidjson::Document& document);

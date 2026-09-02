@@ -3,8 +3,8 @@
 #include <cassert>
 #include "coding.h"
 
-using namespace aliyun_log_sdk_v6;
-using namespace aliyun_log_sdk_v6::pb;
+using namespace ALIYUN_LOG_SDK_NAMESPACE;
+using namespace ALIYUN_LOG_SDK_NAMESPACE::pb;
 
 using KvPair = std::pair<std::string, std::string>;
 

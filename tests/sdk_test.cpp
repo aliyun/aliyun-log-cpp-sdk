@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 
-using namespace aliyun_log_sdk_v6;
+using namespace ALIYUN_LOG_SDK_NAMESPACE;
 
 namespace
 {

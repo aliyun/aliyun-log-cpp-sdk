@@ -40,7 +40,7 @@ static uint32_t __sls_swap32 (uint32_t x)
 #endif
 
 
-namespace aliyun_log_sdk_v6
+namespace ALIYUN_LOG_SDK_NAMESPACE
 {
 /////////////////////////////////////////////// MACRO //////////////////////////////////////////////////
 #define SHIFT_LEFT(a, b) ((a) << (b) | (a) >> (32 - b))

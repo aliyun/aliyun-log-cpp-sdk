@@ -10,11 +10,11 @@
 #include "util.h"
 
 using namespace std;
-using namespace aliyun_log_sdk_v6::pb;
+using namespace ALIYUN_LOG_SDK_NAMESPACE::pb;
 using namespace rapidjson;
-extern const char* const aliyun_log_sdk_v6::LOG_SDK_IDENTIFICATION = "sls-cpp-sdk v0.6.2";
+extern const char* const ALIYUN_LOG_SDK_NAMESPACE::LOG_SDK_IDENTIFICATION = "sls-cpp-sdk v0.6.2";
 
-namespace aliyun_log_sdk_v6
+namespace ALIYUN_LOG_SDK_NAMESPACE
 {
 
 /************************ common method ***********************/
@@ -163,7 +163,7 @@ static void ErrorCheck(const string& response, const string& requestId, const in
 static int32_t ParseLogGroupList(const int32_t logGroupCount, const uint32_t uncompressedSize, const string& content, pb::LogGroupList& logGroupList)
 {
     string uncompressed = "";
-    if (! aliyun_log_sdk_v6::CompressAlgorithm::UncompressLz4(content, uncompressedSize, uncompressed))
+    if (! ALIYUN_LOG_SDK_NAMESPACE::CompressAlgorithm::UncompressLz4(content, uncompressedSize, uncompressed))
     {
         return 1;
     }
@@ -439,7 +439,7 @@ PostLogStoreLogsResponse LOGClient::PostLogStoreLogs(const string& project, cons
     httpHeader[CONTENT_TYPE] = TYPE_LOG_PROTOBUF;
     if(mCompressFlag)
     {
-        if(! aliyun_log_sdk_v6::CompressAlgorithm::CompressLz4(serializeData, body))
+        if(! ALIYUN_LOG_SDK_NAMESPACE::CompressAlgorithm::CompressLz4(serializeData, body))
         {
             throw LOGException(LOGE_UNKNOWN_ERROR, "Data compress failed.");
         }

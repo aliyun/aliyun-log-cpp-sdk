@@ -70,5 +70,19 @@ this is the C++ SDK version 0.6.0 for SLS
     cmake .. -DCURL_INCLUDE_DIR=/usr/local/include -DCURL_LIB_DIR=/usr/local/lib
     ```
 
+## Custom namespace
+
+The SDK uses `aliyun_log_sdk_v6` by default. To avoid symbol conflicts, set
+`ALIYUN_LOG_SDK_NAMESPACE` to a different C++ identifier when building:
+
+```bash
+cmake .. -DALIYUN_LOG_SDK_NAMESPACE=my_sls_sdk
+# or
+make ALIYUN_LOG_SDK_NAMESPACE=my_sls_sdk
+```
+
+Applications that include the SDK headers must use the same definition as the
+SDK library, for example `-DALIYUN_LOG_SDK_NAMESPACE=my_sls_sdk`. The value must
+be a single valid C++ identifier.
 
 

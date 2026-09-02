@@ -10,7 +10,7 @@
 
 using namespace std;
 
-namespace aliyun_log_sdk_v6
+namespace ALIYUN_LOG_SDK_NAMESPACE
 {
 extern const char * const DATE_FORMAT_RFC822  =  "%a, %d %b %Y %H:%M:%S GMT"; ///<RFC822 date formate, GMT time.
 static const uint32_t MD5_BYTES=16;
